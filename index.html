@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>neurOrange – Launcher</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="apple-touch-icon" href="assets/neurOrange_icon_180.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="neurOrange">
+  <meta name="theme-color" content="#0f0d0c">
+  <style>
+    :root { color-scheme: dark; }
+    html, body { height:100%; margin:0; }
+    body {
+      display:grid; place-items:center; background:#0f0d0c; color:white;
+      font: 16px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    .card {
+      width: min(520px, 92vw);
+      padding: 20px 18px;
+      border-radius: 20px;
+      background: #1b1918;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.06);
+      text-align: center;
+    }
+    .icon {
+      width: 96px; height: 96px; border-radius: 22%;
+      background: url('assets/neurOrange_icon_180.png') center/cover no-repeat; margin: 8px auto 12px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+    }
+    .btn {
+      display:inline-block; padding: 12px 16px; border-radius: 12px;
+      background: #ff8c00; color:#1b1918; text-decoration:none; font-weight: 700;
+      border: none;
+    }
+    .sub { opacity:.8; margin-top:8px; font-size: 13px; line-height: 1.4; }
+    .small { font-size:12px; opacity:.7; margin-top:10px; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#12100f; padding:2px 6px; border-radius:6px; }
+  </style>
+  <script>
+    function go(){ window.location.replace('neurOrange.html'); }
+    window.addEventListener('load', () => setTimeout(go, 600));
+  </script>
+</head>
+<body>
+  <main class="card">
+    <div class="icon" aria-hidden="true"></div>
+    <h1>Launching neurOrange…</h1>
+    <p class="sub">Add to Home Screen in Safari: <span class="code">Share</span> → <span class="code">Add to Home Screen</span>.</p>
+    <p><a class="btn" href="neurOrange.html">Open App</a></p>
+    <p class="small">If this page keeps reloading, check that <span class="code">neurOrange.html</span> exists in the repository root.</p>
+  </main>
+</body>
+</html>
