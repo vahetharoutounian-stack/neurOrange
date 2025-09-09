@@ -2,35 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — iPhone-locked layout (Safari-correct)</title>
-
-<!--
-This build “locks” every visible object to the actual iPhone viewport
-(Safari). Sizes are computed from window.innerWidth/innerHeight on load
-and on resize so the layout matches the second screenshot (no side bars,
-no overscale).  Inner = FOOD colours; Outer = Ghosts-first palette.
-Middle nodes touch the left/right screen edges; emojis are orange-only,
-no borders, constant distance from the outer ring; images remain upright.
--->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>neurOrange — Screen-locked Rings + Emoji Orbits</title>
 
 <style>
   :root{
-    /* Theme colours */
-    --quin:#ED6A00;      /* Quinacridone */
-    --pure:#FFA500;      /* Pure Orange */
-    --bergamot:#FFA64D;  /* Bergamot / Toranj */
-    --nick:#FF6600;      /* Nickelodeon */
+    /* We lock every pixel size to the canvas width in JS. */
+    --iph-w:390; --iph-h:844;
 
-    /* Ring params (JS will set px values at runtime) */
-    --gap-deg: 3deg;           /* arc width of separators */
-    --inner-thick: 36px;       /* px (overwritten by JS) */
-    --outer-thick-mult: 2.2;   /* outer thickness = inner * mult */
+    /* Key colors */
+    --quin:#ED6A00;       /* Quinacridone Orange */
+    --pure:#FFA500;       /* Pure Orange */
+    --bergamot:#FFA64D;   /* Bergamot / Toranj */
+    --nick:#FF6600;       /* Nickelodeon Orange */
+
+    /* Ring thickness (JS overwrites with px) */
+    --ring-thick: 40px;            /* inner thickness in px  */
+    --gap-deg: 3deg;               /* separator width (arc)  */
+    --outer-thick-mult: 2.3;       /* outer thickness = inner * mult */
 
     /* Motion */
-    --mid-move-duration: 2200ms;
-    --emoji-font: 18px;        /* px set from screen width */
+    --mid-move-duration: 2200ms;   /* slower move-out for mid nodes */
+    --emoji-font: 18px;            /* px injected from JS */
   }
 
   *{ box-sizing:border-box }
@@ -41,27 +34,29 @@ no borders, constant distance from the outer ring; images remain upright.
     overflow:hidden;
   }
 
-  /* Full-bleed canvas that uses dynamic viewport units (dvw/dvh) and gets
-     overridden with exact px via JS so Safari always hits the edges. */
-  #phone{ position:fixed; inset:0; width:100dvw; height:100dvh; display:grid; place-items:center; background:#000; }
-  #canvas{ position:relative; width:100%; height:100%; overflow:hidden; background:#000; }
+  /* Canvas fills the iPhone screen in Safari (no unexpected margins) */
+  #phone{ position:fixed; inset:0; display:grid; place-items:center; }
+  #canvas{
+    position:relative;
+    width:100vw; height:100vh;              /* lock to viewport */
+    overflow:hidden;
+    background:#000;
+  }
 
-  /* Z order: brand(6) → question(5) → emoji(4) → mid(3) → inner(2.5) → outer(2) → video+fog(1) */
+  /* ===== Z-order: brand (6) → question (5) → emoji rings (4) → mid nodes (3) → inner ring (2.5) → outer ring (2) → video+fog (1) ===== */
 
   /* Brand */
   #brandBar{
-    position:absolute; left:env(safe-area-inset-left); right:env(safe-area-inset-right);
-    top:calc(env(safe-area-inset-top) + 10px); display:flex; justify-content:center;
-    z-index:6; opacity:0; transform: translateY(-8px);
-    transition: opacity 900ms ease, transform 900ms ease;
+    position:absolute; top:max(12px, env(safe-area-inset-top)); left:0; right:0;
+    display:flex; justify-content:center; z-index:6;
+    opacity:0; transform: translateY(-8px); transition: opacity 900ms ease, transform 900ms ease;
     filter: drop-shadow(0 0 14px #000);
   }
   #brandBar.show{ opacity:1; transform: translateY(0); }
-  #brand{ font-weight:900; letter-spacing:.12em; font-size: clamp(18px, 5vw, 32px);
-          animation: brandPulse 4s ease-in-out infinite; }
+  #brand{ font-weight:900; letter-spacing:.12em; font-size: clamp(20px, 5vw, 32px); animation: brandPulse 4s ease-in-out infinite; }
   @keyframes brandPulse{ 0%{color:var(--quin)} 50%{color:var(--pure)} 100%{color:var(--quin)} }
 
-  /* Background video + orange fog */
+  /* Background + fog */
   #bgLayer{ position:absolute; inset:0; z-index:1; opacity:0; transition:opacity 900ms ease; }
   #bgLayer.show{ opacity:1; }
   #bgVideo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; pointer-events:none; }
@@ -85,24 +80,23 @@ no borders, constant distance from the outer ring; images remain upright.
   /* Focus root */
   #focus{ position:absolute; inset:0; display:grid; place-items:center; z-index:2; }
 
-  /* Question bubble (tight + breathing + Bergamot→Quin tint) */
+  /* Question bubble (tight, breathing, pulsing tint Bergamot→Quinacridone) */
   #question{
     position:absolute; left:50%; top:50%;
-    transform: translate(-50%,-50%) scale(0.90);
+    transform: translate(-50%,-50%) scale(0.9);
     display:grid; place-items:center; background:#000; color:#fff;
     border-radius:50%; border:3px solid #000; opacity:0;
     transition: opacity 900ms ease, transform 900ms ease; z-index:5;
     filter: drop-shadow(0 0 16px #000) drop-shadow(0 0 28px #000);
   }
-  #questionText{ font-weight:900; font-style:italic; text-align:center; font-size:clamp(15px,3.4vw,21px);
-                 line-height:1.15; margin:0; animation: tintPulse 3.4s ease-in-out infinite; }
+  #questionText{ font-weight:900; font-style:italic; text-align:center; font-size:clamp(15px,3.4vw,21px); line-height:1.15; margin:0; animation: tintPulse 3.4s ease-in-out infinite; }
   @keyframes tintPulse{ 0%{color:var(--bergamot)} 50%{color:var(--quin)} 100%{color:var(--bergamot)} }
   #question.show{ opacity:1; transform: translate(-50%,-50%) scale(1); }
   #question.rest{ transform: translate(-50%,-50%) scale(0.78); transition: transform 700ms ease; }
   #question.breathe{ animation: breathe 3.8s ease-in-out infinite; }
   @keyframes breathe{ 0%,100%{ transform: translate(-50%,-50%) scale(0.76) } 50%{ transform: translate(-50%,-50%) scale(0.81) } }
 
-  /* INNER ring (CW) */
+  /* INNER ring (spins CW while popping) */
   #ringScale{ position:absolute; width:0; height:0; opacity:0; transform:scale(.975);
               transition: opacity 700ms ease, transform 700ms ease; z-index:2.5;
               filter: drop-shadow(0 0 16px #000) drop-shadow(0 0 28px #000); }
@@ -111,27 +105,21 @@ no borders, constant distance from the outer ring; images remain upright.
   @keyframes rotateCW { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
   #ring{ position:absolute; inset:0; margin:auto; width:100%; height:100%; border-radius:50%; }
 
-  /* MID ring (CCW) + nodes that reach screen edges */
-  #midSpin{ position:absolute; width:0; height:0; z-index:4; pointer-events:none;
-            animation: rotateCCW 56s linear infinite;
-            filter: drop-shadow(0 0 16px #000) drop-shadow(0 0 28px #000); }
+  /* MID nodes (spin CCW; images upright; black borders; black glow) */
+  #midSpin{ position:absolute; width:0; height:0; z-index:4; pointer-events:none; animation: rotateCCW 56s linear infinite; filter: drop-shadow(0 0 16px #000) drop-shadow(0 0 28px #000); }
   @keyframes rotateCCW { from{ transform: rotate(0deg) } to{ transform: rotate(-360deg) } }
   #midRing{ position:absolute; inset:0; pointer-events:none; }
-  .mnode{
-    position:absolute; top:50%; left:50%;
-    width:40px; height:40px; border-radius:50%; overflow:hidden; background:#111;
-    border:3px solid #000; box-shadow:0 0 0 2px #000; opacity:0;
-    transform: translate(-50%,-50%) scale(.5);
-    transition: transform var(--mid-move-duration) cubic-bezier(.22,.85,.2,1), opacity 450ms ease;
-    filter: drop-shadow(0 0 16px #000) drop-shadow(0 0 28px #000);
-  }
-  .mnode img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
-              animation: fixSpin 56s linear infinite; } /* keep upright while CCW */
+  .mnode{ position:absolute; top:50%; left:50%; width:40px; height:40px; border-radius:50%; overflow:hidden; background:#111;
+          border:3px solid #000; box-shadow:0 0 0 2px #000; opacity:0;
+          transform: translate(-50%,-50%) scale(.5);
+          transition: transform var(--mid-move-duration) cubic-bezier(.22,.85,.2,1), opacity 450ms ease;
+          filter: drop-shadow(0 0 16px #000) drop-shadow(0 0 28px #000); }
+  .mnode img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%; animation: fixSpin 56s linear infinite; }
   @keyframes fixSpin{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
   .mnode.show{ opacity:1; transform: var(--final-transform, translate(-50%,-50%) scale(1)); }
   .mnode.noimg{ background: radial-gradient(60% 54% at 50% 42%, #444 0%, #222 60%, #000 100%); }
 
-  /* OUTER ring (thicker; CW; behind) */
+  /* OUTER ring (thicker; behind; black glow) */
   #outerScale{ position:absolute; width:0; height:0; opacity:0; transform:scale(.9);
                transition: opacity 800ms ease, transform 800ms ease; z-index:2;
                filter: drop-shadow(0 0 18px #000) drop-shadow(0 0 36px #000); }
@@ -139,7 +127,7 @@ no borders, constant distance from the outer ring; images remain upright.
   #outerSpin{ position:absolute; inset:0; animation: rotateCW 70s linear infinite; }
   #outerRing{ position:absolute; inset:0; margin:auto; width:100%; height:100%; border-radius:50%; }
 
-  /* Emoji rings (orange only, CCW, staggered) */
+  /* Emoji rings (CCW, staggered; NO borders; locked font) */
   .emoScale{ position:absolute; width:0; height:0; opacity:0; transform:scale(.92);
              transition: opacity 800ms ease, transform 800ms ease; z-index:4; }
   .emoScale.show{ opacity:1; transform:scale(1); }
@@ -168,150 +156,183 @@ no borders, constant distance from the outer ring; images remain upright.
 
       <!-- Focus stack -->
       <div id="focus">
+
         <!-- OUTER ring (behind) -->
         <div id="outerScale"><div id="outerSpin"><div id="outerRing" aria-hidden="true"></div></div></div>
+
         <!-- INNER ring -->
         <div id="ringScale"><div id="ringSpin"><div id="ring" aria-hidden="true"></div></div></div>
+
         <!-- MID ring -->
         <div id="midSpin"><div id="midRing" aria-hidden="true"></div></div>
+
         <!-- EMOJI rings (outside outer; staggered CCW) -->
         <div id="emoScale1" class="emoScale"><div class="emoSpin" style="--dur:54s"><div id="emoRing1" class="emoRing"></div></div></div>
         <div id="emoScale2" class="emoScale"><div class="emoSpin" style="--dur:78s; transform: rotate(-10deg)"><div id="emoRing2" class="emoRing"></div></div></div>
+
         <!-- Question -->
         <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
-      </div>
 
+      </div>
     </div>
   </div>
 
 <script>
-/* === ORANGE LIBRARY === */
+/* ===================== ORANGE LIBRARY (ghosts, standards, food) ===================== */
 const ORANGE_LIBRARY = {
-  ghosts:[ {hex:"#B36019"},{hex:"#F9751F"},{hex:"#F6B76F"},{hex:"#D2B379"},{hex:"#E3AC47"},
-           {hex:"#F88E10"},{hex:"#C18514"},{hex:"#DE9513"},{hex:"#92752D"},{hex:"#F0CE85"},
-           {hex:"#FCBA45"},{hex:"#D99621"},{hex:"#E8C569"},{hex:"#F0B85F"},{hex:"#D2B265"} ],
-  standards:[ {hex:"#F4C430"},{hex:"#FFBF00"},{hex:"#FCC200"},{hex:"#F28500"},{hex:"#FD5E53"},
-              {hex:"#E25822"},{hex:"#FFA500"},{hex:"#D99058"},{hex:"#E87D0D"},{hex:"#FF7F24"},
-              {hex:"#C76A1F"},{hex:"#CB6D51"},{hex:"#FF7F50"},{hex:"#FF8E00"},{hex:"#D07A2D"} ],
-  food:[ {hex:"#ED9121"},{hex:"#FBCEB1"},{hex:"#F28500"},{hex:"#FFA64D"},{hex:"#FF7518"},
-         {hex:"#F6A200"},{hex:"#F98B00"},{hex:"#FFA500"},{hex:"#F99E1A"},{hex:"#E67E22"},
-         {hex:"#F6A700"},{hex:"#DE7C00"},{hex:"#E67910"},{hex:"#FF8A00"},{hex:"#EC5800"} ]
+  ghosts: [
+    { name:"Ghost Pepper Orange", hex:"#B36019" },{ name:"Afterimage Orange", hex:"#F9751F" },
+    { name:"CRT Ghost Orange", hex:"#F6B76F" },{ name:"Will-o’-Wisp Orange", hex:"#D2B379" },
+    { name:"Hitodama Orange", hex:"#E3AC47" },{ name:"Jinn Flame Orange", hex:"#F88E10" },
+    { name:"Phantom Orange", hex:"#C18514" },{ name:"Specter Orange", hex:"#DE9513" },
+    { name:"Wraith Orange", hex:"#92752D" },{ name:"Apparition Orange", hex:"#F0CE85" },
+    { name:"Clyde (Pac-Man Ghost)", hex:"#FCBA45" },{ name:"Poltergeist Orange", hex:"#D99621" },
+    { name:"Marfa Lights Orange", hex:"#E8C569" },{ name:"Ghost Moth Orange", hex:"#F0B85F" },
+    { name:"Hungry Ghost Orange", hex:"#D2B265" }
+  ],
+  standards: [
+    { name:"Saffron Orange", hex:"#F4C430" },{ name:"Amber", hex:"#FFBF00" },{ name:"Marigold", hex:"#FCC200" },
+    { name:"Tangerine", hex:"#F28500" },{ name:"Sunset Orange", hex:"#FD5E53" },{ name:"Flame", hex:"#E25822" },
+    { name:"Pure Orange", hex:"#FFA500" },{ name:"Persian Orange", hex:"#D99058" },{ name:"Nārangī", hex:"#E87D0D" },
+    { name:"Tiger Orange", hex:"#FF7F24" },{ name:"Pumpkin Spice", hex:"#C76A1F" },{ name:"Copper Orange", hex:"#CB6D51" },
+    { name:"Coral Orange", hex:"#FF7F50" },{ name:"Solar Orange", hex:"#FF8E00" },{ name:"Desert Orange", hex:"#D07A2D" }
+  ],
+  food: [
+    { name:"Carrot", hex:"#ED9121" },{ name:"Apricot", hex:"#FBCEB1" },{ name:"Tangerine", hex:"#F28500" },
+    { name:"Bergamot", hex:"#FFA64D" },{ name:"Pumpkin", hex:"#FF7518" },{ name:"Mandarin", hex:"#F6A200" },
+    { name:"Clementine", hex:"#F98B00" },{ name:"Sweet Orange", hex:"#FFA500" },{ name:"Kumquat", hex:"#F99E1A" },
+    { name:"Butternut", hex:"#E67E22" },{ name:"Sea Buckthorn", hex:"#F6A700" },{ name:"Turmeric", hex:"#DE7C00" },
+    { name:"Bitter Orange", hex:"#E67910" },{ name:"Thompson Navel", hex:"#FF8A00" },{ name:"Persimmon", hex:"#EC5800" }
+  ]
 };
-const EMOJIS=[ "&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;","&#129418;","&#128047;","&#128005;" ];
+/* Orange-only emoji set (no non-orange icons) */
+const EMOJIS = ["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;","&#129418;","&#128047;","&#128005;"];
 
-/* === video auto-play (iOS) === */
-(function videoPlay(){
-  const v=document.getElementById('bgVideo');
-  function tryPlay(){ if(!v) return; const p=v.play(); if(p&&p.catch)p.catch(()=>{}); }
-  if(document.readyState!=='loading') tryPlay(); else window.addEventListener('DOMContentLoaded', tryPlay, {once:true});
-  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden&&v&&v.paused) tryPlay(); });
-  window.addEventListener('touchstart', ()=>{ if(v&&v.paused) tryPlay(); }, {passive:true});
+/* ===== video must play on iOS ===== */
+(function ensureVideoPlays(){
+  const v = document.getElementById('bgVideo');
+  function tryPlay(){ if (!v) return; const p=v.play(); if (p && p.catch) p.catch(()=>{}); }
+  if (document.readyState !== 'loading') tryPlay(); else window.addEventListener('DOMContentLoaded', tryPlay, {once:true});
+  document.addEventListener('visibilitychange', ()=>{ if (!document.hidden && v && v.paused) tryPlay(); });
+  window.addEventListener('touchstart', ()=>{ if (v && v.paused) tryPlay(); }, {passive:true});
 })();
 
-/* === helpers === */
-function gapDeg(){ const v=getComputedStyle(document.documentElement).getPropertyValue('--gap-deg'); return parseFloat(v)||3; }
-function conicWithGaps(cols, g, gapColor){
-  const seg=360/cols.length, parts=[];
-  for(let i=0;i<cols.length;i++){ const s=i*seg, ce=s+(seg-g), ge=s+seg; parts.push(`${cols[i]} ${s}deg ${ce}deg`, `${gapColor} ${ce}deg ${ge}deg`); }
+/* ===== helpers ===== */
+function getGapDeg(){ const v = getComputedStyle(document.documentElement).getPropertyValue('--gap-deg'); return parseFloat(v)||3; }
+function conicGaps(colors, gapDeg, gapColor){
+  const seg = 360/colors.length, parts=[];
+  for(let i=0;i<colors.length;i++){
+    const start=i*seg, colorEnd=start+(seg-gapDeg), gapEnd=start+seg;
+    parts.push(`${colors[i]} ${start}deg ${colorEnd}deg`, `${gapColor} ${colorEnd}deg ${gapEnd}deg`);
+  }
   return `conic-gradient(${parts.join(',')})`;
 }
-function ghostFirst(n){ const g=ORANGE_LIBRARY.ghosts.map(x=>x.hex), s=ORANGE_LIBRARY.standards.map(x=>x.hex); const out=g.slice(0,n); let i=0; while(out.length<n) out.push(s[i++%s.length]); return out; }
-function food(n){ const f=ORANGE_LIBRARY.food.map(x=>x.hex); const out=[]; let i=0; while(out.length<n) out.push(f[i++%f.length]); return out; }
+function paletteGhostFirst(n){
+  const ghosts=ORANGE_LIBRARY.ghosts.map(g=>g.hex), std=ORANGE_LIBRARY.standards.map(s=>s.hex);
+  const out=ghosts.slice(0,n); let i=0; while(out.length<n) out.push(std[i++%std.length]); return out;
+}
+function paletteFood(n){
+  const f=ORANGE_LIBRARY.food.map(x=>x.hex); const out=[]; let i=0; while(out.length<n) out.push(f[i++%f.length]); return out;
+}
+function pxFromVar(name,ctx){
+  const probe=document.createElement('div'); probe.style.position='absolute'; probe.style.width=`var(${name})`; probe.style.height='0'; probe.style.visibility='hidden';
+  (ctx||document.body).appendChild(probe); const w=probe.getBoundingClientRect().width; probe.remove(); return w;
+}
 
-/* === question bubble sizing === */
+/* ===== tight question bubble ===== */
 function sizeQuestion(){
   const bubble=document.getElementById('question'), txt=document.getElementById('questionText');
   const prev=bubble.style.transform; bubble.style.transform='translate(-50%,-50%) scale(1)';
   const w=txt.offsetWidth, h=txt.offsetHeight, pad=Math.max(4,Math.round(Math.max(w,h)*0.02));
-  const D=Math.ceil(Math.max(w,h)+pad*2); bubble.style.width=D+'px'; bubble.style.height=D+'px';
-  bubble.style.transform=prev||'translate(-50%,-50%) scale(0.90)';
+  const D=Math.ceil(Math.max(w,h)+pad*2);
+  bubble.style.width=D+'px'; bubble.style.height=D+'px'; bubble.style.transform=prev||'translate(-50%,-50%) scale(0.9)';
 }
 
-/* === mid nodes === */
+/* ===== build mid nodes (images) ===== */
 function buildMidNodes(){
   const mid=document.getElementById('midRing'); mid.innerHTML='';
   const PA=['assets/paintings/1.jpg','assets/paintings/2.jpg','assets/paintings/3.jpg','assets/paintings/4.jpg','assets/paintings/5.jpg','assets/paintings/6.jpg'];
-  for(let i=0;i<6;i++){ const n=document.createElement('div'); n.className='mnode';
-    const img=new Image(); img.src=PA[i%PA.length]; img.alt='Painting'; img.onerror=()=>n.classList.add('noimg'); n.appendChild(img); mid.appendChild(n); }
+  for(let i=0;i<6;i++){ const n=document.createElement('div'); n.className='mnode'; const img=new Image(); img.src=PA[i%PA.length];
+    img.alt='Painting'; img.onerror=()=>n.classList.add('noimg'); n.appendChild(img); mid.appendChild(n); }
 }
 
-/* === emoji rings === */
+/* ===== build emoji rings ===== */
 function buildEmojiRings(){
   const r1=document.getElementById('emoRing1'), r2=document.getElementById('emoRing2'); r1.innerHTML=''; r2.innerHTML='';
-  const a=[],b=[]; EMOJIS.forEach((e,i)=> (i%2?a:b).push(e));
-  const add=(t,l,n)=>{ for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='emo'; d.innerHTML=`<span>${l[i%l.length]}</span>`; t.appendChild(d); } };
-  add(r1,b,18); add(r2,a,20);
+  const e1=[],e2=[]; EMOJIS.forEach((e,i)=> (i%2?e2:e1).push(e));
+  const fill=(target,list,count)=>{ for(let i=0;i<count;i++){ const n=document.createElement('div'); n.className='emo'; n.innerHTML=`<span>${list[i%list.length]}</span>`; target.appendChild(n); } };
+  fill(r1,e1,18); fill(r2,e2,20);
 }
 
-/* === layout everything from window.innerWidth/innerHeight (Safari-correct) === */
+/* ===== layout: lock all sizes to canvas px ===== */
 function layoutAll(){
   const root=document.documentElement, canvas=document.getElementById('canvas');
-  const ringScale=document.getElementById('ringScale'), innerRing=document.getElementById('ring');
+  const ringScale=document.getElementById('ringScale'); const innerRing=document.getElementById('ring');
   const midSpin=document.getElementById('midSpin'), midRing=document.getElementById('midRing');
   const outerScale=document.getElementById('outerScale'), outerRing=document.getElementById('outerRing');
   const emoScale1=document.getElementById('emoScale1'), emoScale2=document.getElementById('emoScale2');
   const emoRing1=document.getElementById('emoRing1'), emoRing2=document.getElementById('emoRing2');
 
-  /* Lock the canvas to the real iPhone viewport (prevents side bars) */
-  const W=window.innerWidth, H=window.innerHeight, S=Math.min(W,H);
-  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const W=canvas.clientWidth, H=canvas.clientHeight, S=Math.min(W,H);
 
-  /* Emoji font locked to screen width */
+  /* Lock emoji font */
   root.style.setProperty('--emoji-font', Math.round(W*0.036)+'px');
 
-  /* INNER ring size */
-  const innerD = Math.round(S*0.58);               /* outer diameter tuned to screenshot */
-  const innerThick = Math.max(16, Math.round(innerD*0.12));
+  /* INNER ring: diameter ~60% of min side, thickness = 12% of that */
+  const innerD=Math.round(S*0.60), innerThick=Math.max(16,Math.round(innerD*0.12));
   ringScale.style.width=ringScale.style.height=innerD+'px';
-  root.style.setProperty('--inner-thick', innerThick+'px');
+  root.style.setProperty('--ring-thick', innerThick+'px');
 
-  /* Paint inner ring: FOOD palette with black separators */
-  innerRing.style.background = conicWithGaps(food(12), gapDeg(), '#000');
+  /* Paint INNER ring with FOOD palette (as requested earlier) + black gaps */
+  innerRing.style.background = conicGaps(paletteFood(12), getGapDeg(), '#000');
 
-  /* MID nodes: size & radius so outer edges touch left/right borders */
-  const nodeD = Math.round(innerThick * 0.85 * 5.25);
-  const margin=2;
-  const midR = Math.max(0, (W/2) - (nodeD/2) - margin);
-  midSpin.style.width=midSpin.style.height=innerD+'px';
+  /* MID nodes: size & radius so outer edges touch the left/right borders */
+  const baseNodeD=Math.max(20,Math.round(innerThick*0.85)), nodeD=Math.round(baseNodeD*5.25);
+  const margin=2; const midR=Math.max(0,(W/2)-(nodeD/2)-margin);
+  midSpin.style.width=midSpin.style.height=innerD+'px';  /* spin group same size as inner ring for reference */
+
   const nodes=midRing.querySelectorAll('.mnode'); const N=6, step=2*Math.PI/N;
   nodes.forEach((n,i)=>{ const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
     n.style.width=n.style.height=nodeD+'px';
     n.style.setProperty('--final-transform',`translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1)`); });
 
-  /* OUTER ring: thicker; inner radius kisses nodes; outer radius beyond sides */
-  const outerInnerR = midR + nodeD/2 + margin;
-  const outerThick = innerThick * (parseFloat(getComputedStyle(root).getPropertyValue('--outer-thick-mult'))||2.2);
-  const desiredOuterR = outerInnerR + outerThick;
-  const outerOuterR = Math.max(desiredOuterR, W/2 + 8);
-  const outD = Math.round(outerOuterR*2);
+  /* OUTER ring: thicker than inner; inner radius kisses nodes; outer radius beyond edges */
+  const outerInnerR=midR + nodeD/2 + margin;
+  const mult=parseFloat(getComputedStyle(root).getPropertyValue('--outer-thick-mult'))||2.3;
+  const outerThick=innerThick*mult;
+  const desiredOuterR=outerInnerR+outerThick;
+  const overshoot=8, minOuterR=W/2 + overshoot;
+  const outerOuterR=Math.max(desiredOuterR,minOuterR);
+  const outD=Math.round(outerOuterR*2);
   outerScale.style.width=outerScale.style.height=outD+'px';
 
-  /* Donut mask for outer pixel radii */
-  const mask = `radial-gradient(circle,
+  /* donut mask for outer ring */
+  const mask=`radial-gradient(circle,
       transparent ${outerInnerR}px,
       #000       ${outerInnerR}px,
       #000       ${outerOuterR}px,
       transparent ${outerOuterR}px)`;
   outerRing.style.webkitMask=mask; outerRing.style.mask=mask;
 
-  /* Paint outer ring: Ghosts-first 18 swatches, black separators */
-  outerRing.style.background = conicWithGaps(ghostFirst(18), gapDeg(), '#000');
+  /* Paint OUTER ring with ghost-first palette + black gaps */
+  outerRing.style.background = conicGaps(paletteGhostFirst(18), getGapDeg(), '#000');
 
-  /* Emoji orbits: constant distance from outer ring */
-  const eGap = Math.max(14, Math.round(S*0.02));
-  const r1 = outerOuterR + eGap, r2 = r1 + Math.max(28, Math.round(S*0.03));
-  emoScale1.style.width=emoScale1.style.height=(r1*2)+'px';
-  emoScale2.style.width=emoScale2.style.height=(r2*2)+'px';
+  /* Emoji rings: constant offset distances from outer ring */
+  const emojiGap=Math.max(14,Math.round(S*0.02));
+  const emojiR1=outerOuterR+emojiGap;
+  const emojiR2=emojiR1+Math.max(28,Math.round(S*0.03));   // stagger
+
+  emoScale1.style.width=emoScale1.style.height=(emojiR1*2)+'px';
+  emoScale2.style.width=emoScale2.style.height=(emojiR2*2)+'px';
 
   function placeEmoji(ringEl, radius){
     const items=ringEl.querySelectorAll('.emo'); const count=items.length, step=2*Math.PI/count;
-    items.forEach((el,i)=>{ const a=i*step, x=Math.cos(a)*radius, y=Math.sin(a)*radius;
-      el.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; });
+    items.forEach((el,i)=>{ const a=i*step, x=Math.cos(a)*radius, y=Math.sin(a)*radius; el.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; });
   }
-  placeEmoji(emoRing1, r1); placeEmoji(emoRing2, r2);
+  placeEmoji(emoRing1,emojiR1); placeEmoji(emoRing2,emojiR2);
 }
 
-/* === sequence: timings preserved === */
+/* ===== sequence ===== */
 (function run(){
   const brandBar=document.getElementById('brandBar');
   const bgLayer=document.getElementById('bgLayer');
@@ -320,6 +341,7 @@ function layoutAll(){
   const midRing=document.getElementById('midRing');
   const outerScale=document.getElementById('outerScale');
 
+  /* Build once, then lock geometry */
   buildMidNodes(); buildEmojiRings(); sizeQuestion(); layoutAll();
   window.addEventListener('resize', ()=>{ sizeQuestion(); layoutAll(); });
 
@@ -328,7 +350,7 @@ function layoutAll(){
   setTimeout(()=> bgLayer.classList.add('show'), 1100);
   setTimeout(()=>{ question.classList.add('show'); setTimeout(sizeQuestion,120); }, 2100);
 
-  /* Question rests + breathe */
+  /* Question rests & breathes */
   const tQRest=3000;
   setTimeout(()=>{ question.classList.add('rest'); question.classList.add('breathe'); }, tQRest);
 
@@ -336,21 +358,20 @@ function layoutAll(){
   const tInnerStart=tQRest+500;
   setTimeout(()=> ringScale.classList.add('show'), tInnerStart);
 
-  /* Middle nodes grow 0.75s after inner begins; cascade; CCW spin already running */
+  /* Mid nodes grow 0.75s after inner begins */
   const tMidStart=tInnerStart+750;
   setTimeout(()=>{ document.querySelectorAll('.mnode').forEach((n,i)=> setTimeout(()=> n.classList.add('show'), i*140)); }, tMidStart);
 
-  /* Outer ring appears just after mid starts */
+  /* Outer ring appears soon after mid begins; emoji rings are already spinning */
   setTimeout(()=> outerScale.classList.add('show'), tMidStart+400);
 })();
 
-/* extra: try to re-lock sizes once Safari finishes UI bar animations */
-window.addEventListener('orientationchange', ()=> setTimeout(layoutAll, 400));
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(layoutAll, 120); });
+/* ===== safe guards if anything was undefined ===== */
+function sizeQuestion(){ try{ sizeQuestionBubble(); }catch(e){ console.warn(e); }}
 
-/* first paints (in case run() is delayed) */
-document.addEventListener('DOMContentLoaded', ()=>{ try{ sizeQuestion(); layoutAll(); }catch(e){} });
-window.addEventListener('load', ()=>{ try{ sizeQuestion(); layoutAll(); }catch(e){} });
+/* initial paints (in case run() timing is slow) */
+document.addEventListener('DOMContentLoaded', ()=>{ try{ layoutAll(); }catch(e){} });
+window.addEventListener('load', ()=>{ try{ layoutAll(); }catch(e){} });
 </script>
 </body>
 </html>
