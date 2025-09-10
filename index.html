@@ -123,7 +123,14 @@
     width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
     background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none;
   }
-  .mnode img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%; }
+  /* LOCK ORIENTATION: counter-rotate images CW at the same speed as the ring's CCW */
+  .mnode img{
+    width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
+    animation: keepUpright 56s linear infinite;
+    transform-origin:center center;
+    backface-visibility:hidden; will-change: transform;
+  }
+  @keyframes keepUpright{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
   .mnode.noimg{ background: radial-gradient(60% 54% at 50% 42%, #444 0%, #222 60%, #000 100%) }
 
   /* OUTER ring (CW; thicker; transparent gaps) + borders */
@@ -134,15 +141,14 @@
     position:absolute; border:2px solid var(--black); border-radius:50%; pointer-events:none;
   }
 
-  /* Emoji rings (CCW, evenly spaced, staggered) — NO border on emojis (requested) */
+  /* Emoji rings (CCW, evenly spaced, staggered) — NO border on emojis (per request) */
   #emojiWrapA, #emojiWrapB { } /* size set by JS; both centered */
   .emojiRing{ position:absolute; inset:0 }
   .emojiSpin{ position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite; }
   .emoji{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     font-size: var(--emoji-font); line-height:1;
-    /* border removed per request */
-    border:none;
+    border:none;                     /* border removed */
     border-radius:10px; background:rgba(0,0,0,.08);
     padding:1px 3px; filter: drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000); cursor:pointer;
   }
@@ -373,7 +379,7 @@ function buildEmojiRings(rA, rB){
   function place(ringEl, list, R, phase=0){
     const n = list.length;
     for(let i=0;i<n;i++){
-      const d=document.createElement('div'); d.className='emoji withCloud'; d.innerHTML=`<span>${list[i]}</span>`;
+      const d=document.createElement('div'); d.className='emoji'; d.innerHTML=`<span>${list[i]}</span>`;
       const a = i*(2*Math.PI/n) + phase;   // even spacing + optional offset
       const x = Math.cos(a)*R, y=Math.sin(a)*R;
       d.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
