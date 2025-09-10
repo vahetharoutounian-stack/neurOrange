@@ -99,55 +99,41 @@
       #000       calc(50% + var(--inner-thick)),
       transparent calc(50% + var(--inner-thick)));
   }
+  /* NEW: invisible click layer for inner ring */
+  #innerHits{ position:absolute; inset:0; pointer-events:none; }
 
   /* COMET lane (z=2.5) — between inner & outer rings */
-  #cometField{ z-index:2.5; }  /* sized by JS; animated in JS */
-  .comet{
-    position:absolute; left:50%; top:50%; pointer-events:none;
-    filter: drop-shadow(0 0 12px #000) drop-shadow(0 0 20px #000);
-    opacity:.95;
-  }
-  .cometStack{ display:flex; flex-direction:column; align-items:center; line-height:1; font-size:clamp(18px, 4.4vw, 26px); }
-  .cometStack .top{ margin-bottom:-2px; } /* 🟠 sits close to ☄️ */
+  #cometField{ z-index:2.5; }
 
-  /* OUTER ring (z=3): CW; transparent gaps; NO borders */
-  #outerWrap{ z-index:3; } /* size set by JS */
-  #outerSpin{ animation:spinCW 70s linear infinite }
-  #outerSurface{ position:absolute; inset:0; border-radius:50% }
+  /* OUTER ring (z=3) */
+  #outerWrap{ z-index:3; } #outerSpin{ animation:spinCW 70s linear infinite } #outerSurface{ position:absolute; inset:0; border-radius:50% }
 
-  /* Emoji rings (z=4) CCW, evenly spaced, staggered; NO emoji borders */
-  #emojiWrapA, #emojiWrapB { z-index:4; } /* size set by JS; both centered */
-  .emojiRing{ position:absolute; inset:0 }
+  /* Emoji rings (z=4) */
+  #emojiWrapA, #emojiWrapB { z-index:4; } .emojiRing{ position:absolute; inset:0 }
   .emojiSpin{ position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite; }
   @keyframes spinCCW{ from{ transform: rotate(0deg) } to{ transform: rotate(-360deg) } }
   .emoji{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    font-size: var(--emoji-font); line-height:1;
-    border:none; border-radius:10px; background:rgba(0,0,0,.08);
+    font-size: var(--emoji-font); line-height:1; border:none; border-radius:10px; background:rgba(0,0,0,.08);
     padding:1px 3px; filter: drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000); cursor:pointer;
   }
 
-  /* MID painting nodes (z=8 TOPMOST) with halo + THIN border */
-  #midWrap{ z-index:8; } /* paintings on top of everything (except outro) */
-  #midSpin{ animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--scene-glow)) }
+  /* MID painting nodes (TOPMOST) */
+  #midWrap{ z-index:8; } #midSpin{ animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--scene-glow)) }
   #midRing{ position:absolute; inset:0 }
   .mnode{
     position:absolute; top:50%; left:50%; border-radius:50%;
     transform:translate(-50%,-50%); background:#111; overflow:hidden;
-    border:1.5px solid #000;            /* thinner border */
-    filter:drop-shadow(var(--scene-glow)); cursor:pointer;
+    border:1.5px solid #000; filter:drop-shadow(var(--scene-glow)); cursor:pointer;
   }
   .mnode.withCloud::before{
     content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
     background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none;
   }
-  .mnode img{
-    width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
-    animation: keepUpright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change: transform;
-  }
+  .mnode img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
+              animation: keepUpright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change: transform; }
   @keyframes keepUpright{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
-  .mnode.noimg{ background: radial-gradient(60% 54% at 50% 42%, #444 0%, #222 60%, #000 100%) }
 
   /* Outro overlay (z=10) */
   #outro{
@@ -187,6 +173,10 @@
         <!-- INNER color ring -->
         <div id="innerWrap" class="wrapCenter">
           <div id="innerSpin" class="spin"><div id="innerSurface" aria-hidden="true"></div></div>
+
+          <!-- NEW: clickable sectors -->
+          <svg id="innerHits" viewBox="0 0 1000 1000"></svg>
+
           <div class="halo" id="innerHalo"></div>
         </div>
 
@@ -224,51 +214,47 @@ const ORANGE_LIBRARY={
   standards:[{hex:"#F4C430"},{hex:"#FFBF00"},{hex:"#FCC200"},{hex:"#F28500"},{hex:"#FD5E53"},{hex:"#E25822"},{hex:"#FFA500"},{hex:"#D99058"},{hex:"#E87D0D"},{hex:"#FF7F24"},{hex:"#C76A1F"},{hex:"#CB6D51"},{hex:"#FF7F50"},{hex:"#FF8E00"},{hex:"#D07A2D"}],
   food:[{hex:"#ED9121"},{hex:"#FBCEB1"},{hex:"#F28500"},{hex:"#FFA64D"},{hex:"#FF7518"},{hex:"#F6A200"},{hex:"#F98B00"},{hex:"#FFA500"},{hex:"#F99E1A"},{hex:"#E67E22"},{hex:"#F6A700"},{hex:"#DE7C00"},{hex:"#E67910"},{hex:"#FF8A00"},{hex:"#EC5800"}]
 };
-/* Orange-only emojis (non-orange removed) */
+/* Orange-only emojis */
 const EMOJIS = [
-  "&#128992;","&#129031;","&#128246;","&#128248;","&#129505;", /* 🟠🟧🔶🔸🧡 */
-  "&#127818;","&#129389;","&#129365;","&#127840;",             /* 🍊🥭🥕🍠 */
-  "&#127875;","&#127936;","&#128217;"                          /* 🎃🏀📙 */
+  "&#128992;","&#129031;","&#128246;","&#128248;","&#129505;",
+  "&#127818;","&#129389;","&#129365;","&#127840;",
+  "&#127875;","&#127936;","&#128217;"
 ];
 
-/* ---------- Video ping-pong (forward↔reverse) with tap fallback ---------- */
-(function pingPongVideo(){
-  const v=document.getElementById('bgVideo'), tap=document.getElementById('tapToPlay');
-  v.src = 'assets/placeholder.mp4';
-  let dir=1, rafId=null, rafMode=false;
-  const fps=60, step=1/fps;
-  function cancel(){ if(rafId){ cancelAnimationFrame(rafId); rafId=null; } }
-  function stepRAF(){
-    v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + step*dir));
-    if(v.currentTime >= v.duration-0.03) dir = -1;
-    if(v.currentTime <= 0.03) dir =  1;
-    rafId=requestAnimationFrame(stepRAF);
-  }
-  function tryNeg(){ return new Promise(res=>{
-    if(!isFinite(v.duration)||v.duration===0){ res(false); return; }
-    const t0=v.currentTime; v.playbackRate=-1;
-    setTimeout(()=>res(v.currentTime<t0), 250);
-  });}
-  function forward(){ cancel(); rafMode=false; v.playbackRate=1; v.play().catch(()=>{}); }
-  async function reverse(){ cancel(); const ok=await tryNeg(); if(ok){ rafMode=false; v.playbackRate=-1; v.play().catch(()=>{}); } else { rafMode=true; v.pause(); rafId=requestAnimationFrame(stepRAF); } }
-  v.addEventListener('ended', ()=>{ dir=-1; reverse(); });
-  v.addEventListener('timeupdate', ()=>{ if(dir<0 && !rafMode && v.currentTime<=0.05){ dir=1; forward(); }});
-  v.addEventListener('loadedmetadata', ()=>{ v.currentTime=0.01; dir=1; forward(); });
-
-  function showTap(){ tap.style.display='block'; }
-  function hideTap(){ tap.style.display='none'; }
-  function tryStart(){ const p=v.play(); if(p && p.catch) p.catch(()=>showTap()); }
-  if(document.readyState!=='loading') tryStart(); else document.addEventListener('DOMContentLoaded', tryStart, {once:true});
-  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && v.paused) tryStart(); });
-  window.addEventListener('pointerdown', ()=>{ if(v.paused){ hideTap(); tryStart(); } }, {passive:true});
-  v.addEventListener('error', ()=>{ hideTap(); });   // keep fog
-})();
+/* ---------- minimal route helper (fade then navigate) ---------- */
+function routeWithFade(url){
+  const o=document.getElementById('outro');
+  if(o){ o.classList.add('show'); setTimeout(()=>{ location.href=url; }, 1200); }
+  else { location.href=url; }
+}
 
 /* ---------- helpers ---------- */
 const gdeg=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg'))||3;
 const conicWithGaps=(cols,g,gapColor)=>{const seg=360/cols.length,parts=[];for(let i=0;i<cols.length;i++){const s=i*seg,ce=s+(seg-g),ge=s+seg;parts.push(`${cols[i]} ${s}deg ${ce}deg`,`${gapColor} ${ce}deg ${ge}deg`)}return `conic-gradient(${parts.join(',')})`};
 const ghostFirst=n=>{const g=ORANGE_LIBRARY.ghosts.map(x=>x.hex),s=ORANGE_LIBRARY.standards.map(x=>x.hex);const out=g.slice(0,n);let i=0;while(out.length<n)out.push(s[i++%s.length]);return out}
 const foodPalette=n=>{const f=ORANGE_LIBRARY.food.map(x=>x.hex);const out=[];let i=0;while(out.length<n)out.push(f[i++%f.length]);return out}
+
+/* NEW: ring-sector helpers */
+function sectorPath(cx,cy,r0,r1,a0,a1){
+  const p=(R,a)=>({x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R});
+  const P0=p(r1,a0), P1=p(r1,a1), Q1=p(r0,a1), Q0=p(r0,a0), large=((a1-a0)>Math.PI)?1:0;
+  return `M${Q0.x},${Q0.y} L${P0.x},${P0.y} A${r1},${r1} 0 ${large} 1 ${P1.x},${P1.y} L${Q1.x},${Q1.y} A${r0},${r0} 0 ${large} 0 ${Q0.x},${Q0.y} Z`;
+}
+function buildHitSectors(svgEl, outerD, thick, items, onTap, innerRpx=null){
+  const N=items.length; svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.innerHTML=''; svgEl.style.pointerEvents='none';
+  const cx=500, cy=500, outR=480;
+  const inR = innerRpx ? (outR - (outerD/2 - innerRpx) * (outR/(outerD/2))) : (outR - (thick * (outR/(outerD/2))));
+  for(let i=0;i<N;i++){
+    const a0=(i/N)*2*Math.PI, a1=((i+1)/N)*2*Math.PI;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', sectorPath(cx,cy,inR,outR,a0,a1));
+    path.setAttribute('fill', 'transparent');
+    path.style.pointerEvents='auto';
+    path.addEventListener('pointerdown', ()=> onTap(items[i]));
+    path.addEventListener('touchstart', ()=> onTap(items[i]), {passive:true});
+    svgEl.appendChild(path);
+  }
+}
 
 /* ---------- center bubble sizing ---------- */
 function sizeQuestion(){
@@ -279,7 +265,7 @@ function sizeQuestion(){
   b.style.transform=prev||'translate(-50%,-50%) scale(0.90)';
 }
 
-/* ---------- paintings loader (robust; cache-buster; case variants) ---------- */
+/* ---------- paintings loader ---------- */
 function buildMidNodes(){
   const mid=document.getElementById('midRing'); mid.innerHTML='';
   const exts=['.jpg','.jpeg','.png','.JPG','.JPEG','.PNG'];
@@ -295,39 +281,40 @@ function buildMidNodes(){
   }
 }
 
-/* ---------- geometry for rings (concentric) ---------- */
+/* ---------- layout (with inner-ring click routing) ---------- */
 function layoutRings(){
   const root=document.documentElement, canvas=document.getElementById('canvas');
   const innerWrap=document.getElementById('innerWrap'), innerSurface=document.getElementById('innerSurface');
-  const innerHalo=document.getElementById('innerHalo');
-  const midWrap=document.getElementById('midWrap'),  midRing=document.getElementById('midRing');
+  const innerHits=document.getElementById('innerHits');
+  const midWrap=document.getElementById('midWrap'), midRing=document.getElementById('midRing');
   const outerWrap=document.getElementById('outerWrap'), outerSurface=document.getElementById('outerSurface');
-  const outerHalo=document.getElementById('outerHalo');
-  const emojiWrapA=document.getElementById('emojiWrapA'), emojiWrapB=document.getElementById('emojiWrapB');
 
   const W=window.innerWidth, H=window.innerHeight, S=Math.min(W,H);
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   root.style.setProperty('--emoji-font', Math.round(W*0.036)+'px');
 
-  /* inner ring */
+  /* inner ring geometry + paint */
   const innerD=Math.round(S*0.58);
   const innerThick=Math.max(16,Math.round(innerD*0.12));
   innerWrap.style.width=innerWrap.style.height=innerD+'px';
   root.style.setProperty('--inner-thick', innerThick+'px');
-  innerSurface.style.background = conicWithGaps(foodPalette(12), gdeg(), 'transparent');
-  innerHalo.style.width = innerHalo.style.height = (innerD+24)+'px';
+  const ringColors = foodPalette(12); // same palette used to paint
+  innerSurface.style.background = conicWithGaps(ringColors, gdeg(), 'transparent');
 
-  /* mid nodes — smaller (shrink), so radius increases (moved outward) */
-  midWrap.style.width=midWrap.style.height=innerD+'px';
-  const nodeScale=0.82;                                           /* shrink factor */
-  const nodeD=Math.round(innerThick*0.85*5.25*nodeScale);         /* smaller nodes */
-  const margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);        /* outward radius */
+  /* NEW: build 12 clickable sectors -> neurOrange Step 2 with #hex */
+  buildHitSectors(innerHits, innerD, innerThick, ringColors, (hex)=>{
+    const h = String(hex||'').replace('#','').toUpperCase();
+    routeWithFade(`neurOrange.html#hex=${h}&step=2`);
+  });
+
+  /* mid nodes (outside inner ring) */
+  const nodeScale=0.82, nodeD=Math.round(innerThick*0.85*5.25*nodeScale);
+  const margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);
   const nodes=midRing.querySelectorAll('.mnode'); const N=6, step=2*Math.PI/N;
   nodes.forEach((n,i)=>{ const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
-    n.style.width=n.style.height=nodeD+'px';
-    n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; });
+    n.style.width=n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; });
 
-  /* outer ring */
+  /* outer ring (ghosts) */
   const outerInnerR = midR + nodeD/2 + margin;
   const outerThick  = innerThick * (parseFloat(getComputedStyle(root).getPropertyValue('--outer-thick-mult'))||2.2);
   const outerOuterR = Math.max(outerInnerR + outerThick, W/2 + 8);
@@ -336,47 +323,32 @@ function layoutRings(){
   const mask=`radial-gradient(circle, transparent ${outerInnerR}px, #000 ${outerInnerR}px, #000 ${outerOuterR}px, transparent ${outerOuterR}px)`;
   outerSurface.style.webkitMask=mask; outerSurface.style.mask=mask;
   outerSurface.style.background = conicWithGaps(ghostFirst(18), gdeg(), 'transparent');
-  outerHalo.style.width = outerHalo.style.height = (outD+28)+'px';
-
-  /* emoji radii right outside ring3 */
-  const gap = Math.max(8, Math.round(S*0.014));
-  const rA = outerOuterR + gap;
-  const rB = rA + Math.max(22, Math.round(S*0.028));
-  emojiWrapA.style.width=emojiWrapA.style.height=(rA*2)+'px';
-  emojiWrapB.style.width=emojiWrapB.style.height=(rB*2)+'px';
-
-  // build static positions for emojis (evenly spaced); wrapper spins CCW
-  buildEmojiRings(rA, rB);
-
-  // store comet geometry
-  window.__geom = { W, H, S, innerD, innerThick, midR, nodeD, outerInnerR, outerOuterR, rA, rB };
 }
 
-/* ---------- emoji rings: evenly spaced, CCW via wrapper rotation (NO sinusoid) ---------- */
+/* (emoji rings, comet, overlay trigger code left as-is) */
+/* ---------- emoji ring builder ---------- */
 function buildEmojiRings(rA, rB){
   const ringA=document.getElementById('emojiRingA');
   const ringB=document.getElementById('emojiRingB');
   ringA.innerHTML=''; ringB.innerHTML='';
 
-  const rep=2;                           /* repeat set for density */
+  const rep=2;
   const listA=Array.from({length:rep}).flatMap(()=>EMOJIS);
   const listB=Array.from({length:rep}).flatMap(()=>EMOJIS);
 
   function place(ringEl, list, R, phase=0){
-    const n = list.length;
-    for(let i=0;i<n;i++){
+    const n=list.length; for(let i=0;i<n;i++){
       const d=document.createElement('div'); d.className='emoji'; d.innerHTML=`<span>${list[i]}</span>`;
-      const a = i*(2*Math.PI/n) + phase;   // even spacing + optional offset
-      const x = Math.cos(a)*R, y=Math.sin(a)*R;
-      d.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      const a=i*(2*Math.PI/n)+phase, x=Math.cos(a)*R, y=Math.sin(a)*R;
+      d.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
       ringEl.appendChild(d);
     }
   }
-  place(ringA, listA, rA, 0);                             // ring 4
-  place(ringB, listB, rB, Math.PI*2/(listB.length*2));    // ring 5 staggered (half-slot)
+  place(ringA, listA, rA, 0);
+  place(ringB, listB, rB, (Math.PI*2)/(listB.length*2));
 }
 
-/* ---------- comet spawner (slower; random straight/offcenter/curved) ---------- */
+/* ---------- comet ---------- */
 (function cometSpawner(){
   const field = document.getElementById('cometField');
 
@@ -384,110 +356,83 @@ function buildEmojiRings(rA, rB){
     const g = window.__geom;
     if(!g){ setTimeout(spawnOnce, 800); return; }
 
-    // Choose path type
     const kinds = ['straight','offcenter','curved'];
     const kind = kinds[Math.floor(Math.random()*kinds.length)];
-
-    const center = {x:0, y:0}; // since field is centered with translate(-50%,-50%)
-    const baseR = (g.outerInnerR + (g.innerD/2 + g.innerThick)) / 2; // between inner-outer rings
-
-    // pick direction
     const theta = Math.random()*Math.PI*2;
-    const n = {x: -Math.sin(theta), y: Math.cos(theta)};  // normal
+    const n = {x: -Math.sin(theta), y: Math.cos(theta)};
+    const run = Math.max(g.W,g.H) + 400;
+    const dur = 4.8 + Math.random()*3.0;
 
-    // chord length further than screen to ensure full cross
-    const run = Math.max(g.W, g.H) + 400;
-    const dur = 4.8 + Math.random()*3.0;   // slower: 4.8–7.8s
-
-    // path points in field coords (centered)
-    let P0, P1, C; // quadratic control for curved
-
+    let P0,P1,C; const center={x:0,y:0};
     if(kind==='straight'){
       P0 = {x: center.x - Math.cos(theta)*run/2, y: center.y - Math.sin(theta)*run/2};
       P1 = {x: center.x + Math.cos(theta)*run/2, y: center.y + Math.sin(theta)*run/2};
     } else if(kind==='offcenter'){
-      const offset = (g.rA + g.rB)/2 - baseR; // slight lane bias
-      const d = (Math.random()*0.35 + 0.15) * baseR; // 15–50% of lane radius
-      const shift = {x: n.x * (Math.random()<0.5?-d:d), y: n.y * (Math.random()<0.5?-d:d)};
-      P0 = {x: center.x - Math.cos(theta)*run/2 + shift.x, y: center.y - Math.sin(theta)*run/2 + shift.y};
-      P1 = {x: center.x + Math.cos(theta)*run/2 + shift.x, y: center.y + Math.sin(theta)*run/2 + shift.y};
-    } else { // curved (quadratic bezier)
+      const d=(Math.random()*0.35+0.15)*((g.rA+g.rB)/2);
+      const sh={x:n.x*(Math.random()<0.5?-d:d), y:n.y*(Math.random()<0.5?-d:d)};
+      P0 = {x: center.x - Math.cos(theta)*run/2 + sh.x, y: center.y - Math.sin(theta)*run/2 + sh.y};
+      P1 = {x: center.x + Math.cos(theta)*run/2 + sh.x, y: center.y + Math.sin(theta)*run/2 + sh.y};
+    } else { // curved
       P0 = {x: center.x - Math.cos(theta)*run/2, y: center.y - Math.sin(theta)*run/2};
       P1 = {x: center.x + Math.cos(theta)*run/2, y: center.y + Math.sin(theta)*run/2};
-      const bend = (Math.random()*0.5 + 0.3) * baseR;  // curvature amount
-      C  = {x: center.x + n.x * (Math.random()<0.5?-bend:bend),
-            y: center.y + n.y * (Math.random()<0.5?-bend:bend)};
+      const bend=(Math.random()*0.5+0.3)*((g.rA+g.rB)/2);
+      C  = {x: center.x + n.x*(Math.random()<0.5?-bend:bend), y: center.y + n.y*(Math.random()<0.5?-bend:bend)};
     }
 
-    // element
-    const comet = document.createElement('div');
-    comet.className = 'comet';
-    const stack = document.createElement('div');
-    stack.className = 'cometStack';
-    const top = document.createElement('div'); top.className='top'; top.innerHTML='&#128992;';   // 🟠
-    const tail= document.createElement('div'); tail.innerHTML='&#x2604;&#xFE0F;';                // ☄️
-    stack.appendChild(top); stack.appendChild(tail);
-    comet.appendChild(stack);
-    field.appendChild(comet);
+    const comet=document.createElement('div'); comet.className='comet';
+    const stk=document.createElement('div'); stk.className='cometStack';
+    const top=document.createElement('div'); top.className='top'; top.innerHTML='&#128992;';
+    const tail=document.createElement('div'); tail.innerHTML='&#x2604;&#xFE0F;';
+    stk.appendChild(top); stk.appendChild(tail); comet.appendChild(stk); field.appendChild(comet);
 
     let t0=null;
     function lerp(a,b,t){ return a + (b-a)*t; }
     function draw(now){
       if(!t0) t0=now;
-      let u = Math.min(1, (now-t0)/(dur*1000));
+      const u=Math.min(1,(now-t0)/(dur*1000));
       let x,y;
-      if(kind==='curved' && C){
-        // Quadratic Bezier
-        const x0=P0.x, y0=P0.y, x1=C.x, y1=C.y, x2=P1.x, y2=P1.y;
+      if(C){
         const one=1-u;
-        x = one*one*x0 + 2*one*u*x1 + u*u*x2;
-        y = one*one*y0 + 2*one*u*y1 + u*u*y2;
+        x=one*one*P0.x + 2*one*u*C.x + u*u*P1.x;
+        y=one*one*P0.y + 2*one*u*C.y + u*u*P1.y;
       }else{
-        x = lerp(P0.x, P1.x, u);
-        y = lerp(P0.y, P1.y, u);
+        x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u);
       }
-      comet.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      if(u<1){ requestAnimationFrame(draw); } else { comet.remove(); }
+      comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      if(u<1) requestAnimationFrame(draw); else comet.remove();
     }
     requestAnimationFrame(draw);
   }
 
-  function loop(){
-    spawnOnce();
-    const next = 7000 + Math.random()*5000; // every 7–12s
-    setTimeout(loop, next);
-  }
+  function loop(){ spawnOnce(); setTimeout(loop, 7000 + Math.random()*5000); }
   setTimeout(loop, 1200);
 })();
-
-/* ---------- outro: fade-to-black + quote on ANY object tap ---------- */
-function installOutroTriggers(){
-  const selectors = [
-    '#innerSurface', '#outerSurface',
-    '.mnode', '.emoji',
-    '#question', '#brand'
-  ].join(',');
-
-  function trigger(){
-    const outro=document.getElementById('outro');
-    if(outro.classList.contains('show')) return;
-    outro.classList.add('show');
-  }
-  document.querySelectorAll(selectors).forEach(el=>{
-    el.addEventListener('pointerdown', trigger, {once:true});
-    el.addEventListener('touchstart', trigger, {once:true, passive:true});
-  });
-}
 
 /* ---------- boot ---------- */
 function boot(){
   sizeQuestion();
   buildMidNodes();
   layoutRings();
-  installOutroTriggers();
+
+  // store geometry for comet
+  (function storeGeom(){
+    const W=innerWidth,H=innerHeight,S=Math.min(W,H);
+    const innerD=Math.round(S*0.58);
+    const innerThick=Math.max(16,Math.round(innerD*0.12));
+    // approximate midR the same way as in layoutRings
+    const nodeD=Math.round(innerThick*0.85*5.25*0.82);
+    const margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);
+    const outerInnerR = midR + nodeD/2 + margin;
+    const outerThick  = innerThick * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult'))||2.2);
+    const outerOuterR = Math.max(outerInnerR + outerThick, W/2 + 8);
+    window.__geom = {W,H,S, innerD, innerThick, midR, nodeD, outerInnerR, outerOuterR,
+                     rA: outerOuterR + Math.max(8,Math.round(S*0.014)),
+                     rB: outerOuterR + Math.max(8,Math.round(S*0.014)) + Math.max(22, Math.round(S*0.028))};
+  })();
+
+  window.addEventListener('resize', boot);
 }
 boot();
-window.addEventListener('resize', boot);
 </script>
 </body>
 </html>
