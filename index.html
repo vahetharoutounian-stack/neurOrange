@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — emoji rings (CCW), borders & halos, tap-to-quote</title>
+<title>neurOrange — emoji rings (CCW), halos, tap-to-quote</title>
 <style>
   :root{
     --quin:#ED6A00; --pure:#FFA500; --bergamot:#FFA64D; --nick:#FF6600;
@@ -13,8 +13,7 @@
     --mid-move-duration: 2200ms;
     --emoji-font: 18px;               /* px (set from screen width) */
 
-    /* scene glow + per-object halos */
-    --scene-glow: 0 0 10px #000, 0 0 18px #000;
+    --scene-glow: 0 0 10px #000, 0 0 18px #000;   /* global soft glow */
     --black: #000;
   }
 
@@ -25,7 +24,7 @@
     -webkit-font-smoothing: antialiased; overflow:hidden;
   }
 
-  /* Full-bleed canvas locked to viewport; layout recomputed in px */
+  /* Full-bleed canvas; we also compute exact px layout in JS */
   #phone{ position:fixed; inset:0; width:100dvw; height:100dvh; display:grid; place-items:center; background:#000; }
   #canvas{ position:relative; width:100%; height:100%; overflow:hidden; background:#000; }
 
@@ -68,7 +67,7 @@
   .wrapCenter{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
   .spin{ position:absolute; inset:0; }
 
-  /* soft “black fog” halo element (attach as child of objects) */
+  /* soft “black fog” halo (attach per object) */
   .halo{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     border-radius:50%; background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0));
@@ -104,12 +103,11 @@
       #000       calc(50% + var(--inner-thick)),
       transparent calc(50% + var(--inner-thick)));
   }
-  /* inner ring edges (outer & inner) */
   #innerOutlineOuter, #innerOutlineHole{
     position:absolute; border:2px solid var(--black); border-radius:50%; pointer-events:none;
   }
 
-  /* MID nodes (painting swatches) with halo + border */
+  /* MID nodes (paintings) with halo + border */
   #midWrap{ } /* size = innerD; set by JS */
   #midSpin{ animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--scene-glow)) }
   @keyframes spinCCW{ from{ transform: rotate(0deg) } to{ transform: rotate(-360deg) } }
@@ -136,20 +134,17 @@
     position:absolute; border:2px solid var(--black); border-radius:50%; pointer-events:none;
   }
 
-  /* Emoji rings (4 & 5) — CCW, evenly spaced, staggered; borders + halo */
+  /* Emoji rings (CCW, evenly spaced, staggered) — NO border on emojis (requested) */
   #emojiWrapA, #emojiWrapB { } /* size set by JS; both centered */
   .emojiRing{ position:absolute; inset:0 }
   .emojiSpin{ position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite; }
   .emoji{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     font-size: var(--emoji-font); line-height:1;
-    border:2px solid var(--black); border-radius:10px; background:rgba(0,0,0,.08);
+    /* border removed per request */
+    border:none;
+    border-radius:10px; background:rgba(0,0,0,.08);
     padding:1px 3px; filter: drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000); cursor:pointer;
-  }
-  .emoji.withCloud::before{
-    content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:calc(100% + 14px); height:calc(100% + 14px); border-radius:inherit;
-    background:radial-gradient(closest-side, rgba(0,0,0,.32), rgba(0,0,0,0)); filter:blur(7px); pointer-events:none;
   }
 
   /* Outro overlay */
@@ -206,12 +201,10 @@
         <!-- Emoji ring 4 (CCW) -->
         <div id="emojiWrapA" class="wrapCenter">
           <div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div>
-          <div class="halo" id="emojiHaloA"></div>
         </div>
-        <!-- Emoji ring 5 (CCW, staggered by rotation) -->
+        <!-- Emoji ring 5 (CCW, staggered) -->
         <div id="emojiWrapB" class="wrapCenter">
           <div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div>
-          <div class="halo" id="emojiHaloB"></div>
         </div>
 
         <!-- Center text -->
@@ -232,7 +225,7 @@ const ORANGE_LIBRARY={
   standards:[{hex:"#F4C430"},{hex:"#FFBF00"},{hex:"#FCC200"},{hex:"#F28500"},{hex:"#FD5E53"},{hex:"#E25822"},{hex:"#FFA500"},{hex:"#D99058"},{hex:"#E87D0D"},{hex:"#FF7F24"},{hex:"#C76A1F"},{hex:"#CB6D51"},{hex:"#FF7F50"},{hex:"#FF8E00"},{hex:"#D07A2D"}],
   food:[{hex:"#ED9121"},{hex:"#FBCEB1"},{hex:"#F28500"},{hex:"#FFA64D"},{hex:"#FF7518"},{hex:"#F6A200"},{hex:"#F98B00"},{hex:"#FFA500"},{hex:"#F99E1A"},{hex:"#E67E22"},{hex:"#F6A700"},{hex:"#DE7C00"},{hex:"#E67910"},{hex:"#FF8A00"},{hex:"#EC5800"}]
 };
-/* Orange-only emoji set (non-orange removed) */
+/* Orange-only emoji set */
 const EMOJIS = [
   "&#128992;","&#129031;","&#128246;","&#128248;","&#129505;", /* 🟠🟧🔶🔸🧡 */
   "&#127818;","&#129389;","&#129365;","&#127840;",             /* 🍊🥭🥕🍠 */
@@ -317,7 +310,6 @@ function layoutRings(){
 
   const emojiWrapA=document.getElementById('emojiWrapA'), emojiWrapB=document.getElementById('emojiWrapB');
   const emojiRingA=document.getElementById('emojiRingA'), emojiRingB=document.getElementById('emojiRingB');
-  const emojiHaloA=document.getElementById('emojiHaloA'), emojiHaloB=document.getElementById('emojiHaloB');
 
   const W=window.innerWidth, H=window.innerHeight, S=Math.min(W,H);
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
@@ -364,11 +356,11 @@ function layoutRings(){
   emojiWrapA.style.width=emojiWrapA.style.height=(rA*2)+'px';
   emojiWrapB.style.width=emojiWrapB.style.height=(rB*2)+'px';
 
-  // compute static positions for emojis (evenly spaced); wrapper spins CCW
+  // build static positions for emojis (evenly spaced); wrapper spins CCW
   buildEmojiRings(rA, rB);
 }
 
-/* ---------- emoji rings: build (no sinusoid), CCW via wrapper rotation ---------- */
+/* ---------- emoji rings: evenly spaced, CCW via wrapper rotation (NO sinusoid) ---------- */
 function buildEmojiRings(rA, rB){
   const ringA=document.getElementById('emojiRingA');
   const ringB=document.getElementById('emojiRingB');
@@ -415,18 +407,11 @@ function installOutroTriggers(){
 function boot(){
   sizeQuestion();
   buildMidNodes();
-  layoutRings();         // computes radii & builds emoji rings
+  layoutRings();
   installOutroTriggers();
 }
 boot();
 window.addEventListener('resize', boot);
-
-/* Outro DOM */
 </script>
-
-<!-- Outro overlay -->
-<div id="outro"><div id="quote">In a world full of yellows and reds
-Dare to be orange</div></div>
-
 </body>
 </html>
