@@ -3,17 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — comet pass + emoji rings (CCW), halos, tap-to-quote</title>
+<title>neurOrange — CCW emoji rings, comet, upright paintings</title>
 <style>
   :root{
     --quin:#ED6A00; --pure:#FFA500; --bergamot:#FFA64D; --nick:#FF6600;
-    --gap-deg: 3deg;                  /* separator width (deg) */
+    --gap-deg: 3deg;                  /* swatch separator width (deg) */
     --inner-thick: 34px;              /* px (runtime) */
     --outer-thick-mult: 2.2;          /* outer thickness = inner * mult */
     --mid-move-duration: 2200ms;
     --emoji-font: 18px;               /* px (set from screen width) */
-    --scene-glow: 0 0 10px #000, 0 0 18px #000;   /* global soft glow */
-    --black: #000;
+    --scene-glow: 0 0 10px #000, 0 0 18px #000;   /* soft global glow */
   }
 
   *{box-sizing:border-box}
@@ -27,17 +26,7 @@
   #phone{ position:fixed; inset:0; width:100dvw; height:100dvh; display:grid; place-items:center; background:#000; }
   #canvas{ position:relative; width:100%; height:100%; overflow:hidden; background:#000; }
 
-  /* Z-layers (intuitive order) */
-  /* 1: bg (video + scene fog) */
-  /* 2: inner ring (beneath comet) */
-  /* 2.5: comet (between inner & outer) */
-  /* 3: outer ring (on top of comet) */
-  /* 3.5: mid nodes (paintings) */
-  /* 4: emoji orbits */
-  /* 5: question bubble */
-  /* 6: brand */
-  /* 10: outro */
-
+  /* Layering (ascending z): 1 bg, 2 inner, 2.5 comet, 3 outer, 4 emoji rings, 5 question, 6 brand, 8 paintings, 10 outro */
   #brandBar{
     position:absolute; left:env(safe-area-inset-left); right:env(safe-area-inset-right);
     top:calc(env(safe-area-inset-top) + 10px);
@@ -46,7 +35,7 @@
   }
   #brand{ font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:var(--pure) }
 
-  #bgLayer{ position:absolute; inset:0; z-index:1; }
+  #bgLayer{ position:absolute; inset:0; z-index:1; opacity:1; }
   #bgVideo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; }
   #tapToPlay{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
@@ -71,28 +60,30 @@
 
   #focus{ position:absolute; inset:0; display:grid; place-items:center; z-index:2 }
 
-  /* concentric center wrapper */
   .wrapCenter{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
   .spin{ position:absolute; inset:0; }
 
-  /* soft “black fog” halo (attach per object) */
+  /* soft per-object halo */
   .halo{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     border-radius:50%; background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0));
     filter: blur(10px); pointer-events:none; z-index:-1;
   }
 
-  /* Center bubble */
+  /* Center bubble (no border) */
   #question{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.9);
     display:grid; place-items:center; background:#000; color:#fff; border-radius:50%;
-    border:2px solid var(--black); z-index:5; filter:drop-shadow(var(--scene-glow));
+    border:none; z-index:5; filter:drop-shadow(var(--scene-glow));
     padding:.4rem .6rem; cursor:pointer;
   }
-  #questionText{ font-weight:900; font-style:italic; text-align:center; font-size:clamp(16px,3.6vw,22px); line-height:1.15; margin:0; }
+  #questionText{
+    font-weight:900; font-style:italic; text-align:center;
+    font-size:clamp(16px,3.6vw,22px); line-height:1.15; margin:0;
+  }
 
-  /* INNER ring (z=2) */
-  #innerWrap{ cursor:pointer; z-index:2; } /* size set by JS */
+  /* INNER ring (z=2): CW; transparent gaps; NO borders */
+  #innerWrap{ z-index:2; } /* size set by JS */
   #innerSpin{ animation:spinCW 60s linear infinite; filter:drop-shadow(var(--scene-glow)) }
   @keyframes spinCW{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
   #innerSurface{
@@ -108,31 +99,42 @@
       #000       calc(50% + var(--inner-thick)),
       transparent calc(50% + var(--inner-thick)));
   }
-  #innerOutlineOuter, #innerOutlineHole{
-    position:absolute; border:2px solid var(--black); border-radius:50%; pointer-events:none;
-  }
 
-  /* COMET lane (z=2.5) sits between inner and outer rings */
-  #cometField{ z-index:2.5; }  /* sized by JS equal to chord span; positioned via transforms */
+  /* COMET lane (z=2.5) — between inner & outer rings */
+  #cometField{ z-index:2.5; }  /* sized by JS; animated in JS */
   .comet{
-    position:absolute; left:50%; top:50%; transform-origin:center center; pointer-events:none;
+    position:absolute; left:50%; top:50%; pointer-events:none;
     filter: drop-shadow(0 0 12px #000) drop-shadow(0 0 20px #000);
     opacity:.95;
-    animation: fly var(--flyDur,3.2s) ease-in-out forwards;
   }
   .cometStack{ display:flex; flex-direction:column; align-items:center; line-height:1; font-size:clamp(18px, 4.4vw, 26px); }
-  .cometStack .top{ margin-bottom:-2px; } /* tighten stack */
-  @keyframes fly{ from{ transform: rotate(var(--angle,0rad)) translateX(calc(-1 * var(--run, 400px))) } to{ transform: rotate(var(--angle,0rad)) translateX(var(--run, 400px)) } }
+  .cometStack .top{ margin-bottom:-2px; } /* 🟠 sits close to ☄️ */
 
-  /* MID nodes (z=3.5) */
-  #midWrap{ z-index:3.5; } /* size = innerD */
-  #midSpin{ animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--scene-glow)) }
+  /* OUTER ring (z=3): CW; transparent gaps; NO borders */
+  #outerWrap{ z-index:3; } /* size set by JS */
+  #outerSpin{ animation:spinCW 70s linear infinite }
+  #outerSurface{ position:absolute; inset:0; border-radius:50% }
+
+  /* Emoji rings (z=4) CCW, evenly spaced, staggered; NO emoji borders */
+  #emojiWrapA, #emojiWrapB { z-index:4; } /* size set by JS; both centered */
+  .emojiRing{ position:absolute; inset:0 }
+  .emojiSpin{ position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite; }
   @keyframes spinCCW{ from{ transform: rotate(0deg) } to{ transform: rotate(-360deg) } }
+  .emoji{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    font-size: var(--emoji-font); line-height:1;
+    border:none; border-radius:10px; background:rgba(0,0,0,.08);
+    padding:1px 3px; filter: drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000); cursor:pointer;
+  }
+
+  /* MID painting nodes (z=8 TOPMOST) with halo + THIN border */
+  #midWrap{ z-index:8; } /* paintings on top of everything (except outro) */
+  #midSpin{ animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--scene-glow)) }
   #midRing{ position:absolute; inset:0 }
   .mnode{
-    position:absolute; top:50%; left:50%; width:40px; height:40px; border-radius:50%;
+    position:absolute; top:50%; left:50%; border-radius:50%;
     transform:translate(-50%,-50%); background:#111; overflow:hidden;
-    border:3px solid var(--black); box-shadow:0 0 0 2px var(--black);
+    border:1.5px solid #000;            /* thinner border */
     filter:drop-shadow(var(--scene-glow)); cursor:pointer;
   }
   .mnode.withCloud::before{
@@ -146,25 +148,6 @@
   }
   @keyframes keepUpright{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
   .mnode.noimg{ background: radial-gradient(60% 54% at 50% 42%, #444 0%, #222 60%, #000 100%) }
-
-  /* OUTER ring (z=3) */
-  #outerWrap{ cursor:pointer; z-index:3; } /* size set by JS */
-  #outerSpin{ animation:spinCW 70s linear infinite }
-  #outerSurface{ position:absolute; inset:0; border-radius:50% }
-  #outerOutlineOuter, #outerOutlineHole{
-    position:absolute; border:2px solid var(--black); border-radius:50%; pointer-events:none;
-  }
-
-  /* Emoji rings (z=4) CCW, evenly spaced, staggered; NO emoji border */
-  #emojiWrapA, #emojiWrapB { z-index:4; } /* size set by JS; both centered */
-  .emojiRing{ position:absolute; inset:0 }
-  .emojiSpin{ position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite; }
-  .emoji{
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    font-size: var(--emoji-font); line-height:1;
-    border:none; border-radius:10px; background:rgba(0,0,0,.08);
-    padding:1px 3px; filter: drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000); cursor:pointer;
-  }
 
   /* Outro overlay (z=10) */
   #outro{
@@ -195,26 +178,22 @@
       </div>
 
       <div id="focus">
-        <!-- RING 3: OUTER color ring -->
+        <!-- OUTER color ring -->
         <div id="outerWrap" class="wrapCenter">
-          <div id="outerOutlineOuter"></div>
           <div id="outerSpin" class="spin"><div id="outerSurface" aria-hidden="true"></div></div>
-          <div id="outerOutlineHole"></div>
           <div class="halo" id="outerHalo"></div>
         </div>
 
-        <!-- RING 1: INNER color ring -->
+        <!-- INNER color ring -->
         <div id="innerWrap" class="wrapCenter">
-          <div id="innerOutlineOuter"></div>
           <div id="innerSpin" class="spin"><div id="innerSurface" aria-hidden="true"></div></div>
-          <div id="innerOutlineHole"></div>
           <div class="halo" id="innerHalo"></div>
         </div>
 
-        <!-- COMET LAYER (between inner & outer) -->
+        <!-- COMET FIELD (between inner & outer) -->
         <div id="cometField" class="wrapCenter"></div>
 
-        <!-- MID painting nodes -->
+        <!-- MID painting nodes (TOPMOST) -->
         <div id="midWrap" class="wrapCenter">
           <div id="midSpin" class="spin"><div id="midRing" aria-hidden="true"></div></div>
         </div>
@@ -245,7 +224,7 @@ const ORANGE_LIBRARY={
   standards:[{hex:"#F4C430"},{hex:"#FFBF00"},{hex:"#FCC200"},{hex:"#F28500"},{hex:"#FD5E53"},{hex:"#E25822"},{hex:"#FFA500"},{hex:"#D99058"},{hex:"#E87D0D"},{hex:"#FF7F24"},{hex:"#C76A1F"},{hex:"#CB6D51"},{hex:"#FF7F50"},{hex:"#FF8E00"},{hex:"#D07A2D"}],
   food:[{hex:"#ED9121"},{hex:"#FBCEB1"},{hex:"#F28500"},{hex:"#FFA64D"},{hex:"#FF7518"},{hex:"#F6A200"},{hex:"#F98B00"},{hex:"#FFA500"},{hex:"#F99E1A"},{hex:"#E67E22"},{hex:"#F6A700"},{hex:"#DE7C00"},{hex:"#E67910"},{hex:"#FF8A00"},{hex:"#EC5800"}]
 };
-/* Orange-only emoji set for rings */
+/* Orange-only emojis (non-orange removed) */
 const EMOJIS = [
   "&#128992;","&#129031;","&#128246;","&#128248;","&#129505;", /* 🟠🟧🔶🔸🧡 */
   "&#127818;","&#129389;","&#129365;","&#127840;",             /* 🍊🥭🥕🍠 */
@@ -320,10 +299,10 @@ function buildMidNodes(){
 function layoutRings(){
   const root=document.documentElement, canvas=document.getElementById('canvas');
   const innerWrap=document.getElementById('innerWrap'), innerSurface=document.getElementById('innerSurface');
-  const innerOutlineOuter=document.getElementById('innerOutlineOuter'), innerOutlineHole=document.getElementById('innerOutlineHole'), innerHalo=document.getElementById('innerHalo');
+  const innerHalo=document.getElementById('innerHalo');
   const midWrap=document.getElementById('midWrap'),  midRing=document.getElementById('midRing');
   const outerWrap=document.getElementById('outerWrap'), outerSurface=document.getElementById('outerSurface');
-  const outerOutlineOuter=document.getElementById('outerOutlineOuter'), outerOutlineHole=document.getElementById('outerOutlineHole'), outerHalo=document.getElementById('outerHalo');
+  const outerHalo=document.getElementById('outerHalo');
   const emojiWrapA=document.getElementById('emojiWrapA'), emojiWrapB=document.getElementById('emojiWrapB');
 
   const W=window.innerWidth, H=window.innerHeight, S=Math.min(W,H);
@@ -336,15 +315,13 @@ function layoutRings(){
   innerWrap.style.width=innerWrap.style.height=innerD+'px';
   root.style.setProperty('--inner-thick', innerThick+'px');
   innerSurface.style.background = conicWithGaps(foodPalette(12), gdeg(), 'transparent');
-  // inner borders + halo
-  innerOutlineOuter.style.inset = '0';
-  const innerHoleD = innerD - innerThick*2;
-  innerOutlineHole.style.width = innerOutlineHole.style.height = innerHoleD+'px';
   innerHalo.style.width = innerHalo.style.height = (innerD+24)+'px';
 
-  /* mid nodes */
+  /* mid nodes — smaller (shrink), so radius increases (moved outward) */
   midWrap.style.width=midWrap.style.height=innerD+'px';
-  const nodeD=Math.round(innerThick*0.85*5.25), margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);
+  const nodeScale=0.82;                                           /* shrink factor */
+  const nodeD=Math.round(innerThick*0.85*5.25*nodeScale);         /* smaller nodes */
+  const margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);        /* outward radius */
   const nodes=midRing.querySelectorAll('.mnode'); const N=6, step=2*Math.PI/N;
   nodes.forEach((n,i)=>{ const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
     n.style.width=n.style.height=nodeD+'px';
@@ -359,8 +336,6 @@ function layoutRings(){
   const mask=`radial-gradient(circle, transparent ${outerInnerR}px, #000 ${outerInnerR}px, #000 ${outerOuterR}px, transparent ${outerOuterR}px)`;
   outerSurface.style.webkitMask=mask; outerSurface.style.mask=mask;
   outerSurface.style.background = conicWithGaps(ghostFirst(18), gdeg(), 'transparent');
-  outerOutlineOuter.style.inset='0';
-  outerOutlineHole.style.width = outerOutlineHole.style.height = (outerInnerR*2)+'px';
   outerHalo.style.width = outerHalo.style.height = (outD+28)+'px';
 
   /* emoji radii right outside ring3 */
@@ -373,8 +348,8 @@ function layoutRings(){
   // build static positions for emojis (evenly spaced); wrapper spins CCW
   buildEmojiRings(rA, rB);
 
-  // store comet radii and geometry
-  window.__geom = { W, H, S, innerD, innerThick, midR, outerInnerR, outerOuterR, rA, rB };
+  // store comet geometry
+  window.__geom = { W, H, S, innerD, innerThick, midR, nodeD, outerInnerR, outerOuterR, rA, rB };
 }
 
 /* ---------- emoji rings: evenly spaced, CCW via wrapper rotation (NO sinusoid) ---------- */
@@ -401,7 +376,7 @@ function buildEmojiRings(rA, rB){
   place(ringB, listB, rB, Math.PI*2/(listB.length*2));    // ring 5 staggered (half-slot)
 }
 
-/* ---------- comet spawner: 🟠 + ☄️ flies between inner & outer ---------- */
+/* ---------- comet spawner (slower; random straight/offcenter/curved) ---------- */
 (function cometSpawner(){
   const field = document.getElementById('cometField');
 
@@ -409,32 +384,77 @@ function buildEmojiRings(rA, rB){
     const g = window.__geom;
     if(!g){ setTimeout(spawnOnce, 800); return; }
 
-    const run = Math.max(g.W, g.H) + 300;                 // long enough to cross
-    const angle = (Math.random()*Math.PI*2);              // random direction
-    const dur = 2.8 + Math.random()*1.2;                  // 2.8–4.0s
+    // Choose path type
+    const kinds = ['straight','offcenter','curved'];
+    const kind = kinds[Math.floor(Math.random()*kinds.length)];
 
+    const center = {x:0, y:0}; // since field is centered with translate(-50%,-50%)
+    const baseR = (g.outerInnerR + (g.innerD/2 + g.innerThick)) / 2; // between inner-outer rings
+
+    // pick direction
+    const theta = Math.random()*Math.PI*2;
+    const n = {x: -Math.sin(theta), y: Math.cos(theta)};  // normal
+
+    // chord length further than screen to ensure full cross
+    const run = Math.max(g.W, g.H) + 400;
+    const dur = 4.8 + Math.random()*3.0;   // slower: 4.8–7.8s
+
+    // path points in field coords (centered)
+    let P0, P1, C; // quadratic control for curved
+
+    if(kind==='straight'){
+      P0 = {x: center.x - Math.cos(theta)*run/2, y: center.y - Math.sin(theta)*run/2};
+      P1 = {x: center.x + Math.cos(theta)*run/2, y: center.y + Math.sin(theta)*run/2};
+    } else if(kind==='offcenter'){
+      const offset = (g.rA + g.rB)/2 - baseR; // slight lane bias
+      const d = (Math.random()*0.35 + 0.15) * baseR; // 15–50% of lane radius
+      const shift = {x: n.x * (Math.random()<0.5?-d:d), y: n.y * (Math.random()<0.5?-d:d)};
+      P0 = {x: center.x - Math.cos(theta)*run/2 + shift.x, y: center.y - Math.sin(theta)*run/2 + shift.y};
+      P1 = {x: center.x + Math.cos(theta)*run/2 + shift.x, y: center.y + Math.sin(theta)*run/2 + shift.y};
+    } else { // curved (quadratic bezier)
+      P0 = {x: center.x - Math.cos(theta)*run/2, y: center.y - Math.sin(theta)*run/2};
+      P1 = {x: center.x + Math.cos(theta)*run/2, y: center.y + Math.sin(theta)*run/2};
+      const bend = (Math.random()*0.5 + 0.3) * baseR;  // curvature amount
+      C  = {x: center.x + n.x * (Math.random()<0.5?-bend:bend),
+            y: center.y + n.y * (Math.random()<0.5?-bend:bend)};
+    }
+
+    // element
     const comet = document.createElement('div');
     comet.className = 'comet';
-    comet.style.setProperty('--angle', angle+'rad');
-    comet.style.setProperty('--run', run+'px');
-    comet.style.setProperty('--flyDur', dur+'s');
-
-    // stack: orange on top of comet emoji
     const stack = document.createElement('div');
     stack.className = 'cometStack';
     const top = document.createElement('div'); top.className='top'; top.innerHTML='&#128992;';   // 🟠
-    const tail= document.createElement('div'); tail.innerHTML='&#x2604;&#xFE0F;';               // ☄️
+    const tail= document.createElement('div'); tail.innerHTML='&#x2604;&#xFE0F;';                // ☄️
     stack.appendChild(top); stack.appendChild(tail);
     comet.appendChild(stack);
-
     field.appendChild(comet);
-    // cleanup after animation
-    comet.addEventListener('animationend', ()=> comet.remove());
+
+    let t0=null;
+    function lerp(a,b,t){ return a + (b-a)*t; }
+    function draw(now){
+      if(!t0) t0=now;
+      let u = Math.min(1, (now-t0)/(dur*1000));
+      let x,y;
+      if(kind==='curved' && C){
+        // Quadratic Bezier
+        const x0=P0.x, y0=P0.y, x1=C.x, y1=C.y, x2=P1.x, y2=P1.y;
+        const one=1-u;
+        x = one*one*x0 + 2*one*u*x1 + u*u*x2;
+        y = one*one*y0 + 2*one*u*y1 + u*u*y2;
+      }else{
+        x = lerp(P0.x, P1.x, u);
+        y = lerp(P0.y, P1.y, u);
+      }
+      comet.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      if(u<1){ requestAnimationFrame(draw); } else { comet.remove(); }
+    }
+    requestAnimationFrame(draw);
   }
 
   function loop(){
     spawnOnce();
-    const next = 6000 + Math.random()*4000; // every 6–10s
+    const next = 7000 + Math.random()*5000; // every 7–12s
     setTimeout(loop, next);
   }
   setTimeout(loop, 1200);
