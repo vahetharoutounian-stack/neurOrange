@@ -3,158 +3,89 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — CCW emoji rings, comet, upright paintings</title>
+<title>neurOrange — home</title>
 <style>
   :root{
-    --quin:#ED6A00; --pure:#FFA500; --bergamot:#FFA64D; --nick:#FF6600;
-    --gap-deg: 3deg;                  /* swatch separator width (deg) */
-    --inner-thick: 34px;              /* px (runtime) */
-    --outer-thick-mult: 2.2;          /* outer thickness = inner * mult */
-    --mid-move-duration: 2200ms;
-    --emoji-font: 18px;               /* px (set from screen width) */
-    --scene-glow: 0 0 10px #000, 0 0 18px #000;   /* soft global glow */
+    --quin:#ED6A00; --pure:#FFA500; --bergamot:#FFA64D; --pantone021:#FE5000; --nick:#FF6600;
+    --gap-deg: 3deg; --inner-thick: 34px; --outer-thick-mult: 2.2; --emoji-font: 18px;
+    --scene-glow: 0 0 10px #000, 0 0 18px #000;
   }
-
   *{box-sizing:border-box}
-  html,body{
-    margin:0; height:100%; background:#000; color:#fff;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    -webkit-font-smoothing: antialiased; overflow:hidden;
-  }
+  html,body{margin:0;height:100%;background:#000;color:#fff;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;-webkit-font-smoothing:antialiased;overflow:hidden}
+  #phone{position:fixed;inset:0;width:100dvw;height:100dvh;display:grid;place-items:center;background:#000}
+  #canvas{position:relative;width:100%;height:100%;overflow:hidden;background:#000}
 
-  /* Full-bleed canvas; we also compute exact px layout in JS */
-  #phone{ position:fixed; inset:0; width:100dvw; height:100dvh; display:grid; place-items:center; background:#000; }
-  #canvas{ position:relative; width:100%; height:100%; overflow:hidden; background:#000; }
+  /* z-order: 1 bg | 2 inner | 2.5 comet | 3 outer | 4 emojis | 5 question | 6 brand | 8 paintings | 10 outro */
+  #brandBar{position:absolute;left:env(safe-area-inset-left);right:env(safe-area-inset-right);top:calc(env(safe-area-inset-top)+10px);display:flex;justify-content:center;z-index:6;filter:drop-shadow(var(--scene-glow))}
+  #brand{font-weight:900;letter-spacing:.12em;font-size:clamp(18px,5vw,32px);color:var(--pure)}
 
-  /* Layering (ascending z): 1 bg, 2 inner, 2.5 comet, 3 outer, 4 emoji rings, 5 question, 6 brand, 8 paintings, 10 outro */
-  #brandBar{
-    position:absolute; left:env(safe-area-inset-left); right:env(safe-area-inset-right);
-    top:calc(env(safe-area-inset-top) + 10px);
-    display:flex; justify-content:center; z-index:6;
-    filter: drop-shadow(var(--scene-glow));
-  }
-  #brand{ font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:var(--pure) }
+  #bgLayer{position:absolute;inset:0;z-index:1}
+  #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  #tapToPlay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;color:#fff;background:rgba(0,0,0,.42);padding:.4rem .6rem;border-radius:.6rem;font-size:clamp(12px,3.5vw,14px);backdrop-filter:blur(4px);display:none}
+  .fogWrap{position:absolute;inset:-30%;z-index:0;pointer-events:none;-webkit-mask-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,1) 62%,rgba(0,0,0,0) 100%);mask-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,1) 62%,rgba(0,0,0,0) 100%)}
+  .fog{position:absolute;inset:0;mix-blend-mode:screen;filter:blur(60px) saturate(120%);
+       background:radial-gradient(28% 22% at 20% 30%,var(--nick) 0 55%,transparent 60%),
+                  radial-gradient(28% 24% at 80% 40%,var(--nick) 0 55%,transparent 60%),
+                  radial-gradient(30% 22% at 40% 70%,var(--nick) 0 55%,transparent 60%);
+       animation:fog1 26s linear infinite alternate;opacity:.62}
+  @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
 
-  #bgLayer{ position:absolute; inset:0; z-index:1; opacity:1; }
-  #bgVideo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; }
-  #tapToPlay{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    z-index:2; color:#fff; background:rgba(0,0,0,.42);
-    padding:.4rem .6rem; border-radius:.6rem; font-size:clamp(12px,3.5vw,14px);
-    backdrop-filter: blur(4px); display:none;
-  }
-  .fogWrap{
-    position:absolute; inset:-30%; z-index:0; pointer-events:none;
-    -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);
-            mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);
-  }
-  .fog{
-    position:absolute; inset:0; mix-blend-mode:screen; filter: blur(60px) saturate(120%);
-    background:
-      radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
-      radial-gradient(28% 24% at 80% 40%, var(--nick) 0 55%, transparent 60%),
-      radial-gradient(30% 22% at 40% 70%, var(--nick) 0 55%, transparent 60%);
-    animation:fog1 26s linear infinite alternate; opacity:.62;
-  }
-  @keyframes fog1{ 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(-3%,-4%) scale(1.08)} }
+  #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
+  .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .spin{position:absolute;inset:0}
 
-  #focus{ position:absolute; inset:0; display:grid; place-items:center; z-index:2 }
+  .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;
+        background:radial-gradient(closest-side,rgba(0,0,0,.35),rgba(0,0,0,0));filter:blur(10px);pointer-events:none;z-index:-1}
 
-  .wrapCenter{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
-  .spin{ position:absolute; inset:0; }
+  #question{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);
+            display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;
+            border:none;z-index:5;filter:drop-shadow(var(--scene-glow));padding:.4rem .6rem;cursor:pointer}
+  #questionText{font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;animation:pulseTint 3s ease-in-out infinite}
+  @keyframes pulseTint{0%,100%{color:#FFA64D}50%{color:#FE5000}}
 
-  /* soft per-object halo */
-  .halo{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    border-radius:50%; background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0));
-    filter: blur(10px); pointer-events:none; z-index:-1;
-  }
+  #innerWrap{z-index:2}
+  #innerSpin{animation:spinCW 60s linear infinite;filter:drop-shadow(var(--scene-glow))}
+  @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  #innerSurface{position:absolute;inset:0;border-radius:50%;
+    -webkit-mask: radial-gradient(circle,transparent calc(50% - var(--inner-thick)),#000 calc(50% - var(--inner-thick)),#000 calc(50% + var(--inner-thick)),transparent calc(50% + var(--inner-thick)));
+            mask: radial-gradient(circle,transparent calc(50% - var(--inner-thick)),#000 calc(50% - var(--inner-thick)),#000 calc(50% + var(--inner-thick)),transparent calc(50% + var(--inner-thick)));cursor:pointer}
+  #innerHits{position:absolute;inset:0;pointer-events:none}
+  #innerHits .hit{pointer-events:auto;cursor:pointer}
 
-  /* Center bubble (no border) */
-  #question{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.9);
-    display:grid; place-items:center; background:#000; color:#fff; border-radius:50%;
-    border:none; z-index:5; filter:drop-shadow(var(--scene-glow));
-    padding:.4rem .6rem; cursor:pointer;
-  }
-  #questionText{
-    font-weight:900; font-style:italic; text-align:center;
-    font-size:clamp(16px,3.6vw,22px); line-height:1.15; margin:0;
-  }
+  #cometField{z-index:2.5}
+  .comet{position:absolute;left:50%;top:50%;pointer-events:none;opacity:.95;filter:drop-shadow(0 0 12px #000) drop-shadow(0 0 20px #000)}
+  .cometStack{display:flex;flex-direction:column;align-items:center;line-height:1;font-size:clamp(18px,4.4vw,26px)}
+  .cometStack .top{margin-bottom:-2px}
 
-  /* INNER ring (z=2): CW; transparent gaps; NO borders */
-  #innerWrap{ z-index:2; } /* size set by JS */
-  #innerSpin{ animation:spinCW 60s linear infinite; filter:drop-shadow(var(--scene-glow)) }
-  @keyframes spinCW{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
-  #innerSurface{
-    position:absolute; inset:0; border-radius:50%;
-    -webkit-mask: radial-gradient(circle,
-      transparent calc(50% - var(--inner-thick)),
-      #000       calc(50% - var(--inner-thick)),
-      #000       calc(50% + var(--inner-thick)),
-      transparent calc(50% + var(--inner-thick)));
-            mask: radial-gradient(circle,
-      transparent calc(50% - var(--inner-thick)),
-      #000       calc(50% - var(--inner-thick)),
-      #000       calc(50% + var(--inner-thick)),
-      transparent calc(50% + var(--inner-thick)));
-  }
-  /* NEW: invisible click layer for inner ring */
-  #innerHits{ position:absolute; inset:0; pointer-events:none; }
+  #outerWrap{z-index:3}
+  #outerSpin{animation:spinCW 70s linear infinite}
+  #outerSurface{position:absolute;inset:0;border-radius:50%;cursor:pointer}
+  #outerHits{position:absolute;inset:0;pointer-events:none}
+  #outerHits .hit{pointer-events:auto;cursor:pointer}
 
-  /* COMET lane (z=2.5) — between inner & outer rings */
-  #cometField{ z-index:2.5; }
+  #emojiWrapA,#emojiWrapB{z-index:4}
+  .emojiRing{position:absolute;inset:0}
+  .emojiSpin{position:absolute;inset:0;animation:spinCCW var(--dur,60s) linear infinite}
+  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+  .emoji{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:var(--emoji-font);border:none;border-radius:10px;background:rgba(0,0,0,.08);padding:1px 3px;filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000);cursor:pointer}
 
-  /* OUTER ring (z=3) */
-  #outerWrap{ z-index:3; } #outerSpin{ animation:spinCW 70s linear infinite } #outerSurface{ position:absolute; inset:0; border-radius:50% }
+  #midWrap{z-index:8}
+  #midSpin{animation:spinCCW 56s linear infinite;filter:drop-shadow(var(--scene-glow))}
+  #midRing{position:absolute;inset:0}
+  .mnode{position:absolute;top:50%;left:50%;border-radius:50%;transform:translate(-50%,-50%);background:#111;overflow:hidden;border:1.5px solid #000;filter:drop-shadow(var(--scene-glow));cursor:pointer}
+  .mnode.withCloud::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% + 16px);height:calc(100% + 16px);border-radius:inherit;background:radial-gradient(closest-side,rgba(0,0,0,.38),rgba(0,0,0,0));filter:blur(8px);pointer-events:none}
+  .mnode img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;animation:keepUpright 56s linear infinite;transform-origin:center;backface-visibility:hidden;will-change:transform}
+  @keyframes keepUpright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .mnode.noimg{background:radial-gradient(60% 54% at 50% 42%,#444 0%,#222 60%,#000 100%)}
 
-  /* Emoji rings (z=4) */
-  #emojiWrapA, #emojiWrapB { z-index:4; } .emojiRing{ position:absolute; inset:0 }
-  .emojiSpin{ position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite; }
-  @keyframes spinCCW{ from{ transform: rotate(0deg) } to{ transform: rotate(-360deg) } }
-  .emoji{
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    font-size: var(--emoji-font); line-height:1; border:none; border-radius:10px; background:rgba(0,0,0,.08);
-    padding:1px 3px; filter: drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000); cursor:pointer;
-  }
-
-  /* MID painting nodes (TOPMOST) */
-  #midWrap{ z-index:8; } #midSpin{ animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--scene-glow)) }
-  #midRing{ position:absolute; inset:0 }
-  .mnode{
-    position:absolute; top:50%; left:50%; border-radius:50%;
-    transform:translate(-50%,-50%); background:#111; overflow:hidden;
-    border:1.5px solid #000; filter:drop-shadow(var(--scene-glow)); cursor:pointer;
-  }
-  .mnode.withCloud::before{
-    content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
-    background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none;
-  }
-  .mnode img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
-              animation: keepUpright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change: transform; }
-  @keyframes keepUpright{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
-
-  /* Outro overlay (z=10) */
-  #outro{
-    position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:10;
-    display:flex; align-items:center; justify-content:center; transition:opacity 1.2s ease;
-  }
-  #outro.show{ opacity:1; pointer-events:auto; }
-  #quote{
-    text-align:center; white-space:pre-line;
-    font-weight:900; font-style:italic; letter-spacing:.02em;
-    font-size:clamp(18px,5.2vw,30px); line-height:1.25; color:#FFA64D;
-    text-shadow: 0 0 10px rgba(0,0,0,.8), 0 0 30px rgba(255,166,77,.25);
-    opacity:0; animation: quoteIn 1.2s ease forwards; animation-delay: 1.0s;
-  }
-  @keyframes quoteIn{ to{ opacity:1; } }
+  #outro{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center}
+  #outro.fade{transition:opacity 2s ease}
+  #quote{text-align:center;white-space:pre-line;font-weight:900;font-style:italic;letter-spacing:.02em;font-size:clamp(18px,5.2vw,30px);line-height:1.25;color:#FFA64D;text-shadow:0 0 10px rgba(0,0,0,.8),0 0 30px rgba(255,166,77,.25);opacity:0}
 </style>
 </head>
 <body>
   <div id="phone">
     <div id="canvas">
-
       <div id="brandBar"><div id="brand">neurOrange</div></div>
 
       <div id="bgLayer">
@@ -164,99 +95,86 @@
       </div>
 
       <div id="focus">
-        <!-- OUTER color ring -->
+        <!-- Ring 3 (ghosts) -->
         <div id="outerWrap" class="wrapCenter">
-          <div id="outerSpin" class="spin"><div id="outerSurface" aria-hidden="true"></div></div>
+          <div id="outerSpin" class="spin"><div id="outerSurface"></div></div>
+          <svg id="outerHits" viewBox="0 0 1000 1000"></svg>
           <div class="halo" id="outerHalo"></div>
         </div>
 
-        <!-- INNER color ring -->
+        <!-- Ring 1 (bright oranges) -->
         <div id="innerWrap" class="wrapCenter">
-          <div id="innerSpin" class="spin"><div id="innerSurface" aria-hidden="true"></div></div>
-
-          <!-- NEW: clickable sectors -->
+          <div id="innerSpin" class="spin"><div id="innerSurface"></div></div>
           <svg id="innerHits" viewBox="0 0 1000 1000"></svg>
-
           <div class="halo" id="innerHalo"></div>
         </div>
 
-        <!-- COMET FIELD (between inner & outer) -->
+        <!-- Comet layer -->
         <div id="cometField" class="wrapCenter"></div>
 
-        <!-- MID painting nodes (TOPMOST) -->
+        <!-- Paintings (topmost) -->
         <div id="midWrap" class="wrapCenter">
-          <div id="midSpin" class="spin"><div id="midRing" aria-hidden="true"></div></div>
+          <div id="midSpin" class="spin"><div id="midRing"></div></div>
         </div>
 
-        <!-- Emoji ring 4 (CCW) -->
+        <!-- Emoji rings -->
         <div id="emojiWrapA" class="wrapCenter">
           <div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div>
         </div>
-        <!-- Emoji ring 5 (CCW, staggered) -->
         <div id="emojiWrapB" class="wrapCenter">
           <div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div>
         </div>
 
-        <!-- Center text -->
+        <!-- Center prompt -->
         <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
       </div>
 
-      <!-- Outro overlay -->
+      <!-- Fade overlay + Quote -->
       <div id="outro"><div id="quote">In a world full of yellows and reds
 Dare to be orange</div></div>
     </div>
   </div>
 
 <script>
-/* ---------- Palettes ---------- */
-const ORANGE_LIBRARY={
-  ghosts:[{hex:"#B36019"},{hex:"#F9751F"},{hex:"#F6B76F"},{hex:"#D2B379"},{hex:"#E3AC47"},{hex:"#F88E10"},{hex:"#C18514"},{hex:"#DE9513"},{hex:"#92752D"},{hex:"#F0CE85"},{hex:"#FCBA45"},{hex:"#D99621"},{hex:"#E8C569"},{hex:"#F0B85F"},{hex:"#D2B265"}],
-  standards:[{hex:"#F4C430"},{hex:"#FFBF00"},{hex:"#FCC200"},{hex:"#F28500"},{hex:"#FD5E53"},{hex:"#E25822"},{hex:"#FFA500"},{hex:"#D99058"},{hex:"#E87D0D"},{hex:"#FF7F24"},{hex:"#C76A1F"},{hex:"#CB6D51"},{hex:"#FF7F50"},{hex:"#FF8E00"},{hex:"#D07A2D"}],
-  food:[{hex:"#ED9121"},{hex:"#FBCEB1"},{hex:"#F28500"},{hex:"#FFA64D"},{hex:"#FF7518"},{hex:"#F6A200"},{hex:"#F98B00"},{hex:"#FFA500"},{hex:"#F99E1A"},{hex:"#E67E22"},{hex:"#F6A700"},{hex:"#DE7C00"},{hex:"#E67910"},{hex:"#FF8A00"},{hex:"#EC5800"}]
+/* Data */
+const LIB = {
+  ghosts:[
+    {name:"Ghost Pepper Orange",hex:"#B36019"},
+    {name:"Afterimage Orange", hex:"#F9751F"},
+    {name:"CRT Ghost Orange",  hex:"#F6B76F"},
+    {name:"Will-o’-Wisp",      hex:"#D2B379"},
+    {name:"Hitodama",          hex:"#E3AC47"},
+    {name:"Jinn Flame",        hex:"#F88E10"},
+    {name:"Phantom",           hex:"#C18514"},
+    {name:"Specter",           hex:"#DE9513"},
+    {name:"Wraith",            hex:"#92752D"},
+    {name:"Apparition",        hex:"#F0CE85"},
+    {name:"Clyde",             hex:"#FCBA45"},
+    {name:"Poltergeist",       hex:"#D99621"},
+    {name:"Marfa Lights",      hex:"#E8C569"},
+    {name:"Ghost Moth",        hex:"#F0B85F"},
+    {name:"Hungry Ghost",      hex:"#D2B265"}
+  ],
+  brightRing1:[
+    {name:"Pantone 021 C", hex:"#FE5000"},
+    {name:"Pure Orange",   hex:"#FFA500"},
+    {name:"Solar Orange",  hex:"#FF8E00"},
+    {name:"Nickelodeon",   hex:"#FF6600"},
+    {name:"Fanta Orange",  hex:"#FF6A00"},
+    {name:"Firefox",       hex:"#FF9400"},
+    {name:"Tangerine",     hex:"#F28500"},
+    {name:"Tiger Orange",  hex:"#FF7F24"},
+    {name:"Carrot",        hex:"#ED9121"},
+    {name:"Amber",         hex:"#FFBF00"},
+    {name:"Safety Orange", hex:"#FF5E00"},
+    {name:"Signal Orange", hex:"#FF6A13"}
+  ],
+  emojis: ["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;"]
 };
-/* Orange-only emojis */
-const EMOJIS = [
-  "&#128992;","&#129031;","&#128246;","&#128248;","&#129505;",
-  "&#127818;","&#129389;","&#129365;","&#127840;",
-  "&#127875;","&#127936;","&#128217;"
-];
 
-/* ---------- minimal route helper (fade then navigate) ---------- */
-function routeWithFade(url){
-  const o=document.getElementById('outro');
-  if(o){ o.classList.add('show'); setTimeout(()=>{ location.href=url; }, 1200); }
-  else { location.href=url; }
-}
-
-/* ---------- helpers ---------- */
+/* helpers */
 const gdeg=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg'))||3;
-const conicWithGaps=(cols,g,gapColor)=>{const seg=360/cols.length,parts=[];for(let i=0;i<cols.length;i++){const s=i*seg,ce=s+(seg-g),ge=s+seg;parts.push(`${cols[i]} ${s}deg ${ce}deg`,`${gapColor} ${ce}deg ${ge}deg`)}return `conic-gradient(${parts.join(',')})`};
-const ghostFirst=n=>{const g=ORANGE_LIBRARY.ghosts.map(x=>x.hex),s=ORANGE_LIBRARY.standards.map(x=>x.hex);const out=g.slice(0,n);let i=0;while(out.length<n)out.push(s[i++%s.length]);return out}
-const foodPalette=n=>{const f=ORANGE_LIBRARY.food.map(x=>x.hex);const out=[];let i=0;while(out.length<n)out.push(f[i++%f.length]);return out}
-
-/* NEW: ring-sector helpers */
-function sectorPath(cx,cy,r0,r1,a0,a1){
-  const p=(R,a)=>({x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R});
-  const P0=p(r1,a0), P1=p(r1,a1), Q1=p(r0,a1), Q0=p(r0,a0), large=((a1-a0)>Math.PI)?1:0;
-  return `M${Q0.x},${Q0.y} L${P0.x},${P0.y} A${r1},${r1} 0 ${large} 1 ${P1.x},${P1.y} L${Q1.x},${Q1.y} A${r0},${r0} 0 ${large} 0 ${Q0.x},${Q0.y} Z`;
-}
-function buildHitSectors(svgEl, outerD, thick, items, onTap, innerRpx=null){
-  const N=items.length; svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.innerHTML=''; svgEl.style.pointerEvents='none';
-  const cx=500, cy=500, outR=480;
-  const inR = innerRpx ? (outR - (outerD/2 - innerRpx) * (outR/(outerD/2))) : (outR - (thick * (outR/(outerD/2))));
-  for(let i=0;i<N;i++){
-    const a0=(i/N)*2*Math.PI, a1=((i+1)/N)*2*Math.PI;
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', sectorPath(cx,cy,inR,outR,a0,a1));
-    path.setAttribute('fill', 'transparent');
-    path.style.pointerEvents='auto';
-    path.addEventListener('pointerdown', ()=> onTap(items[i]));
-    path.addEventListener('touchstart', ()=> onTap(items[i]), {passive:true});
-    svgEl.appendChild(path);
-  }
-}
-
-/* ---------- center bubble sizing ---------- */
+const conic=(cols,g,gapColor)=>{const seg=360/cols.length,parts=[];for(let i=0;i<cols.length;i++){const s=i*seg,ce=s+(seg-g),ge=s+seg;parts.push(`${cols[i]} ${s}deg ${ce}deg`,`${gapColor} ${ce}deg ${ge}deg`)}return `conic-gradient(${parts.join(',')})`};
 function sizeQuestion(){
   const b=document.getElementById('question'), t=document.getElementById('questionText');
   const prev=b.style.transform; b.style.transform='translate(-50%,-50%) scale(1)';
@@ -265,172 +183,167 @@ function sizeQuestion(){
   b.style.transform=prev||'translate(-50%,-50%) scale(0.90)';
 }
 
-/* ---------- paintings loader ---------- */
+/* build hit sectors */
+function buildHitSectors(svgEl, outerD, thick, items, onTap, innerRpx=null){
+  const N=items.length; svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.innerHTML='';
+  const cx=500, cy=500, outR=480;
+  const inR = innerRpx ? (outR - (outerD/2 - innerRpx) * (outR/(outerD/2))) : (outR - (thick * (outR/(outerD/2))));
+  for(let i=0;i<N;i++){
+    const a0=(i/N)*2*Math.PI, a1=((i+1)/N)*2*Math.PI;
+    const p = sectorPath(cx,cy,inR,outR,a0,a1);
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',p); path.setAttribute('fill','transparent'); path.classList.add('hit');
+    const item=items[i];
+    path.addEventListener('pointerdown', ()=> onTap(item));
+    path.addEventListener('touchstart', ()=> onTap(item), {passive:true});
+    svgEl.appendChild(path);
+  }
+}
+function sectorPath(cx,cy,r0,r1,a0,a1){
+  const c=(a)=>({x:cx+Math.cos(a)*r1, y:cy+Math.sin(a)*r1});
+  const d=(a)=>({x:cx+Math.cos(a)*r0, y:cy+Math.sin(a)*r0});
+  const p0=c(a0), p1=c(a1), q1=d(a1), q0=d(a0), large=((a1-a0)>Math.PI)?1:0;
+  return `M${q0.x},${q0.y} L${p0.x},${p0.y} A${r1},${r1} 0 ${large} 1 ${p1.x},${p1.y} L${q1.x},${q1.y} A${r0},${r0} 0 ${large} 0 ${q0.x},${q0.y} Z`;
+}
+
+/* paintings */
 function buildMidNodes(){
   const mid=document.getElementById('midRing'); mid.innerHTML='';
-  const exts=['.jpg','.jpeg','.png','.JPG','.JPEG','.PNG'];
+  const exts=['.jpg','.jpeg','.png','.JPG','.JPEG','.PNG']; const stamp='?v='+Date.now();
   for(let i=1;i<=6;i++){
-    const n=document.createElement('div'); n.className='mnode withCloud';
-    const img=new Image(); img.alt='Painting'; n.appendChild(img); mid.appendChild(n);
-    let k=0; const stamp='?v='+Date.now();
-    (function tryNext(){
-      if(k>=exts.length){ n.classList.add('noimg'); return; }
-      img.onerror = tryNext; img.decoding='async'; img.loading='eager';
-      img.src = `assets/paintings/${i}${exts[k++]}${stamp}`;
-    })();
+    const n=document.createElement('div'); n.className='mnode withCloud'; const img=new Image(); img.alt='Painting';
+    n.appendChild(img); mid.appendChild(n);
+    let k=0; (function next(){ if(k>=exts.length){ n.classList.add('noimg'); return; }
+      img.onerror=next; img.decoding='async'; img.loading='eager'; img.src=`assets/paintings/${i}${exts[k++]}${stamp}`; })();
+    n.addEventListener('pointerdown', ()=> routeWithFade(`/art-gallery#painting=${i}`));
+    n.addEventListener('touchstart', ()=> routeWithFade(`/art-gallery#painting=${i}`), {passive:true});
   }
 }
 
-/* ---------- layout (with inner-ring click routing) ---------- */
+/* layout rings and emojis */
 function layoutRings(){
   const root=document.documentElement, canvas=document.getElementById('canvas');
-  const innerWrap=document.getElementById('innerWrap'), innerSurface=document.getElementById('innerSurface');
-  const innerHits=document.getElementById('innerHits');
+  const innerWrap=document.getElementById('innerWrap'), innerSurface=document.getElementById('innerSurface'), innerHalo=document.getElementById('innerHalo');
+  const outerWrap=document.getElementById('outerWrap'), outerSurface=document.getElementById('outerSurface'), outerHalo=document.getElementById('outerHalo');
+  const innerHits=document.getElementById('innerHits'), outerHits=document.getElementById('outerHits');
   const midWrap=document.getElementById('midWrap'), midRing=document.getElementById('midRing');
-  const outerWrap=document.getElementById('outerWrap'), outerSurface=document.getElementById('outerSurface');
+  const emojiWrapA=document.getElementById('emojiWrapA'), emojiWrapB=document.getElementById('emojiWrapB');
 
   const W=window.innerWidth, H=window.innerHeight, S=Math.min(W,H);
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   root.style.setProperty('--emoji-font', Math.round(W*0.036)+'px');
 
-  /* inner ring geometry + paint */
-  const innerD=Math.round(S*0.58);
-  const innerThick=Math.max(16,Math.round(innerD*0.12));
+  const innerD=Math.round(S*0.58), innerThick=Math.max(16,Math.round(innerD*0.12));
   innerWrap.style.width=innerWrap.style.height=innerD+'px';
   root.style.setProperty('--inner-thick', innerThick+'px');
-  const ringColors = foodPalette(12); // same palette used to paint
-  innerSurface.style.background = conicWithGaps(ringColors, gdeg(), 'transparent');
+  innerHalo.style.width=innerHalo.style.height=(innerD+24)+'px';
+  innerSurface.style.background = conic(LIB.brightRing1.map(o=>o.hex), gdeg(), 'transparent');
 
-  /* NEW: build 12 clickable sectors -> neurOrange Step 2 with #hex */
-  buildHitSectors(innerHits, innerD, innerThick, ringColors, (hex)=>{
-    const h = String(hex||'').replace('#','').toUpperCase();
-    routeWithFade(`neurOrange.html#hex=${h}&step=2`);
-  });
+  buildHitSectors(innerHits, innerD, innerThick, LIB.brightRing1, (color)=>routeWithFade(`/color-library#hex=${color.hex.replace('#','')}`));
 
-  /* mid nodes (outside inner ring) */
+  midWrap.style.width=midWrap.style.height=innerD+'px';
   const nodeScale=0.82, nodeD=Math.round(innerThick*0.85*5.25*nodeScale);
   const margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);
   const nodes=midRing.querySelectorAll('.mnode'); const N=6, step=2*Math.PI/N;
-  nodes.forEach((n,i)=>{ const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
-    n.style.width=n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; });
+  nodes.forEach((n,i)=>{ const a=i*step,x=Math.cos(a)*midR,y=Math.sin(a)*midR; n.style.width=n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; });
 
-  /* outer ring (ghosts) */
   const outerInnerR = midR + nodeD/2 + margin;
   const outerThick  = innerThick * (parseFloat(getComputedStyle(root).getPropertyValue('--outer-thick-mult'))||2.2);
   const outerOuterR = Math.max(outerInnerR + outerThick, W/2 + 8);
-  const outD = Math.round(outerOuterR*2);
+  const outD=Math.round(outerOuterR*2);
   outerWrap.style.width=outerWrap.style.height=outD+'px';
-  const mask=`radial-gradient(circle, transparent ${outerInnerR}px, #000 ${outerInnerR}px, #000 ${outerOuterR}px, transparent ${outerOuterR}px)`;
-  outerSurface.style.webkitMask=mask; outerSurface.style.mask=mask;
-  outerSurface.style.background = conicWithGaps(ghostFirst(18), gdeg(), 'transparent');
+  outerHalo.style.width=outerHalo.style.height=(outD+28)+'px';
+  outerSurface.style.webkitMask=`radial-gradient(circle, transparent ${outerInnerR}px, #000 ${outerInnerR}px, #000 ${outerOuterR}px, transparent ${outerOuterR}px)`;
+  outerSurface.style.mask       =`radial-gradient(circle, transparent ${outerInnerR}px, #000 ${outerInnerR}px, #000 ${outerOuterR}px, transparent ${outerOuterR}px)`;
+  outerSurface.style.background = conic(LIB.ghosts.map(g=>g.hex), gdeg(), 'transparent');
+  buildHitSectors(outerHits, outD, outD/2-outerInnerR, LIB.ghosts, (ghost)=>routeWithFade(`/illusion#hex=${ghost.hex.replace('#','')}`), outerInnerR);
+
+  const gap=Math.max(8,Math.round(S*0.014)), rA=outerOuterR+gap, rB=rA+Math.max(22,Math.round(S*0.028));
+  emojiWrapA.style.width=emojiWrapA.style.height=(rA*2)+'px';
+  emojiWrapB.style.width=emojiWrapB.style.height=(rB*2)+'px';
+  buildEmojiRing(document.getElementById('emojiRingA'), LIB.emojis, rA, 0);
+  buildEmojiRing(document.getElementById('emojiRingB'), LIB.emojis, rB, Math.PI*2/(LIB.emojis.length*2));
+
+  window.__geom = {W,H,S,innerD,innerThick,midR,nodeD,outerInnerR,outerOuterR,rA,rB};
 }
 
-/* (emoji rings, comet, overlay trigger code left as-is) */
-/* ---------- emoji ring builder ---------- */
-function buildEmojiRings(rA, rB){
-  const ringA=document.getElementById('emojiRingA');
-  const ringB=document.getElementById('emojiRingB');
-  ringA.innerHTML=''; ringB.innerHTML='';
-
-  const rep=2;
-  const listA=Array.from({length:rep}).flatMap(()=>EMOJIS);
-  const listB=Array.from({length:rep}).flatMap(()=>EMOJIS);
-
-  function place(ringEl, list, R, phase=0){
-    const n=list.length; for(let i=0;i<n;i++){
-      const d=document.createElement('div'); d.className='emoji'; d.innerHTML=`<span>${list[i]}</span>`;
-      const a=i*(2*Math.PI/n)+phase, x=Math.cos(a)*R, y=Math.sin(a)*R;
-      d.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      ringEl.appendChild(d);
-    }
+/* emoji ring builder */
+function buildEmojiRing(container, list, R, phase){
+  container.innerHTML=''; const n=list.length;
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div'); d.className='emoji'; d.innerHTML=`<span>${list[i]}</span>`;
+    const a=i*(2*Math.PI/n)+phase, x=Math.cos(a)*R, y=Math.sin(a)*R;
+    d.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+    d.addEventListener('pointerdown', ()=>routeWithFade(`/color-library#hex=FFA500`));
+    d.addEventListener('touchstart', ()=>routeWithFade(`/color-library#hex=FFA500`), {passive:true});
+    container.appendChild(d);
   }
-  place(ringA, listA, rA, 0);
-  place(ringB, listB, rB, (Math.PI*2)/(listB.length*2));
 }
 
-/* ---------- comet ---------- */
+/* comet spawner */
 (function cometSpawner(){
-  const field = document.getElementById('cometField');
-
+  const field=document.getElementById('cometField');
   function spawnOnce(){
-    const g = window.__geom;
-    if(!g){ setTimeout(spawnOnce, 800); return; }
-
-    const kinds = ['straight','offcenter','curved'];
-    const kind = kinds[Math.floor(Math.random()*kinds.length)];
-    const theta = Math.random()*Math.PI*2;
-    const n = {x: -Math.sin(theta), y: Math.cos(theta)};
-    const run = Math.max(g.W,g.H) + 400;
-    const dur = 4.8 + Math.random()*3.0;
-
-    let P0,P1,C; const center={x:0,y:0};
+    const g=window.__geom; if(!g){ setTimeout(spawnOnce,800); return; }
+    const kinds=['straight','offcenter','curved']; const kind=kinds[Math.floor(Math.random()*kinds.length)];
+    const theta=Math.random()*Math.PI*2, n={x:-Math.sin(theta),y:Math.cos(theta)};
+    const run=Math.max(g.W,g.H)+400, dur=4.8+Math.random()*3.0; let P0,P1,C; const center={x:0,y:0};
     if(kind==='straight'){
-      P0 = {x: center.x - Math.cos(theta)*run/2, y: center.y - Math.sin(theta)*run/2};
-      P1 = {x: center.x + Math.cos(theta)*run/2, y: center.y + Math.sin(theta)*run/2};
-    } else if(kind==='offcenter'){
+      P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
+      P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2};
+    }else if(kind==='offcenter'){
       const d=(Math.random()*0.35+0.15)*((g.rA+g.rB)/2);
-      const sh={x:n.x*(Math.random()<0.5?-d:d), y:n.y*(Math.random()<0.5?-d:d)};
-      P0 = {x: center.x - Math.cos(theta)*run/2 + sh.x, y: center.y - Math.sin(theta)*run/2 + sh.y};
-      P1 = {x: center.x + Math.cos(theta)*run/2 + sh.x, y: center.y + Math.sin(theta)*run/2 + sh.y};
-    } else { // curved
-      P0 = {x: center.x - Math.cos(theta)*run/2, y: center.y - Math.sin(theta)*run/2};
-      P1 = {x: center.x + Math.cos(theta)*run/2, y: center.y + Math.sin(theta)*run/2};
+      const sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};
+      P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};
+      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y+Math.sin(theta)*run/2+sh.y};
+    }else{
+      P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
+      P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2};
       const bend=(Math.random()*0.5+0.3)*((g.rA+g.rB)/2);
-      C  = {x: center.x + n.x*(Math.random()<0.5?-bend:bend), y: center.y + n.y*(Math.random()<0.5?-bend:bend)};
+      C={x:center.x+n.x*(Math.random()<0.5?-bend:bend),y:center.y+n.y*(Math.random()<0.5?-bend:bend)};
     }
-
     const comet=document.createElement('div'); comet.className='comet';
     const stk=document.createElement('div'); stk.className='cometStack';
-    const top=document.createElement('div'); top.className='top'; top.innerHTML='&#128992;';
-    const tail=document.createElement('div'); tail.innerHTML='&#x2604;&#xFE0F;';
+    const top=document.createElement('div'); top.className='top'; top.innerHTML='&#128992;'; // 🟠
+    const tail=document.createElement('div'); tail.innerHTML='&#x2604;&#xFE0F;';              // ☄️
     stk.appendChild(top); stk.appendChild(tail); comet.appendChild(stk); field.appendChild(comet);
-
-    let t0=null;
-    function lerp(a,b,t){ return a + (b-a)*t; }
-    function draw(now){
-      if(!t0) t0=now;
-      const u=Math.min(1,(now-t0)/(dur*1000));
-      let x,y;
-      if(C){
-        const one=1-u;
-        x=one*one*P0.x + 2*one*u*C.x + u*u*P1.x;
-        y=one*one*P0.y + 2*one*u*C.y + u*u*P1.y;
-      }else{
-        x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u);
-      }
+    let t0=null; function lerp(a,b,t){return a+(b-a)*t}
+    function draw(now){ if(!t0)t0=now; const u=Math.min(1,(now-t0)/(dur*1000)); let x,y;
+      if(kind==='curved' && C){ const one=1-u; x=one*one*P0.x+2*one*u*C.x+u*u*P1.x; y=one*one*P0.y+2*one*u*C.y+u*u*P1.y; }
+      else { x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u); }
       comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      if(u<1) requestAnimationFrame(draw); else comet.remove();
-    }
+      if(u<1) requestAnimationFrame(draw); else comet.remove(); }
     requestAnimationFrame(draw);
   }
-
-  function loop(){ spawnOnce(); setTimeout(loop, 7000 + Math.random()*5000); }
-  setTimeout(loop, 1200);
+  function loop(){ spawnOnce(); setTimeout(loop,7000+Math.random()*5000); }
+  setTimeout(loop,1200);
 })();
 
-/* ---------- boot ---------- */
+/* Fade-to-black + quote timing, then navigate */
+function routeWithFade(url){
+  const outro=document.getElementById('outro'); const quote=document.getElementById('quote');
+  outro.classList.remove('fade'); outro.style.opacity=0; quote.style.transition='none'; quote.style.opacity=0; outro.style.pointerEvents='none';
+  requestAnimationFrame(()=>{
+    outro.classList.add('fade'); outro.style.opacity=1; outro.style.pointerEvents='auto';
+    setTimeout(()=>{ quote.style.transition='opacity 1.2s ease'; quote.style.opacity=1; }, 400);
+    setTimeout(()=>{ quote.style.transition='opacity 1.75s ease'; quote.style.opacity=0; }, 1600);
+    setTimeout(()=>{ window.location.href=url; }, 3700);
+  });
+}
+
+/* init */
 function boot(){
   sizeQuestion();
   buildMidNodes();
   layoutRings();
-
-  // store geometry for comet
-  (function storeGeom(){
-    const W=innerWidth,H=innerHeight,S=Math.min(W,H);
-    const innerD=Math.round(S*0.58);
-    const innerThick=Math.max(16,Math.round(innerD*0.12));
-    // approximate midR the same way as in layoutRings
-    const nodeD=Math.round(innerThick*0.85*5.25*0.82);
-    const margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);
-    const outerInnerR = midR + nodeD/2 + margin;
-    const outerThick  = innerThick * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult'))||2.2);
-    const outerOuterR = Math.max(outerInnerR + outerThick, W/2 + 8);
-    window.__geom = {W,H,S, innerD, innerThick, midR, nodeD, outerInnerR, outerOuterR,
-                     rA: outerOuterR + Math.max(8,Math.round(S*0.014)),
-                     rB: outerOuterR + Math.max(8,Math.round(S*0.014)) + Math.max(22, Math.round(S*0.028))};
-  })();
-
-  window.addEventListener('resize', boot);
+  // center prompt → Bergamot
+  document.getElementById('question').addEventListener('pointerdown', ()=> routeWithFade('/color-library#hex=FFA64D'));
+  document.getElementById('question').addEventListener('touchstart', ()=> routeWithFade('/color-library#hex=FFA64D'), {passive:true});
+  // video autoplay shim minimal
+  const v=document.getElementById('bgVideo'), tap=document.getElementById('tapToPlay');
+  function tryStart(){ const p=v.play(); if(p&&p.catch)p.catch(()=> tap.style.display='block'); }
+  v.src='assets/placeholder.mp4'; if(document.readyState!=='loading') tryStart(); else document.addEventListener('DOMContentLoaded', tryStart, {once:true});
+  window.addEventListener('resize', ()=>{ sizeQuestion(); layoutRings(); }, {passive:true});
 }
 boot();
 </script>
