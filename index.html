@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — Home (SVG Rings, Centered & Scaled)</title>
+<title>neurOrange — Home (SVG Rings)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
@@ -57,12 +57,37 @@
   .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)} .spin{position:absolute;inset:0}
   .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),rgba(0,0,0,0));filter:blur(10px);pointer-events:none;z-index:-1}
 
-  #question{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none}
-  #questionText{font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;display:inline-block;will-change:transform}
-  /* gentle rotation with random reversal */
-  @keyframes spinText { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  #questionText.spin { animation:spinText 24s linear infinite; }
-  #questionText.spin.rev { animation-direction:reverse; }
+  /* Center prompt */
+  #question{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);
+    display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;
+    z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none;
+    animation:breathe 6s ease-in-out infinite;   /* subtle grow/shrink of circle */
+  }
+  @keyframes breathe{
+    0%,100%{transform:translate(-50%,-50%) scale(.90)}
+    50%    {transform:translate(-50%,-50%) scale(.94)}
+  }
+  #questionText{
+    font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;
+    display:inline-block; transform-origin:50% 50%;
+    animation:
+      wobble 3.2s ease-in-out infinite,          /* gentle wobble, not orbit */
+      colorPulse 5.5s ease-in-out infinite;      /* white → bergamot → pure-orange → white */
+  }
+  @keyframes wobble{
+    0%   { transform:translate(0,0) rotate(0deg) }
+    25%  { transform:translate(0.6px,-0.8px) rotate(1.2deg) }
+    50%  { transform:translate(0.0px, 0.6px) rotate(0deg) }
+    75%  { transform:translate(-0.7px,0.2px) rotate(-1.2deg) }
+    100% { transform:translate(0,0) rotate(0deg) }
+  }
+  @keyframes colorPulse{
+    0%   { color:#FFFFFF; text-shadow:0 0 6px rgba(255,255,255,.35) }
+    33%  { color:var(--bergamot); text-shadow:0 0 8px rgba(255,166,77,.45) }
+    66%  { color:var(--pure);     text-shadow:0 0 8px rgba(255,165,0,.45) }
+    100% { color:#FFFFFF; text-shadow:0 0 6px rgba(255,255,255,.35) }
+  }
 
   /* SVG rings rotate CW */
   #innerSVG,#outerSVG{ transform-box: fill-box; transform-origin:50% 50%;
@@ -83,7 +108,7 @@
   .mnode img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;animation:upright 56s linear infinite;transform-origin:center;backface-visibility:hidden;will-change:transform}
   @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* Optional fade+quote overlay (not used for intro) */
+  /* Optional fade+quote overlay */
   #outro{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;transition:opacity 1.2s ease}
   #outro.show{opacity:1;pointer-events:auto}
   #quote{text-align:center;white-space:pre-line;font-weight:900;font-style:italic;letter-spacing:.02em;font-size:clamp(18px,5.2vw,30px);line-height:1.25;color:#FFA64D;text-shadow:0 0 10px rgba(0,0,0,.8),0 0 30px rgba(255,166,77,.25);opacity:0;animation:quoteIn 1.2s ease forwards;animation-delay:1s}
@@ -175,12 +200,7 @@ function sizeQuestion(){
   const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(4,Math.round(Math.max(w,h)*0.02));
   const D=Math.ceil(Math.max(w,h)+pad*2); b.style.width=D+'px'; b.style.height=D+'px';
   b.style.transform=prev||'translate(-50%,-50%) scale(0.90)';
-  // Start gentle text rotation with random direction flips
-  t.classList.add('spin');
-  (function flip(){
-    t.classList.toggle('rev', Math.random()<0.5);
-    setTimeout(flip, 4000 + Math.random()*6000); // change every 4–10s
-  })();
+  // wobble + color pulse already defined in CSS keyframes
 }
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
   const toRad = d => d*Math.PI/180;
@@ -311,7 +331,7 @@ function layoutRings() {
     if(kind==='straight'){ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2}; P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2}; }
     else if(kind==='offcenter'){ const d=(Math.random()*0.35+0.15)*(W/2); const sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};
       P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};
-      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y}; }
+      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y+Math.sin(theta)*run/2+sh.y}; }
     else{ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       const bend=(Math.random()*0.5+0.3)*(W/2); C={x:center.x+n.x*(Math.random()<0.5?-bend:bend), y:center.y+n.y*(Math.random()<0.5?-bend:bend)}; }
@@ -336,8 +356,6 @@ function layoutRings() {
 (function boot(){
   const v=$('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
   buildMidNodes(); sizeQuestion(); layoutRings();
-
-  // start the gentle/random rotation of the question text (already set in sizeQuestion)
   addEventListener('resize', ()=>{ sizeQuestion(); layoutRings(); }, {passive:true});
 })();
 </script>
