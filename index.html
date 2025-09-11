@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — Home (SVG Rings)</title>
+<title>neurOrange — Home (SVG Rings, Centered & Animated)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
     --gap-deg:3;                 /* degrees of gap between wedges */
-    --inner-thick:34px;          /* computed in JS as well */
+    --inner-thick:34px;          /* also computed in JS */
     --outer-thick-mult:2.2;
     --emoji-font:18px;
     --glow:0 0 10px #000, 0 0 18px #000;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:#000;color:#fff;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;-webkit-font-smoothing:antialiased;overflow:hidden}
+  html,body{margin:0;height:100%;background:#000;color:#fff;
+            font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+            -webkit-font-smoothing:antialiased;overflow:hidden}
 
   /* ===== Intro (tap-to-enter) ===== */
   #intro{
@@ -54,26 +56,41 @@
   @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
 
   #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
-  .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)} .spin{position:absolute;inset:0}
+
+  /* Centered wrappers that we also scale in */
+  .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1); will-change:transform,opacity;}
+  .grow{ animation:ringGrow 1100ms cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0; }
+  #innerWrap.grow { animation-delay: 60ms;  }
+  #midWrap.grow   { animation-delay: 140ms; }
+  #outerWrap.grow { animation-delay: 220ms; }
+  #emojiWrapA.grow{ animation-delay: 300ms; }
+  #emojiWrapB.grow{ animation-delay: 380ms; }
+  @keyframes ringGrow{
+    0%   { transform:translate(-50%,-50%) scale(.55); opacity:0 }
+    60%  { transform:translate(-50%,-50%) scale(1.06); opacity:1 }
+    100% { transform:translate(-50%,-50%) scale(1.00); opacity:1 }
+  }
+
+  .spin{position:absolute;inset:0}
   .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),rgba(0,0,0,0));filter:blur(10px);pointer-events:none;z-index:-1}
 
-  /* Center prompt */
+  /* Center prompt (fixed to center; subtle breathing) */
   #question{
-    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);
     display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;
     z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none;
-    animation:breathe 6s ease-in-out infinite;   /* subtle grow/shrink of circle */
+    animation:breathe 6s ease-in-out infinite;
   }
   @keyframes breathe{
-    0%,100%{transform:translate(-50%,-50%) scale(.90)}
-    50%    {transform:translate(-50%,-50%) scale(.94)}
+    0%,100%{transform:translate(-50%,-50%) scale(1.00)}
+    50%    {transform:translate(-50%,-50%) scale(1.04)}
   }
   #questionText{
     font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;
     display:inline-block; transform-origin:50% 50%;
     animation:
-      wobble 3.2s ease-in-out infinite,          /* gentle wobble, not orbit */
-      colorPulse 5.5s ease-in-out infinite;      /* white → bergamot → pure-orange → white */
+      wobble 3.2s ease-in-out infinite,
+      colorPulse 5.5s ease-in-out infinite;
   }
   @keyframes wobble{
     0%   { transform:translate(0,0) rotate(0deg) }
@@ -157,6 +174,7 @@
       <div id="emojiWrapA" class="wrapCenter"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
       <div id="emojiWrapB" class="wrapCenter"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
 
+      <!-- Center prompt -->
       <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
     </div>
 
@@ -174,6 +192,10 @@ Dare to be orange</div></div>
     if(typeof layoutRings==='function') layoutRings();
     if(typeof buildMidNodes==='function' && !document.querySelector('#midRing .mnode')) buildMidNodes();
     const v=document.getElementById('bgVideo'); if(v && v.paused){ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
+    // scale-in animation for all rings
+    ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
+      const el=document.getElementById(id); if(el){ el.classList.add('grow'); }
+    });
     setTimeout(()=>window.dispatchEvent(new Event('resize')),0);
   }catch(e){}}
   function dismiss(){ intro.classList.add('hidden'); setTimeout(()=>{ intro.remove(); requestAnimationFrame(layoutKick); },950); }
@@ -196,11 +218,11 @@ const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127
 function $(id){return document.getElementById(id)}
 function sizeQuestion(){
   const b=$('question'), t=$('questionText');
-  const prev=b.style.transform; b.style.transform='translate(-50%,-50%) scale(1)';
-  const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(4,Math.round(Math.max(w,h)*0.02));
-  const D=Math.ceil(Math.max(w,h)+pad*2); b.style.width=D+'px'; b.style.height=D+'px';
-  b.style.transform=prev||'translate(-50%,-50%) scale(0.90)';
-  // wobble + color pulse already defined in CSS keyframes
+  // Keep the circle perfectly centered, compute diameter from text
+  b.style.transform='translate(-50%,-50%) scale(1)';
+  const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20)); /* larger bubble */
+  const D=Math.ceil(Math.max(w,h)+pad*2);
+  b.style.width=D+'px'; b.style.height=D+'px';
 }
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
   const toRad = d => d*Math.PI/180;
@@ -356,6 +378,10 @@ function layoutRings() {
 (function boot(){
   const v=$('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
   buildMidNodes(); sizeQuestion(); layoutRings();
+  // trigger the scale-in on initial load (also happens after intro)
+  ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
+    const el=$(id); if(el){ el.classList.add('grow'); }
+  });
   addEventListener('resize', ()=>{ sizeQuestion(); layoutRings(); }, {passive:true});
 })();
 </script>
