@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — Home (bounded 1 rpm text + floating/physics + sprout comets)</title>
+<title>neurOrange — Home (bounded 1 rpm text)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
@@ -116,16 +116,6 @@
   .mnode.withCloud::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% + 16px);height:calc(100% + 16px);border-radius:inherit;background:radial-gradient(closest-side,rgba(0,0,0,.38),rgba(0,0,0,0));filter:blur(8px);pointer-events:none}
   .mnode img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;animation:upright 56s linear infinite;transform-origin:center;backface-visibility:hidden;will-change:transform}
   @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-
-  /* Floating text (after 10s) */
-  .floatingText{
-    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-    font-weight:900; font-style:italic; text-align:center;
-    font-size:clamp(16px,3.6vw,22px); line-height:1.15; color:#fff;
-    text-shadow:0 0 6px rgba(255,255,255,.35);
-    pointer-events:none; user-select:none; z-index:6;
-    will-change:transform;
-  }
 
   /* Optional fade+quote overlay */
   #outro{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;transition:opacity 1.2s ease}
@@ -376,93 +366,6 @@ function startBoundedSpin(){
     spinRAF = requestAnimationFrame(step);
   }
   spinRAF = requestAnimationFrame(step);
-
-  // Launch floating physics after 10s (only once)
-  setTimeout(()=> launchFloatingText(angle), 10000);
-}
-
-/* ===== Floating text with simple circle-collision, then vanish at top ===== */
-let floatingStarted=false;
-function launchFloatingText(currentAngle){
-  if(floatingStarted) return; floatingStarted=true;
-
-  const q  = document.getElementById('question');
-  const qt = document.getElementById('questionText');
-  const rect = q.getBoundingClientRect();
-
-  // Create floating copy
-  const ft = document.createElement('div');
-  ft.className = 'floatingText';
-  ft.innerHTML = 'What are you<br/>feeling?';
-  document.body.appendChild(ft);
-
-  // Start at the visual center of question
-  let x = rect.left + rect.width/2;
-  let y = rect.top  + rect.height/2;
-
-  // Match size to original text
-  const tmp = qt.cloneNode(true); tmp.style.position='fixed'; tmp.style.left='-9999px'; document.body.appendChild(tmp);
-  const tw = tmp.getBoundingClientRect().width, th = tmp.getBoundingClientRect().height; tmp.remove();
-  const rTxt = Math.max(tw,th)/2;   // simple circular approx
-
-  // Hide original text while floating
-  qt.style.visibility='hidden';
-
-  // Initial velocity: gentle upward drift with slight horizontal bias
-  let vx = (Math.random()*40 - 20);   // px/s
-  let vy = - (30 + Math.random()*25); // px/s (up)
-
-  // Painting circles (colliders)
-  const colliders = Array.from(document.querySelectorAll('#midRing .mnode')).map(el=>{
-    const b = el.getBoundingClientRect();
-    return {cx: b.left + b.width/2, cy: b.top + b.height/2, r: b.width/2 + 3};
-  });
-
-  // Animation loop
-  let last = performance.now();
-  function loop(now){
-    const dt = Math.min(0.033, (now-last)/1000); last = now; // cap dt
-
-    // Move
-    x += vx*dt;
-    y += vy*dt;
-
-    // Gentle upward buoyancy (reduce downward; we keep vy mostly negative)
-    vy -= 2*dt;
-
-    // Collide with painting circles
-    for(const c of colliders){
-      const dx = x - c.cx, dy = y - c.cy;
-      const dist = Math.hypot(dx,dy);
-      const minDist = (c.r + rTxt);
-      if(dist < minDist){
-        // push out
-        const nX = dx / (dist || 1), nY = dy / (dist || 1);
-        const overlap = (minDist - dist) + 0.5;
-        x += nX * overlap;
-        y += nY * overlap;
-        // reflect velocity
-        const dot = vx*nX + vy*nY;
-        vx = vx - 2*dot*nX;
-        vy = vy - 2*dot*nY;
-        // damp
-        vx *= 0.92; vy *= 0.92;
-      }
-    }
-
-    // Apply transform (keep the 1rpm bounded angle added to gentle rotation)
-    ft.style.transform = `translate(${x}px, ${y}px) translate(-50%,-50%) rotate(${currentAngle||0}deg)`;
-
-    // Disappear off top
-    if(y + rTxt < -20){
-      ft.remove();
-      return;
-    }
-    requestAnimationFrame(loop);
-  }
-  // Position immediately before first frame
-  ft.style.transform = `translate(${x}px, ${y}px) translate(-50%,-50%) rotate(${currentAngle||0}deg)`;
-  requestAnimationFrame(loop);
 }
 
 /* ===== Comet flourish (every 4th = 🌱, every 5th = 🌹) ===== */
