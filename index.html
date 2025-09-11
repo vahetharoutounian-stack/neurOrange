@@ -8,7 +8,7 @@
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
     --gap-deg:3;                 /* degrees of gap between wedges */
-    --inner-thick:34px;
+    --inner-thick:34px;          /* computed in JS as well */
     --outer-thick-mult:2.2;
     --emoji-font:18px;
     --glow:0 0 10px #000, 0 0 18px #000;
@@ -58,7 +58,17 @@
   .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),rgba(0,0,0,0));filter:blur(10px);pointer-events:none;z-index:-1}
 
   #question{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none}
-  #questionText{font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0}
+  #questionText{font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;display:inline-block;will-change:transform}
+  /* gentle rotation with random reversal */
+  @keyframes spinText { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  #questionText.spin { animation:spinText 24s linear infinite; }
+  #questionText.spin.rev { animation-direction:reverse; }
+
+  /* SVG rings rotate CW */
+  #innerSVG,#outerSVG{ transform-box: fill-box; transform-origin:50% 50%;
+                        animation:spinCW 60s linear infinite; }
+  #outerSVG{ animation-duration:70s; }
+  @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
   /* Emoji rings */
   #emojiWrapA,#emojiWrapB{z-index:4} .emojiRing{position:absolute;inset:0}
@@ -165,6 +175,12 @@ function sizeQuestion(){
   const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(4,Math.round(Math.max(w,h)*0.02));
   const D=Math.ceil(Math.max(w,h)+pad*2); b.style.width=D+'px'; b.style.height=D+'px';
   b.style.transform=prev||'translate(-50%,-50%) scale(0.90)';
+  // Start gentle text rotation with random direction flips
+  t.classList.add('spin');
+  (function flip(){
+    t.classList.toggle('rev', Math.random()<0.5);
+    setTimeout(flip, 4000 + Math.random()*6000); // change every 4–10s
+  })();
 }
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
   const toRad = d => d*Math.PI/180;
@@ -180,7 +196,7 @@ function drawRing(svgEl, sizePx, r0px, r1px, colors, gapDeg) {
   svgEl.style.width  = sizePx + 'px';
   svgEl.style.height = sizePx + 'px';
   const k  = 1000 / sizePx;               // px → viewBox units
-  const r0 = r0px * k, r1 = r1px * k;
+  const r0 = Math.max(2, r0px * k), r1 = r1px * k; // clamp r0 >= 2
   const cx = 500, cy = 500;
   const gap = Number(gapDeg) || 0;
   const n   = colors.length, slice = 360 / n;
@@ -222,11 +238,15 @@ function layoutRings() {
   innerWrap.style.width  = innerD + 'px';
   innerWrap.style.height = innerD + 'px';
 
+  // Make ring 1 extend *twice* toward the center => double thickness inward
+  const innerOuter = innerD / 2;
+  const innerInner = Math.max(2, innerOuter - innerThick * 2);
+
   drawRing(
     innerSVG,
     innerD,
-    (innerD / 2) - innerThick,
-    (innerD / 2),
+    innerInner,
+    innerOuter,
     BRIGHT.map(o => o.hex),
     parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3
   );
@@ -291,7 +311,7 @@ function layoutRings() {
     if(kind==='straight'){ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2}; P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2}; }
     else if(kind==='offcenter'){ const d=(Math.random()*0.35+0.15)*(W/2); const sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};
       P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};
-      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y+Math.sin(theta)*run/2+sh.y}; }
+      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y}; }
     else{ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       const bend=(Math.random()*0.5+0.3)*(W/2); C={x:center.x+n.x*(Math.random()<0.5?-bend:bend), y:center.y+n.y*(Math.random()<0.5?-bend:bend)}; }
@@ -316,6 +336,8 @@ function layoutRings() {
 (function boot(){
   const v=$('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
   buildMidNodes(); sizeQuestion(); layoutRings();
+
+  // start the gentle/random rotation of the question text (already set in sizeQuestion)
   addEventListener('resize', ()=>{ sizeQuestion(); layoutRings(); }, {passive:true});
 })();
 </script>
