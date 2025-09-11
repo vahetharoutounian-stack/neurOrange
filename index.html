@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
-<title>neurOrange — Home (ghost opponent slow flicker)</title>
+<title>neurOrange — Home (ghost flicker starts immediately + grow-out rings)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
@@ -65,17 +65,17 @@
 
   #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
 
-  /* Centered wrappers + grow-in animation */
+  /* Centered wrappers + grow-out animation FROM BEHIND BLACK CIRCLE */
   .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1); will-change:transform,opacity;}
-  .grow{ animation:ringGrow 1100ms cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0; }
-  #innerWrap.grow { animation-delay: 60ms;  }
-  #midWrap.grow   { animation-delay: 140ms; }
-  #outerWrap.grow { animation-delay: 220ms; }
-  #emojiWrapA.grow{ animation-delay: 300ms; }
-  #emojiWrapB.grow{ animation-delay: 380ms; }
+  .grow{ animation:ringGrow 1200ms cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0; }
+  #innerWrap.grow { animation-delay: 0ms;    }
+  #midWrap.grow   { animation-delay: 120ms;  }
+  #outerWrap.grow { animation-delay: 220ms;  }
+  #emojiWrapA.grow{ animation-delay: 340ms;  }
+  #emojiWrapB.grow{ animation-delay: 440ms;  }
   @keyframes ringGrow{
-    0%   { transform:translate(-50%,-50%) scale(.55); opacity:0 }
-    60%  { transform:translate(-50%,-50%) scale(1.06); opacity:1 }
+    0%   { transform:translate(-50%,-50%) scale(.12); opacity:0 } /* start tiny at center */
+    55%  { transform:translate(-50%,-50%) scale(1.06); opacity:1 }/* overshoot */
     100% { transform:translate(-50%,-50%) scale(1.00); opacity:1 }
   }
 
@@ -106,21 +106,22 @@
     100% { color:#FFFFFF; text-shadow:0 0 6px rgba(255,255,255,.35) }
   }
 
-  /* SVG rings rotate CW */
+  /* SVG rings rotate CW (rotation continues during grow-out) */
   #innerSVG,#outerSVG{ transform-box: fill-box; transform-origin:50% 50%;
                         animation:spinCW 60s linear infinite; }
   #outerSVG{ animation-duration:70s; }
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* GHOST WEDGE flicker (slower, less frequent) */
+  /* GHOST WEDGE flicker (slower, start immediately) */
   .ghost-wedge{
     fill: var(--c0);
     animation: ghostFlick var(--dur, 12s) ease-in-out infinite;
     animation-delay: var(--delay, 0s);
   }
   @keyframes ghostFlick{
-    0%, 88%, 100% { fill: var(--c0); }  /* mostly base color */
-    89%, 90%      { fill: var(--c1); }  /* brief single blip to opponent */
+    /* Mostly base, brief opponent blip */
+    0%, 88%, 100% { fill: var(--c0); }
+    89%, 90%      { fill: var(--c1); }
   }
 
   /* Emoji rings */
@@ -178,7 +179,7 @@
         <div class="halo" id="innerHalo"></div>
       </div>
 
-      <!-- Comet -->
+      <!-- Comet layer (for visual flourishes) -->
       <div id="cometField" class="wrapCenter"></div>
 
       <!-- Paintings -->
@@ -211,12 +212,11 @@ Dare to be orange</div></div>
     sizeQuestion(); layoutRings(); buildMidNodes();
     const v=document.getElementById('bgVideo');
     if(v){
-      // Show video only when it's actually ready/playing
-      v.addEventListener('playing', ()=> v.style.opacity = 1, {once:true});
-      v.addEventListener('loadeddata', ()=> v.style.opacity = 1, {once:true});
+      v.addEventListener('playing',   ()=> v.style.opacity = 1, {once:true});
+      v.addEventListener('loadeddata',()=> v.style.opacity = 1, {once:true});
       const p=v.play(); if(p&&p.catch) p.catch(()=>{});  // best effort
     }
-    // scale-in animation for all rings
+    // grow-out from the center for all rings/sets
     ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
       const el=document.getElementById(id); if(el){ el.classList.add('grow'); }
     });
@@ -299,7 +299,7 @@ function drawRing(svgEl, sizePx, r0px, r1px, colors, gapDeg) {
   }
 }
 
-/* Draw ghost outer ring with opponent *slow* flicker */
+/* Draw ghost outer ring with opponent slow flicker (starts immediately) */
 function drawGhostRing(svgEl, sizePx, r0px, r1px, ghostHexes, gapDeg){
   svgEl.setAttribute('viewBox', '0 0 1000 1000');
   svgEl.style.width  = sizePx + 'px';
@@ -319,9 +319,11 @@ function drawGhostRing(svgEl, sizePx, r0px, r1px, ghostHexes, gapDeg){
     path.classList.add('ghost-wedge');
     path.style.setProperty('--c0', base);
     path.style.setProperty('--c1', opp);
-    // Slower cycle (10–16s) and wider, staggered delays
-    path.style.setProperty('--dur',   (10 + Math.random()*6).toFixed(2) + 's');
-    path.style.setProperty('--delay', (i*0.40 + Math.random()*0.80).toFixed(2) + 's');
+    // Slower cycle (10–16s) AND START MID-CYCLE using NEGATIVE delay so it begins immediately.
+    const durSec   = 10 + Math.random()*6;
+    const phaseSec = Math.random()*durSec; /* random phase so wedges aren’t synced */
+    path.style.setProperty('--dur',   durSec.toFixed(2) + 's');
+    path.style.setProperty('--delay', (-phaseSec).toFixed(2) + 's');  // negative: start in-progress NOW
     path.setAttribute('stroke','rgba(0,0,0,.18)');
     path.setAttribute('stroke-width','1');
     svgEl.appendChild(path);
@@ -383,7 +385,7 @@ function layoutRings() {
     n.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
   });
 
-  // ----- Outer ring (ghosts with slow opponent flicker) -----
+  // ----- Outer ring (ghosts with slow opponent flicker that starts immediately) -----
   const outerInnerR = midR + nodeD / 2 + margin;         // px
   const outerThick  = innerThick * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult')) || 2.2);
   const outerOuterR = Math.max(outerInnerR + outerThick, W / 2 + 8);  // px
@@ -452,7 +454,7 @@ function startBoundedSpin(){
   spinRAF = requestAnimationFrame(step);
 }
 
-/* ===== Comet flourish (every 4th = 🌱, every 5th = 🌹) ===== */
+/* ===== Comet flourish (every 4th = 🌱, every 5th = 🌹, others 🟠) ===== */
 (function comet(){
   const field=document.getElementById('cometField');
   let cometCount = 0;
@@ -471,7 +473,6 @@ function startBoundedSpin(){
     const comet=document.createElement('div'); comet.className='comet';
     const stk=document.createElement('div'); stk.className='cometStack';
 
-    // Priority: every 5th 🌹, else every 4th 🌱, else 🟠
     const top=document.createElement('div'); top.className='top';
     top.innerHTML = (cometCount % 5 === 0) ? '🌹' :
                     (cometCount % 4 === 0) ? '🌱' : '🟠';
@@ -495,7 +496,7 @@ function startBoundedSpin(){
 (function boot(){
   const v=document.getElementById('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; /* reveal opacity on 'playing'/'loadeddata' */ }
   buildMidNodes(); sizeQuestion(); layoutRings();
-  // trigger the scale-in on initial load (also happens after intro)
+  // trigger the grow-out on initial load (also happens after intro)
   ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
     const el=document.getElementById(id); if(el){ el.classList.add('grow'); }
   });
