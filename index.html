@@ -3,20 +3,27 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — Home (bounded 1 rpm text)</title>
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<title>neurOrange — Home (white-screen proof)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
-    --gap-deg:3;                 /* degrees of gap between wedges */
+    --gap-deg:3;                 /* wedge gap (deg) */
     --inner-thick:34px;          /* also computed in JS */
     --outer-thick-mult:2.2;
     --emoji-font:18px;
     --glow:0 0 10px #000, 0 0 18px #000;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:#000;color:#fff;
+  html,body{margin:0;min-height:100%;background:#000;color:#fff;
             font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
             -webkit-font-smoothing:antialiased;overflow:hidden}
+
+  /* ===== BLACK FAILSAFE (removed once frame paints) ===== */
+  #failsafe{
+    position:fixed; inset:0; background:#000; z-index:100000; opacity:1; transition:opacity .25s ease;
+  }
 
   /* ===== Intro (tap-to-enter) ===== */
   #intro{
@@ -43,7 +50,8 @@
   #brand{font-weight:900;letter-spacing:.12em;font-size:clamp(18px,5vw,32px);color:#FFA500}
 
   #bgLayer{position:absolute;inset:0;z-index:1}
-  #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  /* HIDE VIDEO UNTIL IT'S READY  */
+  #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000; opacity:0; transition:opacity .4s ease;}
   .fogWrap{position:absolute;inset:-30%;z-index:0;pointer-events:none;
     -webkit-mask-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,1) 62%,rgba(0,0,0,0) 100%);
             mask-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,1) 62%,rgba(0,0,0,0) 100%)}
@@ -126,6 +134,9 @@
 </head>
 <body>
 
+<!-- Black failsafe -->
+<div id="failsafe"></div>
+
 <!-- Intro overlay -->
 <div id="intro" role="button" aria-label="Tap to enter neurOrange">
   <div class="intro-stack">
@@ -176,14 +187,24 @@ Dare to be orange</div></div>
 </div>
 
 <script>
+/* ===== Remove failsafe after first paint ===== */
+(function killFailsafe(){
+  const fs = document.getElementById('failsafe');
+  requestAnimationFrame(()=>{ fs.style.opacity = 0; setTimeout(()=>fs.remove(), 300); });
+})();
+
 /* ===== Intro logic (tap → fade away) + layout kick ===== */
 (function introOnce(){
   const intro=document.getElementById('intro');
   function layoutKick(){ try{
-    if(typeof sizeQuestion==='function') sizeQuestion();
-    if(typeof layoutRings==='function') layoutRings();
-    if(typeof buildMidNodes==='function' && !document.querySelector('#midRing .mnode')) buildMidNodes();
-    const v=document.getElementById('bgVideo'); if(v && v.paused){ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
+    sizeQuestion(); layoutRings(); buildMidNodes();
+    const v=document.getElementById('bgVideo');
+    if(v){
+      // Show video only when it's actually ready/playing
+      v.addEventListener('playing', ()=> v.style.opacity = 1, {once:true});
+      v.addEventListener('loadeddata', ()=> v.style.opacity = 1, {once:true});
+      const p=v.play(); if(p&&p.catch) p.catch(()=>{});  // best effort
+    }
     // scale-in animation for all rings
     ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
       const el=document.getElementById(id); if(el){ el.classList.add('grow'); }
@@ -210,12 +231,11 @@ const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127
 function $(id){return document.getElementById(id)}
 function sizeQuestion(){
   const b=$('question'), t=$('questionText');
-  // perfect centering + adequate padding around text
   b.style.transform='translate(-50%,-50%) scale(1)';
   const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
   const D=Math.ceil(Math.max(w,h)+pad*2);
   b.style.width=D+'px'; b.style.height=D+'px';
-  startBoundedSpin();            // ensure the spin loop (1 rpm, ±45°) is running
+  startBoundedSpin();            // ensure 1 rpm ±45°
 }
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
   const toRad = d => d*Math.PI/180;
@@ -409,9 +429,8 @@ function startBoundedSpin(){
 
 /* ===== Boot ===== */
 (function boot(){
-  const v=$('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
+  const v=$('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; /* will reveal opacity on 'playing'/'loadeddata' */ }
   buildMidNodes(); sizeQuestion(); layoutRings();
-
   // trigger the scale-in on initial load (also happens after intro)
   ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
     const el=$(id); if(el){ el.classList.add('grow'); }
