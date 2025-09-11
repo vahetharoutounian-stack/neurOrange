@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
-<title>neurOrange — Home (ghost opponent flicker)</title>
+<title>neurOrange — Home (ghost opponent slow flicker)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
@@ -112,18 +112,15 @@
   #outerSVG{ animation-duration:70s; }
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* GHOST WEDGE flicker (opponent color) */
-  .ghost-wedge{ fill: var(--c0); animation: ghostFlick 4.6s ease-in-out infinite; }
+  /* GHOST WEDGE flicker (slower, less frequent) */
+  .ghost-wedge{
+    fill: var(--c0);
+    animation: ghostFlick var(--dur, 12s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
   @keyframes ghostFlick{
-    0%   { fill: var(--c0); }
-    12%  { fill: var(--c1); }
-    18%  { fill: var(--c0); }
-    26%  { fill: var(--c1); }
-    32%  { fill: var(--c0); }
-    55%  { fill: var(--c0); }
-    60%  { fill: var(--c1); }
-    65%  { fill: var(--c0); }
-    100% { fill: var(--c0); }
+    0%, 88%, 100% { fill: var(--c0); }  /* mostly base color */
+    89%, 90%      { fill: var(--c1); }  /* brief single blip to opponent */
   }
 
   /* Emoji rings */
@@ -302,7 +299,7 @@ function drawRing(svgEl, sizePx, r0px, r1px, colors, gapDeg) {
   }
 }
 
-/* Draw ghost outer ring with opponent flicker */
+/* Draw ghost outer ring with opponent *slow* flicker */
 function drawGhostRing(svgEl, sizePx, r0px, r1px, ghostHexes, gapDeg){
   svgEl.setAttribute('viewBox', '0 0 1000 1000');
   svgEl.style.width  = sizePx + 'px';
@@ -322,11 +319,9 @@ function drawGhostRing(svgEl, sizePx, r0px, r1px, ghostHexes, gapDeg){
     path.classList.add('ghost-wedge');
     path.style.setProperty('--c0', base);
     path.style.setProperty('--c1', opp);
-    // Stagger flicker timing a bit so wedges don't sync
-    const dur = (4.2 + Math.random()*1.2).toFixed(2) + 's';
-    const delay = (i*0.15 + Math.random()*0.2).toFixed(2) + 's';
-    path.style.animationDuration = dur;
-    path.style.animationDelay = delay;
+    // Slower cycle (10–16s) and wider, staggered delays
+    path.style.setProperty('--dur',   (10 + Math.random()*6).toFixed(2) + 's');
+    path.style.setProperty('--delay', (i*0.40 + Math.random()*0.80).toFixed(2) + 's');
     path.setAttribute('stroke','rgba(0,0,0,.18)');
     path.setAttribute('stroke-width','1');
     svgEl.appendChild(path);
@@ -388,7 +383,7 @@ function layoutRings() {
     n.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
   });
 
-  // ----- Outer ring (ghosts with opponent flicker) -----
+  // ----- Outer ring (ghosts with slow opponent flicker) -----
   const outerInnerR = midR + nodeD / 2 + margin;         // px
   const outerThick  = innerThick * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult')) || 2.2);
   const outerOuterR = Math.max(outerInnerR + outerThick, W / 2 + 8);  // px
