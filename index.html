@@ -1,26 +1,192 @@
-// Draw a donut ring as SVG wedges (sizePx = wrapper size in CSS pixels).
-// r0px / r1px are radii in *pixels*; we scale to the 1000×1000 viewBox.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>neurOrange — Home (SVG Rings, Centered & Scaled)</title>
+<style>
+  :root{
+    --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
+    --gap-deg:3;                 /* degrees of gap between wedges */
+    --inner-thick:34px;
+    --outer-thick-mult:2.2;
+    --emoji-font:18px;
+    --glow:0 0 10px #000, 0 0 18px #000;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#000;color:#fff;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;-webkit-font-smoothing:antialiased;overflow:hidden}
+
+  /* ===== Intro (tap-to-enter) ===== */
+  #intro{
+    position:fixed; inset:0; background:#000; display:grid; place-items:center;
+    z-index:9999; opacity:1; pointer-events:auto; transition:opacity 900ms ease;
+  }
+  #intro.hidden{ opacity:0; pointer-events:none; }
+  .intro-stack{ display:grid; justify-items:center; gap:1.2rem; }
+  .intro-emoji{ font-size:clamp(96px,28vw,220px); line-height:1;
+    filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25)); user-select:none; }
+  .intro-title{ font-weight:900; letter-spacing:.14em; font-size:clamp(20px,7vw,48px);
+    color:var(--bergamot); text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);
+    animation:titlePulse 2.2s ease-in-out infinite; }
+  @keyframes titlePulse{
+    0%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
+    50%{color:var(--pure);    text-shadow:0 0 14px rgba(255,165,0,.65), 0 0 34px rgba(255,165,0,.45)}
+    100%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
+  }
+
+  /* ===== Scene ===== */
+  #phone{position:fixed;inset:0;display:grid;place-items:center}
+  #canvas{position:relative;width:100%;height:100%;overflow:hidden;background:#000}
+  #brandBar{position:absolute;left:0;right:0;top:10px;display:flex;justify-content:center;z-index:6;filter:drop-shadow(var(--glow))}
+  #brand{font-weight:900;letter-spacing:.12em;font-size:clamp(18px,5vw,32px);color:#FFA500}
+
+  #bgLayer{position:absolute;inset:0;z-index:1}
+  #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  .fogWrap{position:absolute;inset:-30%;z-index:0;pointer-events:none;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,1) 62%,rgba(0,0,0,0) 100%);
+            mask-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,1) 62%,rgba(0,0,0,0) 100%)}
+  .fog{position:absolute;inset:0;mix-blend-mode:screen;filter:blur(60px) saturate(120%);
+       background:
+        radial-gradient(28% 22% at 20% 30%,var(--nick) 0 55%,transparent 60%),
+        radial-gradient(28% 24% at 80% 40%,var(--nick) 0 55%,transparent 60%),
+        radial-gradient(30% 22% at 40% 70%,var(--nick) 0 55%,transparent 60%);
+       animation:fog1 26s linear infinite alternate;opacity:.62}
+  @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
+
+  #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
+  .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)} .spin{position:absolute;inset:0}
+  .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),rgba(0,0,0,0));filter:blur(10px);pointer-events:none;z-index:-1}
+
+  #question{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none}
+  #questionText{font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0}
+
+  /* Emoji rings */
+  #emojiWrapA,#emojiWrapB{z-index:4} .emojiRing{position:absolute;inset:0}
+  .emojiSpin{position:absolute;inset:0;animation:spinCCW var(--dur,60s) linear infinite}
+  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+  .emoji{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:var(--emoji-font);border:none;border-radius:10px;background:rgba(0,0,0,.08);padding:1px 3px;filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
+
+  /* Paintings */
+  #midWrap{z-index:8} #midSpin{animation:spinCCW 56s linear infinite;filter:drop-shadow(var(--glow))} #midRing{position:absolute;inset:0}
+  .mnode{position:absolute;top:50%;left:50%;border-radius:50%;transform:translate(-50%,-50%);background:#111;overflow:hidden;border:1.5px solid #000;filter:drop-shadow(var(--glow))}
+  .mnode.withCloud::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% + 16px);height:calc(100% + 16px);border-radius:inherit;background:radial-gradient(closest-side,rgba(0,0,0,.38),rgba(0,0,0,0));filter:blur(8px);pointer-events:none}
+  .mnode img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;animation:upright 56s linear infinite;transform-origin:center;backface-visibility:hidden;will-change:transform}
+  @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+  /* Optional fade+quote overlay (not used for intro) */
+  #outro{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;transition:opacity 1.2s ease}
+  #outro.show{opacity:1;pointer-events:auto}
+  #quote{text-align:center;white-space:pre-line;font-weight:900;font-style:italic;letter-spacing:.02em;font-size:clamp(18px,5.2vw,30px);line-height:1.25;color:#FFA64D;text-shadow:0 0 10px rgba(0,0,0,.8),0 0 30px rgba(255,166,77,.25);opacity:0;animation:quoteIn 1.2s ease forwards;animation-delay:1s}
+  @keyframes quoteIn{to{opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- Intro overlay -->
+<div id="intro" role="button" aria-label="Tap to enter neurOrange">
+  <div class="intro-stack">
+    <div class="intro-emoji" aria-hidden="true">🍊</div>
+    <div class="intro-title">neurOrange</div>
+  </div>
+</div>
+
+<div id="phone">
+  <div id="canvas">
+    <div id="brandBar"><div id="brand">neurOrange</div></div>
+
+    <div id="bgLayer">
+      <video id="bgVideo" muted playsinline webkit-playsinline preload="auto"></video>
+      <div class="fogWrap"><div class="fog"></div></div>
+    </div>
+
+    <div id="focus">
+      <!-- Outer ring (SVG) -->
+      <div id="outerWrap" class="wrapCenter">
+        <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg>
+        <div class="halo" id="outerHalo"></div>
+      </div>
+
+      <!-- Inner ring (SVG) -->
+      <div id="innerWrap" class="wrapCenter">
+        <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg>
+        <div class="halo" id="innerHalo"></div>
+      </div>
+
+      <!-- Comet -->
+      <div id="cometField" class="wrapCenter"></div>
+
+      <!-- Paintings -->
+      <div id="midWrap" class="wrapCenter"><div id="midSpin" class="spin"><div id="midRing"></div></div></div>
+
+      <!-- Emoji rings -->
+      <div id="emojiWrapA" class="wrapCenter"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
+      <div id="emojiWrapB" class="wrapCenter"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
+
+      <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
+    </div>
+
+    <div id="outro"><div id="quote">In a world full of yellows and reds
+Dare to be orange</div></div>
+  </div>
+</div>
+
+<script>
+/* ===== Intro logic (tap → fade away) + layout kick ===== */
+(function introOnce(){
+  const intro=document.getElementById('intro');
+  function layoutKick(){ try{
+    if(typeof sizeQuestion==='function') sizeQuestion();
+    if(typeof layoutRings==='function') layoutRings();
+    if(typeof buildMidNodes==='function' && !document.querySelector('#midRing .mnode')) buildMidNodes();
+    const v=document.getElementById('bgVideo'); if(v && v.paused){ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
+    setTimeout(()=>window.dispatchEvent(new Event('resize')),0);
+  }catch(e){}}
+  function dismiss(){ intro.classList.add('hidden'); setTimeout(()=>{ intro.remove(); requestAnimationFrame(layoutKick); },950); }
+  function onTap(e){ e.preventDefault(); e.stopPropagation(); dismiss(); }
+  function onKey(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); dismiss(); } }
+  document.addEventListener('pointerdown',onTap,{once:true,capture:true});
+  document.addEventListener('keydown',onKey,{once:true,capture:true});
+})();
+
+/* ===== Palettes ===== */
+const BRIGHT=[
+  {hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},
+  {hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},
+  {hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}
+];
+const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
+const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;"];
+
+/* ===== Helpers ===== */
+function $(id){return document.getElementById(id)}
+function sizeQuestion(){
+  const b=$('question'), t=$('questionText');
+  const prev=b.style.transform; b.style.transform='translate(-50%,-50%) scale(1)';
+  const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(4,Math.round(Math.max(w,h)*0.02));
+  const D=Math.ceil(Math.max(w,h)+pad*2); b.style.width=D+'px'; b.style.height=D+'px';
+  b.style.transform=prev||'translate(-50%,-50%) scale(0.90)';
+}
+function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
+  const toRad = d => d*Math.PI/180;
+  const a0=toRad(a0Deg), a1=toRad(a1Deg);
+  const P = (r,a)=>({x:cx + r*Math.cos(a), y:cy + r*Math.sin(a)});
+  const A = P(r1,a0), B = P(r1,a1), C = P(r0,a1), D = P(r0,a0);
+  const large = (a1Deg - a0Deg) > 180 ? 1 : 0;
+  return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`;
+}
+// Draw donut ring as SVG wedges; radii are in *pixels* and scaled to 1000×1000 viewBox
 function drawRing(svgEl, sizePx, r0px, r1px, colors, gapDeg) {
-  // Ensure the SVG uses a 1000×1000 coordinate space
   svgEl.setAttribute('viewBox', '0 0 1000 1000');
-  // CSS size of the SVG (will fill the wrapper)
   svgEl.style.width  = sizePx + 'px';
   svgEl.style.height = sizePx + 'px';
-
-  // Convert pixel radii to viewBox units
-  const k  = 1000 / sizePx;
-  const r0 = r0px * k;
-  const r1 = r1px * k;
-
+  const k  = 1000 / sizePx;               // px → viewBox units
+  const r0 = r0px * k, r1 = r1px * k;
   const cx = 500, cy = 500;
   const gap = Number(gapDeg) || 0;
-  const n   = colors.length;
-  const slice = 360 / n;
-
+  const n   = colors.length, slice = 360 / n;
   svgEl.innerHTML = '';
   for (let i = 0; i < n; i++) {
-    const a0 = i * slice;
-    const a1 = (i + 1) * slice - gap;
+    const a0 = i * slice, a1 = (i + 1) * slice - gap;
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', wedgePath(cx, cy, r0, r1, a0, a1));
     path.setAttribute('fill', colors[i]);
@@ -29,3 +195,129 @@ function drawRing(svgEl, sizePx, r0px, r1px, colors, gapDeg) {
     svgEl.appendChild(path);
   }
 }
+
+/* ===== Build paintings ===== */
+function buildMidNodes(){
+  const mid=$('midRing'); mid.innerHTML='';
+  for(let i=1;i<=6;i++){
+    const n=document.createElement('div'); n.className='mnode withCloud';
+    const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`;
+    n.appendChild(img); mid.appendChild(n);
+  }
+}
+
+/* ===== Layout (SVG rings) ===== */
+function layoutRings() {
+  const innerSVG = $('innerSVG'), outerSVG = $('outerSVG');
+  const innerWrap = $('innerWrap'), outerWrap = $('outerWrap'), midRing = $('midRing');
+
+  const W = innerWidth, H = innerHeight, S = Math.min(W, H);
+  document.documentElement.style.setProperty('--emoji-font', Math.round(W * 0.036) + 'px');
+
+  // ----- Inner ring -----
+  const innerD     = Math.round(S * 0.58);               // wrapper size in px
+  const innerThick = Math.max(16, Math.round(innerD * 0.12));
+  document.documentElement.style.setProperty('--inner-thick', innerThick + 'px');
+
+  innerWrap.style.width  = innerD + 'px';
+  innerWrap.style.height = innerD + 'px';
+
+  drawRing(
+    innerSVG,
+    innerD,
+    (innerD / 2) - innerThick,
+    (innerD / 2),
+    BRIGHT.map(o => o.hex),
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3
+  );
+
+  // ----- Paintings around inner -----
+  const nodeD  = Math.round(innerThick * 0.85 * 5.25 * 0.82);
+  const margin = 2;
+  const midR   = Math.max(0, (W / 2) - (nodeD / 2) - margin);
+  const N      = 6, step = 2 * Math.PI / N;
+  const nodes  = midRing.querySelectorAll('.mnode');
+  nodes.forEach((n, i) => {
+    const a = i * step, x = Math.cos(a) * midR, y = Math.sin(a) * midR;
+    n.style.width  = nodeD + 'px';
+    n.style.height = nodeD + 'px';
+    n.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+  });
+
+  // ----- Outer ring -----
+  const outerInnerR = midR + nodeD / 2 + margin;         // px
+  const outerThick  = innerThick * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult')) || 2.2);
+  const outerOuterR = Math.max(outerInnerR + outerThick, W / 2 + 8);  // px
+  const outD        = Math.round(outerOuterR * 2);        // wrapper size in px
+
+  outerWrap.style.width  = outD + 'px';
+  outerWrap.style.height = outD + 'px';
+
+  drawRing(
+    outerSVG,
+    outD,
+    outerInnerR,
+    outerOuterR,
+    GHOSTS,
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3
+  );
+
+  // ----- Emoji orbits (outside outer ring) -----
+  const gap = Math.max(8, Math.round(S * 0.014));
+  const rA  = outerOuterR + gap;
+  const rB  = rA + Math.max(22, Math.round(S * 0.028));
+  const place = (wrapId, R, phase = 0) => {
+    const container = $(wrapId).querySelector('.emojiRing');
+    container.innerHTML = '';
+    const n = 12;
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('div'); d.className='emoji'; d.innerHTML = EMOJIS[i % EMOJIS.length];
+      const a = i * (2 * Math.PI / n) + phase, x = Math.cos(a) * R, y = Math.sin(a) * R;
+      d.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      container.appendChild(d);
+    }
+  };
+  place('emojiWrapA', rA, 0);
+  place('emojiWrapB', rB, (Math.PI * 2) / (12 * 2));
+}
+
+/* ===== Comet flourish ===== */
+(function comet(){
+  const field=$('cometField');
+  function spawn(){
+    const W=innerWidth,H=innerHeight, run=Math.max(W,H)+400, theta=Math.random()*Math.PI*2;
+    const kinds=['straight','offcenter','curved']; const kind=kinds[Math.floor(Math.random()*kinds.length)];
+    const n={x:-Math.sin(theta),y:Math.cos(theta)}, dur=4.8+Math.random()*3.0; let P0,P1,C; const center={x:0,y:0};
+    if(kind==='straight'){ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2}; P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2}; }
+    else if(kind==='offcenter'){ const d=(Math.random()*0.35+0.15)*(W/2); const sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};
+      P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};
+      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y+Math.sin(theta)*run/2+sh.y}; }
+    else{ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
+      P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
+      const bend=(Math.random()*0.5+0.3)*(W/2); C={x:center.x+n.x*(Math.random()<0.5?-bend:bend), y:center.y+n.y*(Math.random()<0.5?-bend:bend)}; }
+    const comet=document.createElement('div'); comet.className='comet';
+    const stk=document.createElement('div'); stk.className='cometStack';
+    const top=document.createElement('div'); top.className='top'; top.innerHTML='&#128992;';
+    const tail=document.createElement('div'); tail.innerHTML='&#x2604;&#xFE0F;';
+    stk.appendChild(top); stk.appendChild(tail); comet.appendChild(stk); field.appendChild(comet);
+    let t0=null; function lerp(a,b,t){return a+(b-a)*t}
+    function draw(now){ if(!t0)t0=now; const u=Math.min(1,(now-t0)/(dur*1000)); let x,y;
+      if(C){ const one=1-u; x=one*one*P0.x + 2*one*u*C.x + u*u*P1.x; y=one*one*P0.y + 2*one*u*C.y + u*u*P1.y; }
+      else{ x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u); }
+      comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      if(u<1) requestAnimationFrame(draw); else comet.remove();
+    }
+    requestAnimationFrame(draw);
+  }
+  (function loop(){ spawn(); setTimeout(loop, 7000 + Math.random()*5000); })();
+})();
+
+/* ===== Boot ===== */
+(function boot(){
+  const v=$('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }
+  buildMidNodes(); sizeQuestion(); layoutRings();
+  addEventListener('resize', ()=>{ sizeQuestion(); layoutRings(); }, {passive:true});
+})();
+</script>
+</body>
+</html>
