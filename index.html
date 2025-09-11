@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>neurOrange — Home (SVG Rings, Centered & Animated)</title>
+<title>neurOrange — Home (bounded text rotation + subtle breathing)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
@@ -76,26 +76,21 @@
 
   /* Center prompt (fixed, centered) */
   #question{
-    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%) scale(1);           /* hard center */
     display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;
     z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none;
-    animation:breathe 6s ease-in-out infinite;            /* subtle size pulsing */
+    animation:breathe 7s ease-in-out infinite;          /* subtler breathing */
   }
   @keyframes breathe{
     0%,100%{transform:translate(-50%,-50%) scale(1.00)}
-    50%    {transform:translate(-50%,-50%) scale(1.04)}
+    50%    {transform:translate(-50%,-50%) scale(1.02)}
   }
   #questionText{
     font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;
     display:inline-block; transform-origin:50% 50%;
-    /* gentle rotation in place; direction toggled by JS */
-    animation-name: gentleSpin, colorPulse;
-    animation-duration: 24s, 5.5s;
-    animation-timing-function: linear, ease-in-out;
-    animation-iteration-count: infinite, infinite;
-    animation-direction: normal, normal;  /* JS flips first term to reverse */
+    animation: colorPulse 5.5s ease-in-out infinite;     /* white → bergamot → pure → white */
   }
-  @keyframes gentleSpin{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes colorPulse{
     0%   { color:#FFFFFF; text-shadow:0 0 6px rgba(255,255,255,.35) }
     33%  { color:var(--bergamot); text-shadow:0 0 8px rgba(255,166,77,.45) }
@@ -220,19 +215,7 @@ function sizeQuestion(){
   const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
   const D=Math.ceil(Math.max(w,h)+pad*2);
   b.style.width=D+'px'; b.style.height=D+'px';
-
-  // Randomly flip only the *first* animation direction (gentleSpin) every 4–10s
-  function flipDir(){
-    // Read current per-animation directions
-    const base = getComputedStyle(t).animationDirection.split(',').map(s=>s.trim());
-    // Toggle first entry normal<->reverse; keep second (color pulse) untouched
-    base[0] = (base[0] === 'reverse') ? 'normal' : 'reverse';
-    t.style.animationDirection = base.join(', ');
-    setTimeout(flipDir, 4000 + Math.random()*6000);
-  }
-  // Initialize directions explicitly (spin:normal, colorPulse:normal)
-  t.style.animationDirection = 'normal, normal';
-  setTimeout(flipDir, 4000 + Math.random()*6000);
+  startBoundedSpin();                        // (re)start the bounded rotation if needed
 }
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
   const toRad = d => d*Math.PI/180;
@@ -353,6 +336,39 @@ function layoutRings() {
   place('emojiWrapB', rB, (Math.PI * 2) / (12 * 2));
 }
 
+/* ===== Bounded rotation for “What are you feeling?” ===== */
+let spinRAF, spinStarted=false;
+function startBoundedSpin(){
+  if(spinStarted) return; spinStarted=true;
+  const t = document.getElementById('questionText');
+  let angle = 0;                // current angle (deg)
+  let dir   = Math.random()<0.5 ? 1 : -1;  // +1 or -1
+  let speed = 12;               // deg / second (gentle)
+  let changeTimer = 3 + Math.random()*5;  // seconds until optional random flip
+  let last = performance.now();
+
+  function step(now){
+    const dt = (now - last)/1000; last = now;
+    // update angle
+    angle += dir * speed * dt;
+
+    // clamp to ±45°, bounce if hit
+    if(angle > 45){ angle = 45; dir = -1; }
+    if(angle < -45){ angle = -45; dir =  1; }
+
+    // occasionally flip direction randomly inside bounds
+    changeTimer -= dt;
+    if(changeTimer <= 0){
+      if(Math.random() < 0.35){ dir *= -1; }
+      changeTimer = 3 + Math.random()*5;
+    }
+
+    t.style.transform = `rotate(${angle.toFixed(3)}deg)`;
+    spinRAF = requestAnimationFrame(step);
+  }
+  spinRAF = requestAnimationFrame(step);
+}
+
 /* ===== Comet flourish (every 5th = 🌹) ===== */
 (function comet(){
   const field=$('cometField');
@@ -365,7 +381,7 @@ function layoutRings() {
     if(kind==='straight'){ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2}; P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2}; }
     else if(kind==='offcenter'){ const d=(Math.random()*0.35+0.15)*(W/2); const sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};
       P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};
-      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y+Math.sin(theta)*run/2+sh.y}; }
+      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y}; }
     else{ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       const bend=(Math.random()*0.5+0.3)*(W/2); C={x:center.x+n.x*(Math.random()<0.5?-bend:bend), y:center.y+n.y*(Math.random()<0.5?-bend:bend)}; }
