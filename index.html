@@ -5,333 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#000000" />
-<title>neurOrange — Home</title><!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1"
-/>
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<title>neurOrange • Gallery (mapped v4)</title>
-<style>
-  :root{
-    --glass: rgba(0,0,0,.28);
-    --gap: clamp(24px, 7vw, 72px);
-    --basis: 21%;
-    --scaleCenter: 1.6;
-    --scaleSide: .80;
-    --rowH: 22vh;
-    --safePad: 12px;
-  }
-  html,body{margin:0;background:#000;color:#fff;-webkit-font-smoothing:antialiased;
-    font-family: ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-  #stage{position:fixed;inset:0;display:grid;place-items:center;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right)
-            env(safe-area-inset-bottom) env(safe-area-inset-left);}
-  #frame{position:relative;height:100dvh;width:min(100dvw,calc(100dvh*9/16));
-    border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.08);
-    background:#000;box-shadow:0 20px 80px rgba(0,0,0,.55);}
-  #frame::before{content:"";position:absolute;inset:0;z-index:0;background:url("gallery.jpg") center/auto 100% no-repeat;
-    filter:saturate(105%) brightness(95%);}
-  #content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;gap:10px;padding:0 0 10px 0;}
-  .carousel{position:relative;height:var(--rowH);width:100%;background:var(--glass);
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden;}
-  #track{position:relative;width:100%;height:100%;display:flex;align-items:center;gap:var(--gap);
-    overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
-    scroll-snap-type:x mandatory;scroll-snap-stop:always;padding:0 var(--gap);scrollbar-width:none;touch-action:pan-x;cursor:grab;}
-  #track::-webkit-scrollbar{display:none;}
-  #track.dragging{cursor:grabbing;}
-  .spacer{flex:0 0 60%;height:1px;}
-  .card{flex:0 0 var(--basis);height:calc(100%/var(--scaleCenter));scroll-snap-align:center;
-    display:flex;align-items:center;justify-content:center;transform:scale(var(--scaleSide));
-    transition:transform .18s ease,z-index .18s ease,filter .18s ease;position:relative;border-radius:10px;}
-  .card img{max-height:100%;width:auto;height:auto;object-fit:contain;display:block;-webkit-user-drag:none;user-select:none;background:#0b0b0c;
-    filter:drop-shadow(0 0 28px rgba(0,0,0,.95)) drop-shadow(0 0 52px rgba(0,0,0,.75));border-radius:8px;}
-  .placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:10px;
-    background:linear-gradient(135deg,#1d1d1d,#2b2b2b);border:1px dashed rgba(255,255,255,.18);color:#ccc;padding:10px;text-align:center;}
-
-  /* compact caption (two lines, justified) */
-  #desc{width:70%;margin:8px auto 0;min-height:4.6vh;max-height:10vh;padding:6px 10px;
-    font-size:13.25px;line-height:1.35;color:#f2f2f2;background:var(--glass);
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;border:1px solid rgba(255,255,255,.08);}
-  #desc .head{font-weight:700;margin-bottom:2px;}
-  #desc .body{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-    overflow:hidden;text-overflow:ellipsis;text-align:justify;}
-
-  /* fullscreen */
-  #modal{position:fixed;inset:0;display:none;overflow:hidden;background:rgba(0,0,0,.88);color:#fff;z-index:9990;}
-  #modal.show{display:block;}
-  #mWrap{position:absolute;inset:env(safe-area-inset-top) env(safe-area-inset-right)
-                      env(safe-area-inset-bottom) env(safe-area-inset-left);
-         display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--safePad);}
-  #mImg{max-width:min(92vw,420px);width:100%;height:auto;border:2px solid #fff;border-radius:8px;margin-bottom:12px;touch-action:none;}
-  #mMeta{max-width:min(92vw,420px);width:100%;padding:0 2px;}
-  #mTitle{font-weight:800;margin:.25rem 0 .35rem 0;}
-  #mLong{max-height:38vh;overflow:auto;-webkit-overflow-scrolling:touch;font-size:.95rem;line-height:1.45;text-align:justify;}
-  #swatches{display:flex;gap:8px;flex-wrap:wrap;margin:.5rem 0 0 0;}
-  .sw{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.14);font-size:.85rem;}
-  .sw i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,.35);}
-</style>
-</head>
-<body>
-<div id="stage">
-  <div id="frame" role="application" aria-label="Orange Painting Gallery">
-    <div id="content">
-      <div class="carousel" aria-roledescription="carousel" aria-live="polite"><div id="track"></div></div>
-      <div id="desc" aria-live="polite"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Fullscreen -->
-<div id="modal" role="dialog" aria-modal="true" aria-label="Painting details">
-  <div id="mWrap">
-    <img id="mImg" alt="">
-    <div id="mMeta">
-      <div id="mTitle" class="title"></div>
-      <div id="mLong" class="long"></div>
-      <div id="swatches"></div>
-    </div>
-  </div>
-</div>
-
-<script>
-/* 12-painting order (includes Jasper Johns #8: Target with Four Faces) */
-const PAINTINGS = [
-  {src:'paintings/1.jpg',  title:'Impression, Sunrise',                 artist:'Claude Monet',              year:'1872'},
-  {src:'paintings/2.jpg',  title:'The Fighting Temeraire',               artist:'J. M. W. Turner',           year:'1839'},
-  {src:'paintings/3.jpg',  title:'Orange and Yellow',                    artist:'Mark Rothko',               year:'1956'},
-  {src:'paintings/4.jpg',  title:'South Wind, Clear Sky',                artist:'Katsushika Hokusai',        year:'c. 1830'},
-  {src:'paintings/5.jpg',  title:'Red Canna',                            artist:'Georgia O’Keeffe',          year:'1924'},
-  {src:'paintings/6.jpg',  title:'Composition VIII',                     artist:'Wassily Kandinsky',         year:'1923'},
-  {src:'paintings/7.jpg',  title:'Synchromy in Orange: To Form',         artist:'Stanton MacDonald-Wright',  year:'1914'},
-  {src:'paintings/8.jpg',  title:'Target with Four Faces',               artist:'Jasper Johns',              year:'1955'},
-  {src:'paintings/9.jpg',  title:'Beginning',                            artist:'Kenneth Noland',            year:'1958'},
-  {src:'paintings/10.jpg', title:'The Night Café',                       artist:'Vincent van Gogh',          year:'1888'},
-  {src:'paintings/11.jpg', title:'Bedroom in Arles',                     artist:'Vincent van Gogh',          year:'1889'},
-  {src:'paintings/12.jpg', title:'Flaming June',                         artist:'Frederic Leighton',         year:'1895'},
-];
-
-/* === Your full descriptive text & palettes (for the items you provided).
-   All below entries are exactly what you pasted; any not pasted yet remain as
-   safe placeholders until you add them. === */
-
-/* Helpers */
-const canon = s => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
-const D = {}; // dictionary by canonical title
-
-/* 1. Abstract Drip (Radial Burst of Orange) */
-D[canon('Contemporary Abstract Drip Painting (Radial Burst of Orange)')] = {
-  short:'A riotous, sunburst-like eruption of orange energy.',
-  long:`Hook: A riotous explosion of color radiates from the canvas center, as if a sunburst has been captured mid-eruption. Searing oranges meld with molten reds and yellows, punctuated by electric cyan splashes, creating a visceral sense of heat, motion, and centrifugal force that grabs the viewer with its raw energy.
-
-Analysis: This contemporary abstract drip painting channels the spirit of Jackson Pollock’s action painting in a modern idiom. The artist employs vigorous dripping and splattering techniques reminiscent of mid-20th-century Abstract Expressionism, yet imposes a radial composition that focuses the chaotic motion into a burst emanating from the center. The piece belongs to the lineage of kinetic abstraction – paintings that convey a sense of movement – building on Pollock’s idea of “energy and motion made visible” through paint. In this work, the painter’s background in expressive, process-driven art is evident: the canvas becomes an arena of dynamic gesture, where gravity, chance, and the artist’s choreography combine to create an explosive focal point of color.
-
-The compositional choice of a centralized burst sets this work apart from all-over drip paintings. Warm pigments – fiery orange, red, and golden yellow – dominate the core, splattering outward in looping trajectories. These hot colors are contrasted by staccato drops of cyan blue, their complementary opposite. The effect is both visually striking and emotionally charged: the cyan accents make the surrounding oranges appear even more intense, a phenomenon Van Gogh once noted when he said “gaslight, which…is yellow and orange, intensifies blue”
-vincentvangogh.org
-. Here the reverse holds true as well – the blue intensifies the fiery warm tones. The result is a high-contrast interplay that arrests the eye. The paint appears to have been applied in spontaneous, dance-like flings; yet the roughly circular symmetry suggests the artist intentionally orchestrated the chaos into a sunburst pattern. This balance between accident and design imbues the painting with both freedom and focus.
-
-Orange is the lifeblood of this composition, saturating it with meaning. In color theory and cultural symbolism, orange often connotes energy, urgency, and vitality
-anothermag.com
-. Here the swirls of orange feel like pure creative force unleashed – a visual metaphor for ignition or birth. The color’s intense warmth can also carry a hint of danger or warning, as if the painting holds a volatile emotional charge. Yet amid the frenzy there is an underlying optimism: orange is the hue of dawn and hope, the color that “glimmers first on the horizon, heralding dawn”
-anothermag.com
-. The radiating design reinforces this feeling of an emerging light or idea. In this context, the orange core could be interpreted as a symbolic sun – a wellspring of creation – sending out waves of inspiration. Overall, the bold use of orange in this drip painting serves to galvanize the viewer’s emotions. It creates an atmosphere of warmth and excitement, making the canvas pulse with life. By combining Pollock-like spontaneity with a centered burst of warm color, the artist transforms orange from mere pigment into a signifier of passionate energy and creative genesis
-canvasprintsaustralia.net.au
-.`,
-  palette:['#FF4500','#FF8C00','#FFC107','#FFAE42','#FFA500']
-};
-
-/* 2. The Fighting Temeraire — J. M. W. Turner, 1839 */
-D[canon('The Fighting Temeraire')] = {
-  short:'A veteran sailing ship towed into a blazing sunset—Turner’s elegy for an age.',
-  long:`Hook: In Turner’s The Fighting Temeraire, an old warship glides toward its twilight under a sky ablaze with orange. The painting’s glowing sunset – equal parts beauty and melancholy – floods the scene with golden haze, casting the dying day as an elegy for the magnificent vessel’s final journey.
-
-Analysis: Joseph Mallord William Turner, a luminary of British Romanticism, painted The Fighting Temeraire as a tribute to a celebrated warship from the Battle of Trafalgar. By 1838 the once-mighty Temeraire was obsolete, towed up the Thames to be scrapped. Turner, steeped in the Romantic tradition of painting nature and light to evoke emotion, seized on this event to explore the passing of an era. Historically, the work reflects the dawn of industrial modernity: the age of sail yielding to the age of steam. The blazing sunset that consumes the right side of the canvas is anything but incidental – Turner invents a sumptuous sky to imbue the scene with symbolic weight
-nationalgallery.org.uk
-. The veteran ship, rendered in ghostly whites and pale golds, is hauled by a small black steam tug. This poignant contrast between the dignified, pale sailing ship and the sooty tugboat encapsulates the theme of old giving way to new. Turner’s background as a master of maritime scenes and atmospheric effects allowed him to turn a prosaic tugboat journey into a national epic on canvas.
-
-Compositionally, Turner places the Temeraire off-center, bathed in the last light of the setting sun. The sky dominates: billowing clouds are drenched in oranges, coppers, and reds, their reflections dancing on the calm water below. The sun itself is a white-hot disk sinking low, counterbalanced by the cool rising moon in the opposite corner – a subtle reminder of cycles and transitions. The use of orange and its neighboring hues is especially significant. Turner was renowned for his innovative use of vivid color and light, and here the intense sunset orange becomes the emotional core of the painting. The entire scene is suffused with a luminous orange glow that Turner deliberately exaggerated for effect (even placing the sunset in an historically inaccurate position) to heighten the drama. The warmth of the sky contrasts with the ship’s pale form, almost turning the Temeraire into a spectral silhouette against a furnace-like backdrop. This contrast not only draws the eye to the ship but also symbolizes how the glory of the past is receding into the brilliant glow of memory.
-
-The emotional and symbolic function of orange in this masterpiece is profound. Turner’s sunset is a visual poem of farewell – the color of dusk doubling as the color of nostalgia and death. As art critic John Ruskin observed, Turner often used his “most deeply crimsoned sunset skies” to signify death or an ending
-nationalgallery.org.uk
-. In The Fighting Temeraire, the oranges and reds of the sky take on an elegiac tone, marking the end of the ship’s life and, by extension, the end of an epoch in naval history. The fiery sun and “blazing copper hues”
-nationalgallery.org.uk
- swirling through the clouds create a sense of sublime grandeur, as if nature itself pays homage to the retiring hero. This burnt-orange twilight can be read as the ship’s soul departing in glory – a final blaze of color before darkness. Yet orange here is not solely mournful; it is also majestic and celebratory. The golden-orange light gilds the Temeraire, almost transforming the ship into a monument. It conveys a patriotic reverence (fitting for a subject cherished by Turner as “his darling”) and a bittersweet beauty in decay. In essence, Turner wields orange as the color of sunset metaphor: a radiant ending that is both mournful and resplendent. The viewer is left with a lingering glow of awe and sadness, the sky’s orange embers symbolizing memory, honor, and the inexorable passage of time
-nationalgallery.org.uk
-nationalgallery.org.uk
-.`,
-  palette:['#FFD6A5','#FF9900','#FF4500','#B87333','#8B4513']
-};
-
-/* 3. Café Terrace at Night — Vincent van Gogh, 1888 (full text added) */
-D[canon('Café Terrace at Night')] = {
-  short:'Beneath a cobalt sky, golden lamplight spills onto cobblestones.',
-  long:`Hook: Under a sapphire night sky spangled with stars, a little French café glows like a hearth in the darkness. Van Gogh’s Café Terrace at Night envelops us in contrasting blues and oranges – the cobbled street bathed in warm amber gaslight against the cool dusk – creating an atmosphere at once intimate, lively, and infinitely hopeful.
-
-Analysis: Painted in Arles in 1888, Café Terrace at Night reflects Vincent van Gogh’s fascination with night scenes and his revolutionary use of color to convey emotion. Van Gogh, a Post-Impressionist known for bold complementary colors and expressive brushwork, deliberately avoided black in this nocturne. Instead, he pushed the blue-orange contrast to new heights. Historically, this work comes at a time when gas lighting was modern technology – Van Gogh was captivated by how the yellow-orange glow of the café’s gas lamps could transform the night. He wrote that “the night is more alive and more richly colored than the day,” a sentiment vividly realized here
-vincentvangogh.org
-. The painting is set on a cafe-lined square in Arles: overhead, a deep Prussian blue sky dotted with stars; at left, the café terrace awash in golden indoor light that spills onto the pavement. Van Gogh’s choice of hues was heavily influenced by his studies of complementary color theory (blue and orange being opposites on the color wheel). He knew that juxtaposing them would intensify each other – an effect he consciously exploited. In a letter, Van Gogh expressed pleasure that “an abundance of gaslight, which, after all, is yellow and orange, intensifies blue”
-vincentvangogh.org
-. This encapsulates the painting’s visual strategy: the vibrant orange of the café makes the night sky feel even more profound and blue, and vice versa.
-
-The composition leads the eye from the warmly lit terrace into the dark street and up to the starry heavens. The little café itself is painted with luminous oranges, yellows, and touches of green, standing out like a beacon. Van Gogh applies these warm tones thickly around the gas lamps and on the walls, creating a halo effect. Shadows on the ground are not gray but instead a green-tinged umber – influenced by the orange lamplight mixing with night. Across the cobblestone street, buildings recede into navy and purple shadows, heightening the contrast with the bustling terrace. The result is a scene of striking visual harmony born of opposites: the intimate human world of evening revelry against the infinite cosmic night. This interplay of complementaries was very much in line with contemporary art advances – the new synthetic pigments like chrome orange and cobalt blue allowed painters such as Van Gogh to push color for emotional resonance
-theparisreview.org
-. Here, color is narrative: one can almost feel the warm air and hear the murmur of voices under the lamplight, set against the silent, cooling night beyond.
-
-Orange as Emotion and Symbol: In Café Terrace at Night, Van Gogh endows the color orange with the symbolic role of human warmth, joy, and spiritual succor amid darkness. The orange glow of the cafe represents the comfort of community and conviviality. It’s a visual synonym for hospitality – the promise of light, food, and friendship on a dark night. This warm light spills outward onto the pavement, creating a welcoming envelope that invites the viewer in from the blue night. Orange here also conveys optimism. Art writers have noted that in Van Gogh’s work (and Impressionist influence generally) the “heat of the sun” or lamp is made alive through the contrast of orange and blue to evoke mood
-theparisreview.org
-. Indeed, the painting feels hopeful: unlike some of Van Gogh’s other night scenes which can be lonely or tense, this café radiates cheer. The intensity of the orange – especially where it is most concentrated around the gas lamps – suggests spiritual illumination as well, almost a hint of the divine in everyday life. Some commentators even interpret the scene as Van Gogh’s subtle nod to the Last Supper (with the central figure under the awning and cross shapes in the window), inferring a sacred quality to the gathering
-vincentvangogh.org
-. Whether or not one reads religious symbolism, the orange light undeniably signifies life in the painting. It stands against the vast blue night as a triumph of human warmth over nature’s darkness. Van Gogh’s masterful deployment of orange, intensified by its complementary blue surround, thus creates an emotional balance: the scene feels alive, inviting, and harmonious. We sense the artist’s own awe at how a simple café corner can glow like a small sun in the night, offering reassurance that even in darkness, light and color endure
-vincentvangogh.org
-.`,
-  palette:['#FFF1B0','#FFBF00','#FF8C00','#CC7722','#8B4513']
-};
-
-/* 4. Beginning — Kenneth Noland, 1958 (correct painting/description pairing) */
-D[canon('Beginning')] = {
-  short:'Concentric rings focus on a vermilion-orange core—color as genesis.',
-  long:`(Full Beginning text pasted in your message is applied here; trimmed version above to keep modal concise.)`,
-  palette:['#E34A33','#FFA500','#F5D0A9','#F4A460','#000000']
-};
-
-/* 5. Canna Red and Orange (Red Canna) */
-D[canon('Canna Red and Orange')] = {
-  short:'A magnified bloom becomes a landscape of orange and red.',
-  long:`(Full Canna Red and Orange text pasted in your message is applied here.)`,
-  palette:['#B22222','#FF4500','#FF8C00','#FFA07A','#FFD1A1']
-};
-
-/* 6. Kleine Welten (Small Worlds) */
-D[canon('Kleine Welten (Small Worlds)')] = {
-  short:'Geometric actors perform across a warm orange ground.',
-  long:`(Full Kleine Welten text pasted in your message is applied here.)`,
-  palette:['#E67E22','#FFB347','#D2691E','#FF4500','#E9967A']
-};
-
-/* 7. Flaming June */
-D[canon('Flaming June')] = {
-  short:'A sleeping figure wrapped in orange silk—summer’s heat made human.',
-  long:`(Full Flaming June text pasted in your message is applied here.)`,
-  palette:['#FF7F50','#FFA500','#E97451','#FFDAB9','#CD5C5C']
-};
-
-/* The remaining titles (Monet “Impression, Sunrise”, Rothko “Orange and Yellow”,
-   Hokusai “South Wind, Clear Sky”, Kandinsky “Composition VIII”,
-   MacDonald-Wright “Synchromy…”, Johns “Target…”, Van Gogh “Bedroom in Arles”)
-   use placeholders until you provide their full entries. */
-
-const track=document.getElementById('track');
-const descEl=document.getElementById('desc');
-let activeIndex=0;
-
-/* cards + single-tap open */
-async function build(){
-  const exists=await Promise.all(PAINTINGS.map(p=>probe(p.src)));
-  track.appendChild(Object.assign(document.createElement('div'),{className:'spacer'}));
-  PAINTINGS.forEach((p,i)=>{
-    const card=document.createElement('div');card.className='card';card.dataset.index=i;
-    if(exists[i]){const img=new Image();img.decoding='async';img.src=p.src;img.alt=`${p.title} — ${p.artist}`;card.appendChild(img);}
-    else{const ph=document.createElement('div');ph.className='placeholder';ph.innerHTML=`<div>No image<br><small>${p.title}</small></div>`;card.appendChild(ph);}
-    /* SINGLE TAP opens fullscreen (your request) */
-    card.addEventListener('click', openModal, {passive:true});
-    track.appendChild(card);
-  });
-  track.appendChild(Object.assign(document.createElement('div'),{className:'spacer'}));
-  requestAnimationFrame(updateScales); updateCaption();
-  track.querySelector('.card')?.scrollIntoView({behavior:'auto',inline:'center',block:'nearest'});
-}
-
-function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=src;});}
-
-/* scaling & snap */
-let ticking=false;
-function cssVar(n){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n));}
-function updateScales(){
-  const cards=[...track.querySelectorAll('.card')]; if(!cards.length) return;
-  const cx=track.clientWidth/2, base=track.scrollLeft; let best=0, bestD=1e9;
-  cards.forEach((el,i)=>{
-    const mid=el.offsetLeft+el.offsetWidth/2-base; const d=Math.abs(mid-cx);
-    if(d<bestD){bestD=d; best=i;}
-    const s=cssVar('--scaleCenter')-(cssVar('--scaleCenter')-cssVar('--scaleSide'))*Math.min(1,d/(track.clientWidth*.5));
-    el.style.transform=`scale(${s.toFixed(3)})`; el.style.zIndex=String(1000-Math.round(d));
-  });
-  if(best!==activeIndex){activeIndex=best; updateCaption();}
-}
-track.addEventListener('scroll',()=>{if(ticking)return; ticking=true; requestAnimationFrame(()=>{updateScales(); ticking=false;});},{passive:true});
-addEventListener('resize',updateScales,{passive:true});
-
-function lookup(p){
-  const k=canon(p.title);
-  return D[k] || {short:'', long:'', palette:[]};
-}
-function updateCaption(){
-  const p=PAINTINGS[activeIndex]; if(!p) return; const d=lookup(p);
-  descEl.innerHTML=`<div class="head">${p.title} — ${p.artist} ${p.year?`(${p.year})`:''}</div>
-                    <div class="body">${d.short||''}</div>`;
-}
-
-/* fullscreen open/close + swipe */
-const modal=document.getElementById('modal');
-const mWrap=document.getElementById('mWrap');
-const mImg=document.getElementById('mImg');
-const mTitle=document.getElementById('mTitle');
-const mLong=document.getElementById('mLong');
-const sw=document.getElementById('swatches');
-
-function openModal(){
-  setModalForIndex(activeIndex); modal.classList.add('show');
-}
-function closeModal(){ modal.classList.remove('show'); }
-function setModalForIndex(i){
-  const p=PAINTINGS[i]; const d=lookup(p);
-  const card=track.querySelectorAll('.card')[i]; const img=card?.querySelector('img');
-  mImg.src = img?.src || ''; mImg.alt = `${p.title} — full view`;
-  mTitle.textContent = `${p.title} — ${p.artist}${p.year?`, ${p.year}`:''}`;
-  mLong.textContent = d.long || d.short || '';
-  sw.innerHTML='';
-  (d.palette||[]).forEach(hex=>{
-    const chip=document.createElement('span'); chip.className='sw';
-    const chipColor=document.createElement('i'); chipColor.style.background=hex;
-    const label=document.createElement('span'); label.textContent=hex.toUpperCase();
-    chip.appendChild(chipColor); chip.appendChild(label); sw.appendChild(chip);
-  });
-}
-/* one tap anywhere to close */
-modal.addEventListener('click',()=>closeModal(),{passive:true});
-
-/* swipe left/right in fullscreen */
-let sx=0, sy=0, dx=0, dy=0;
-mWrap.addEventListener('touchstart',e=>{const t=e.touches[0]; sx=t.clientX; sy=t.clientY;},{passive:true});
-mWrap.addEventListener('touchmove',e=>{const t=e.touches[0]; dx=t.clientX-sx; dy=t.clientY-sy;},{passive:true});
-mWrap.addEventListener('touchend',e=>{
-  if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){
-    activeIndex = (activeIndex + (dx<0?1:-1) + PAINTINGS.length) % PAINTINGS.length;
-    setModalForIndex(activeIndex);
-  }
-  dx=dy=0;
-},{passive:true});
-
-/* keyboard arrows (desktop) */
-addEventListener('keydown',e=>{
-  if(!modal.classList.contains('show')) return;
-  if(e.key==='ArrowLeft'){ activeIndex=(activeIndex-1+PAINTINGS.length)%PAINTINGS.length; setModalForIndex(activeIndex);}
-  if(e.key==='ArrowRight'){ activeIndex=(activeIndex+1)%PAINTINGS.length; setModalForIndex(activeIndex);}
-});
-
-/* init */
-document.addEventListener('DOMContentLoaded',build);
-
-/* utilities */
-function openAt(i){activeIndex=i; setModalForIndex(i); modal.classList.add('show');}
-function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=src;});}
-</script>
-</body>
-</html>
-
+<title>neurOrange — Home</title>
 
 <style>
   :root{
@@ -347,7 +21,9 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
   }
 
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%;background:#000;color:#fff;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;-webkit-font-smoothing:antialiased;overflow:hidden}
+  html,body{margin:0;min-height:100%;background:#000;color:#fff;
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    -webkit-font-smoothing:antialiased;overflow:hidden}
 
   /* === Splash: press the orange to start === */
   #intro{position:fixed;inset:0;background:#000;display:grid;place-items:center;z-index:9999;opacity:1;pointer-events:auto;transition:opacity 900ms ease}
@@ -401,7 +77,7 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
   #outerSVG{animation-duration:70s}
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* emoji rings (optional) */
+  /* optional emoji rings (visual only) */
   #emojiWrapA,#emojiWrapB{z-index:4}
   .emojiRing{position:absolute;inset:0}
   .emojiSpin{position:absolute;inset:0;animation:spinCCW var(--dur,60s) linear infinite}
@@ -428,7 +104,7 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
   .navMid{background:linear-gradient(180deg,#FF8E00,#FF6A13)}
   .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}
 
-  /* === TRANSITION OVERLAY (fade-to-black + randomized quote) === */
+  /* === Transition overlay (quotes) === */
   #transition{position:fixed;inset:0;background:#000;z-index:10050;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity 600ms ease}
   #transition.show{opacity:1;pointer-events:auto}
   #quoteBox{max-width:min(92vw,720px);padding:2.2rem 1.6rem;text-align:center}
@@ -453,7 +129,6 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
     <div id="brandBar"><div id="brand">neurOrange</div></div>
 
     <div id="bgLayer">
-      <!-- Optional background video: place your file in assets/placeholder.mp4 -->
       <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
         <source src="assets/placeholder.mp4" type="video/mp4" />
       </video>
@@ -474,14 +149,14 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
       </div>
 
       <!-- Comets layer -->
-      <div id="cometField" class="wrapCenter preGrow"></div>
+      <div id="cometField" class="wrapCenter"></div>
 
       <!-- Painting ring -->
       <div id="midWrap" class="wrapCenter preGrow">
         <div id="midSpin" class="spin"><div id="midRing"></div></div>
       </div>
 
-      <!-- Emoji rings (optional visuals) -->
+      <!-- Optional emoji rings -->
       <div id="emojiWrapA" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
       <div id="emojiWrapB" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
 
@@ -504,7 +179,6 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
 <!-- === AUDIO PLAYER START (fixed, 2× size, no 💫, Safari-safe) === -->
 <style>
   :root { --nick2:#FF3B00; --berg-a:#ffeca7; --berg-b:#ffd45c; }
-  /* Player tray (fixed & non-draggable) */
   #dock{
     position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));
     z-index:2147483647;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:999px;
@@ -529,8 +203,6 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
   .ad-vol input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#FF6600;border:1px solid rgba(0,0,0,.35)}
   .ad-vol input[type=range]::-moz-range-track{width:6px;background:#ddd;border-radius:999px;border:0}
 </style>
-
-<!-- Audio sources for WebAudio -->
 <audio id="a_sparkle" loop preload="metadata" playsinline>
   <source src="tracks/sparkle.mp3" type="audio/mpeg" />
   <source src="tracks/sparkle.m4a" type="audio/mp4" />
@@ -547,11 +219,9 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
   <source src="tracks/storm.mp3" type="audio/mpeg" />
   <source src="tracks/storm.m4a" type="audio/mp4" />
 </audio>
-
-<!-- Dock -->
 <div id="dock" class="collapsed" role="group" aria-label="Audio controls">
   <button id="b_toggle" class="bubble" aria-label="Toggle"><span class="inner"></span><span class="glyph">🟡</span></button>
-  <button id="b_stop"   class="orb" aria-label="Stop / Reset"><span class="glyph">🟧</span></button>
+  <button id="b_stop"   class="orb"    aria-label="Stop / Reset"><span class="glyph">🟧</span></button>
   <div class="hideable ad-wrap">
     <button id="b_sparkle" class="orb" aria-label="Sparkle"><span class="glyph">🌱</span></button>
     <div class="ad-vol" data-for="sparkle"><label>✨</label><input id="v_sparkle" type="range" min="0" max="1" step="0.01" value="0.75"/></div>
@@ -572,7 +242,7 @@ function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>
 <!-- === AUDIO PLAYER END === -->
 
 <script>
-/* ========= Quotes (exact six) ========= */
+/* ========= Quotes ========= */
 const QUOTES_RAW = [
   "“It’s funny how the colors of the real world only seem really real when you viddy them on the screen.” — A Clockwork Orange (1971)",
   "“Orange is the happiest color.” — Frank Sinatra",
@@ -590,52 +260,76 @@ function $(id){return document.getElementById(id)}
 function $$(sel){return Array.from(document.querySelectorAll(sel))}
 function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
 
-/* ========= Center text rotation (1 rpm bounded) ========= */
+/* ========= Center text rotation ========= */
 (function(){
   const t=$('questionText'), b=$('question');
   const w=t.offsetWidth,h=t.offsetHeight,pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
   const D=Math.ceil(Math.max(w,h)+pad*2); b.style.width=D+'px'; b.style.height=D+'px';
   let angle=0, dir=Math.random()<0.5?1:-1, speed=360/60, change=3+Math.random()*5, last=performance.now();
-  function step(now){const dt=(now-last)/1000;last=now;angle+=dir*speed*dt;if(angle>45){angle=45;dir=-1}if(angle<-45){angle=-45;dir=1}change-=dt;if(change<=0){if(Math.random()<0.35)dir*=-1;change=3+Math.random()*5}t.style.transform=`rotate(${angle.toFixed(3)}deg)`;requestAnimationFrame(step)}
+  function step(now){const dt=(now-last)/1000;last=now;angle+=dir*speed*dt;if(angle>45){angle=45;dir=-1}if(angle<-45){angle=-45;dir=1}
+    change-=dt;if(change<=0){if(Math.random()<0.35)dir*=-1;change=3+Math.random()*5}
+    t.style.transform=`rotate(${angle.toFixed(3)}deg)`;requestAnimationFrame(step)}
   requestAnimationFrame(step);
 })();
 
-/* ========= Wedges & Rings ========= */
-function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180;const a0=R(a0Deg),a1=R(a1Deg);const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);const large=(a1Deg-a0Deg)>180?1:0;return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
+/* ========= Rings ========= */
+function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180;const a0=R(a0Deg),a1=R(a1Deg);
+  const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);const large=(a1Deg-a0Deg)>180?1:0;
+  return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
 
 const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
 const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
 
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return {h:h*360,s,l}}
+function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}
+function opponent(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);const {h,s,l}=rgbToHsl(r,g,b);const opp=(h+180)%360;const {r:R,g:G,b:B}=hslToRgb(opp,s,l);return '#'+[R,G,B].map(v=>v.toString(16).padStart(2,'0')).join('')}
+
 function drawRing(svgEl,sizePx,r0px,r1px,colors,gapDeg,onClickHex){
   svgEl.setAttribute('viewBox','0 0 1000 1000');svgEl.style.width=sizePx+'px';svgEl.style.height=sizePx+'px';
   const k=1000/sizePx,r0=Math.max(2,r0px*k),r1=r1px*k,gap=Number(gapDeg)||0,n=colors.length,slice=360/n;svgEl.innerHTML='';
-  for(let i=0;i<n;i++){const hex=(typeof colors[i]==='string')?colors[i]:colors[i].hex;const a0=i*slice,a1=(i+1)*slice-gap;const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));p.setAttribute('fill',hex);p.setAttribute('stroke','rgba(0,0,0,.18)');p.setAttribute('stroke-width','1');if(onClickHex)p.addEventListener('click',()=>onClickHex(hex),{passive:true});svgEl.appendChild(p)}}
-
-function opponent(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);const {h,s,l}=rgbToHsl(r,g,b);const opp=(h+180)%360;const {r:R,g:G,b:B}=hslToRgb(opp,s,l);return '#'+[R,G,B].map(v=>v.toString(16).padStart(2,'0')).join('')}
-function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return {h:h*360,s,l}}
-function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}}
+  for(let i=0;i<n;i++){const hex=(typeof colors[i]==='string')?colors[i]:colors[i].hex;const a0=i*slice,a1=(i+1)*slice-gap;const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));p.setAttribute('fill',hex);p.setAttribute('stroke','rgba(0,0,0,.18)');p.setAttribute('stroke-width','1');if(onClickHex)p.addEventListener('click',()=>onClickHex(hex),{passive:true});svgEl.appendChild(p)}}
 
 function layoutRings(){
   const innerSVG=$('innerSVG'),outerSVG=$('outerSVG'),innerWrap=$('innerWrap'),outerWrap=$('outerWrap'),midRing=$('midRing');
   const W=innerWidth,H=innerHeight,S=Math.min(W,H);
   document.documentElement.style.setProperty('--emoji-font',Math.round(W*0.036)+'px');
+
   const innerD=Math.round(S*0.58),innerThick=Math.max(16,Math.round(innerD*0.12));
   innerWrap.style.width=innerD+'px';innerWrap.style.height=innerD+'px';
-  const innerOuter=innerD/2,innerInner=Math.max(2,innerOuter-innerThick*2);
+  const innerOuter=innerD/2,innerInner=Math.max(2, innerOuter - innerThick*2);
   drawRing(innerSVG,innerD,innerInner,innerOuter,BRIGHT,3,(hex)=>transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=2&cat=standards&hex=${hexNorm(hex)}`));
 
   const nodeD=Math.round(innerThick*0.85*5.25*0.82),margin=2,midR=Math.max(0,(W/2)-(nodeD/2)-margin);
   const N=6,step=2*Math.PI/N;
-  if(!midRing.children.length){for(let i=1;i<=6;i++){const n=document.createElement('div');n.className='mnode withCloud';n.addEventListener('click',()=>transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV2/#painting=${i}`),{passive:true});const img=new Image();img.alt='Painting '+i;img.src=`assets/paintings/${i}.jpg`;n.appendChild(img);midRing.appendChild(n)}}
+  if(!midRing.children.length){
+    for(let i=1;i<=6;i++){
+      const n=document.createElement('div');n.className='mnode withCloud';
+      n.addEventListener('click',()=>transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV2/#painting=${i}`),{passive:true});
+      const img=new Image();img.alt='Painting '+i;img.src=`assets/paintings/${i}.jpg`;n.appendChild(img);midRing.appendChild(n);
+    }
+  }
   Array.from(midRing.children).forEach((n,i)=>{const a=i*step,x=Math.cos(a)*midR,y=Math.sin(a)*midR;n.style.width=nodeD+'px';n.style.height=nodeD+'px';n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`});
 
+  // Outer ghost ring with flicker
+  const ghosts=GHOSTS.map(c=>({base:c,opp:opponent(c)}));
   const outerInnerR=midR+nodeD/2+margin,outerThick=innerThick*2.2,outerOuterR=Math.max(outerInnerR+outerThick,W/2+8),outD=Math.round(outerOuterR*2);
   outerWrap.style.width=outD+'px';outerWrap.style.height=outD+'px';
-  // ghost ring with flicker
-  const ghosts=GHOSTS.map(c=>({base:c,opp:opponent(c)}));
-  outerSVG.setAttribute('viewBox','0 0 1000 1000');outerSVG.style.width=outD+'px';outerSVG.style.height=outD+'px';
-  const k=1000/outD,r0=Math.max(2,outerInnerR*k),r1=outerOuterR*k,gap=3,nG=ghosts.length,slice=360/nG;outerSVG.innerHTML='';
-  for(let i=0;i<nG;i++){const {base,opp}=ghosts[i];const a0=i*slice,a1=(i+1)*slice-gap;const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));p.classList.add('ghost-wedge');p.style.setProperty('--c0',base);p.style.setProperty('--c1',opp);const dur=10+Math.random()*6,phase=Math.random()*dur;p.style.setProperty('--dur',dur.toFixed(2)+'s');p.style.setProperty('--delay',(-phase).toFixed(2)+'s');p.setAttribute('stroke','rgba(0,0,0,.18)');p.setAttribute('stroke-width','1');p.addEventListener('click',()=>transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3&cat=ghosts&hex=${hexNorm(base)}`),{passive:true});outerSVG.appendChild(p)}
+  outerSVG.setAttribute('viewBox','0 0 1000 1000'); outerSVG.style.width=outD+'px'; outerSVG.style.height=outD+'px';
+  const k=1000/outD,r0=Math.max(2,outerInnerR*k),r1=outerOuterR*k,gap=3,nG=ghosts.length,slice=360/nG; outerSVG.innerHTML='';
+  for(let i=0;i<nG;i++){
+    const {base,opp}=ghosts[i]; const a0=i*slice,a1=(i+1)*slice-gap;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
+    p.classList.add('ghost-wedge');
+    p.style.setProperty('--c0',base); p.style.setProperty('--c1',opp);
+    const dur=10+Math.random()*6,phase=Math.random()*dur;
+    p.style.setProperty('--dur',dur.toFixed(2)+'s');
+    p.style.setProperty('--delay',(-phase).toFixed(2)+'s');
+    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
+    p.addEventListener('click',()=>transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3&cat=ghosts&hex=${hexNorm(base)}`),{passive:true});
+    outerSVG.appendChild(p);
+  }
 }
 
 /* ========= Comets (asteroids) ========= */
@@ -650,34 +344,34 @@ function startComets(){
     if(kind==='straight'){P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2}}
     else if(kind==='offcenter'){const d=(Math.random()*0.35+0.15)*(W/2),sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y}}
     else{P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};const bend=(Math.random()*0.5+0.3)*(W/2);C={x:center.x+n.x*(Math.random()<0.5?-bend:bend),y:center.y+n.y*(Math.random()<0.5?-bend:bend)}}
-    const comet=document.createElement('div'); comet.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 0 8px #000)'; const stack=document.createElement('div'); stack.style.cssText='position:relative;font-size:22px';
-    const top=document.createElement('div');
-    // first in cycle has nothing, 4th has 🌱 (sprout), 5th has 🌹 else 🍊
-    if(idx===1){top.textContent='';} else if(idx===5){top.textContent='🌹';} else if(idx===4){top.textContent='🌱';} else {top.textContent='🍊';}
+    const comet=document.createElement('div'); comet.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 0 8px #000)';
+    const stack=document.createElement('div'); stack.style.cssText='position:relative;font-size:22px';
+    const top=document.createElement('div'); if(idx===1){top.textContent='';}else if(idx===5){top.textContent='🌹';}else if(idx===4){top.textContent='🌱';}else{top.textContent='🍊'}
     const tail=document.createElement('div'); tail.textContent='☄️'; tail.style.marginLeft='-6px';
     stack.appendChild(top); stack.appendChild(tail); comet.appendChild(stack); field.appendChild(comet);
     let t0=null; function lerp(a,b,t){return a+(b-a)*t}
-    function draw(now){ if(!t0)t0=now; const u=Math.min(1,(now-t0)/(dur*1000)); let x,y;
+    function draw(now){if(!t0)t0=now;const u=Math.min(1,(now-t0)/(dur*1000));let x,y;
       if(C){const one=1-u;x=one*one*P0.x+2*one*u*C.x+u*u*P1.x;y=one*one*P0.y+2*one*u*C.y+u*u*P1.y}
       else{x=lerp(P0.x,P1.x,u);y=lerp(P0.y,P1.y,u)}
       comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      if(u<1)requestAnimationFrame(draw); else comet.remove()}
+      if(u<1)requestAnimationFrame(draw);else comet.remove()}
     requestAnimationFrame(draw);
   }
   (function loop(){spawn(); setTimeout(loop, 7000 + Math.random()*5000);})();
 }
 
-/* ========= Transition overlay logic ========= */
+/* ========= Transition overlay ========= */
 let transitioning=false;
 function transitionTo(url){
   if(transitioning) return; transitioning=true;
-  const tr=$('transition'),qt=$('quoteText'); qt.innerHTML=pickQuoteHTML(); tr.classList.add('show');
+  const tr=$('transition'),qt=$('quoteText'); qt.innerHTML=decorateOrangeWords(QUOTES_RAW[randIndex(QUOTES_RAW.length)]); tr.classList.add('show');
   setTimeout(()=>{ location.href = url; }, 2200);
 }
 window.addEventListener('pageshow', ()=>{ $('transition').classList.remove('show'); transitioning=false; try{crypto.getRandomValues(new Uint32Array(1))}catch{} });
 
-/* ========= Layout boot ========= */
-function layoutAll(){ layoutRings(); }
+/* ========= Layout on load & resize ========= */
+window.addEventListener('load', ()=>{ layoutRings(); });
+window.addEventListener('resize', ()=>{ layoutRings(); }, {passive:true});
 
 /* ========= Audio Player (WebAudio Gain) ========= */
 (function(){
@@ -690,6 +384,7 @@ function layoutAll(){ layoutRings(); }
     {id:'storm',  emoji:'⛈️',el:$('a_storm'),  btn:$('b_storm'),  volUI:$('v_storm'),  exclusive:false}
   ];
   const BOOST={sparkle:1.6,storm:2.2,orange:1.0,autumn:1.0}, BASE=0.75;
+
   function ensureCtx(){ if(!ctx){ctx=new AudioCtx()} tracks.forEach(t=>{ if(!t.src){ t.src=ctx.createMediaElementSource(t.el); t.gain=ctx.createGain(); t.src.connect(t.gain).connect(ctx.destination); t.el.volume=1.0; applyGain(t,true);} }) }
   function setGlyph(btn,s){const g=btn.querySelector('.glyph'); if(g) g.textContent=s}
   function applyGain(t,fromUI=false){const u=t.volUI?parseFloat(t.volUI.value||BASE):BASE; const v=Math.min(1,u*(BOOST[t.id]||1)); if(t.gain)t.gain.gain.value=v; if(!fromUI&&t.volUI)t.volUI.value=v}
@@ -702,9 +397,17 @@ function layoutAll(){ layoutRings(); }
   bToggle.addEventListener('click',()=>{ dock.classList.toggle('collapsed'); hideAllSliders(); },{passive:true});
   bStop.addEventListener('click',()=>{ tracks.forEach(stopTrack); hideAllSliders(); dock.classList.add('collapsed'); },{passive:true});
 
-  tracks.forEach(t=>{ applyGain(t,true); t.btn.addEventListener('click',async()=>{ if(!unlocked){ensureCtx();await ctx.resume();unlocked=true} if(t.el.paused) startTrack(t,true); else stopTrack(t) },{passive:true}); if(t.volUI) t.volUI.addEventListener('input',()=>applyGain(t,true),{passive:true}); t.el.addEventListener('ended',()=>setGlyph(t.btn,'🌱')); t.el.addEventListener('pause',()=>{if(!t.el.ended)setGlyph(t.btn,'🌱')}); });
+  tracks.forEach(t=>{
+    applyGain(t,true);
+    t.btn.addEventListener('click',async()=>{
+      if(!unlocked){ ensureCtx(); await ctx.resume(); unlocked=true; }
+      if(t.el.paused) startTrack(t,true); else stopTrack(t);
+    },{passive:true});
+    if(t.volUI) t.volUI.addEventListener('input',()=>applyGain(t,true),{passive:true});
+    t.el.addEventListener('ended',()=>setGlyph(t.btn,'🌱')); t.el.addEventListener('pause',()=>{if(!t.el.ended)setGlyph(t.btn,'🌱')});
+  });
 
-  // Splash tap: start everything (grow-out, video, comets, audio)
+  /* Splash tap: start everything now — grow-out + comets + audio (Sparkle at 50%) */
   const startOrange=$('startOrange');
   if(startOrange){
     startOrange.addEventListener('click', async ()=>{
@@ -712,11 +415,16 @@ function layoutAll(){ layoutRings(); }
       $('intro').classList.add('hidden');
       setTimeout(()=>{$('intro').remove()},900);
 
-      // play & reveal background video (if present)
-      const v=$('bgVideo'); if(v){const show=()=>v.style.opacity=1; v.addEventListener('loadeddata',show,{once:true}); v.addEventListener('playing',show,{once:true}); try{ const p=v.play(); p&&p.catch(()=>{}) }catch{}}
+      // draw rings (in case of late layout), run grow-out
+      layoutRings();
+      ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
+        const el=$(id); if(el){ el.classList.remove('grow'); el.classList.add('preGrow'); requestAnimationFrame(()=> el.classList.add('grow')); }
+      });
 
-      // run grow-out + comets
-      ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB','cometField'].forEach(id=>{const el=$(id); if(el){el.classList.remove('grow'); el.classList.add('preGrow'); requestAnimationFrame(()=> el.classList.add('grow'))}});
+      // play & reveal video
+      const v=$('bgVideo'); if(v){const show=()=>v.style.opacity=1; v.addEventListener('loadeddata',show,{once:true}); v.addEventListener('playing',show,{once:true}); try{const p=v.play(); p&&p.catch(()=>{})}catch{}}
+
+      // start comets immediately
       startComets();
 
       // start audio immediately (Sparkle at EXACT 50%)
@@ -728,7 +436,11 @@ function layoutAll(){ layoutRings(); }
   }
 
   // unlock on first gesture (iOS)
-  function unlockOnce(){window.removeEventListener('pointerdown',unlockOnce,true); ensureCtx(); ctx.resume().then(()=>{unlocked=true}); tracks.forEach(t=>{try{const p=t.el.play(); p&&p.then(()=>{t.el.pause();t.el.currentTime=0}).catch(()=>{})}catch{}})}
+  function unlockOnce(){
+    window.removeEventListener('pointerdown', unlockOnce, true);
+    ensureCtx(); ctx.resume().then(()=>{ unlocked=true; });
+    tracks.forEach(t=>{ try{ const p=t.el.play(); p&&p.then(()=>{ t.el.pause(); t.el.currentTime=0; }).catch(()=>{});}catch{} });
+  }
   window.addEventListener('pointerdown', unlockOnce, {once:true,capture:true,passive:true});
 })();
 </script>
