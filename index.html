@@ -116,32 +116,37 @@
     100%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
   }
 
-  /* ring rotations (running by default; we start shrunk so it still looks like grow+spin) */
+  /* ring rotations (running by default; grow effect still from center) */
   #innerSVG,#outerSVG{transform-box:fill-box; transform-origin:50% 50%; animation:spinCW 60s linear infinite}
   #outerSVG{animation-duration:70s}
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+  .ghost-wedge{
+    fill:var(--c0);
+    animation:ghostFlick var(--dur,12s) ease-in-out infinite;
+    animation-delay:var(--delay,0s)
+  }
+  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
+
+  #emojiWrapA,#emojiWrapB{z-index:4} .emojiRing{position:absolute; inset:0}
   .emojiSpin{position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite}
   @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
   .emoji{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:var(--emoji-font);
          border:none; border-radius:10px; background:rgba(0,0,0,.08); padding:1px 3px;
          filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
 
-  /* ghost flicker */
-  .ghost-wedge{fill:var(--c0); animation:ghostFlick var(--dur,12s) ease-in-out infinite; animation-delay:var(--delay,0s)}
-  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
-
   /* paintings ring */
   #midWrap{z-index:8}
   #midSpin{animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--glow))}
   #midRing{position:absolute; inset:0}
   .mnode{position:absolute; top:50%; left:50%; border-radius:50%; transform:translate(-50%,-50%);
-         background:#111; overflow:hidden; border:1.5px solid #000; filter:drop-shadow(var(--glow))}
+         background:#111; overflow:hidden; border:1.5px solid #000; filter:drop-shadow(var(--glow));
+         cursor:pointer}
   .mnode.withCloud::before{content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
     background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none}
   .mnode img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
              animation:upright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change:transform}
-  @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
   /* bottom nav — tighter; Color Library stays one line */
   .bottomNav{
@@ -155,14 +160,14 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     font-size:clamp(12px, 3.2vw, 14px); line-height:1.05;
   }
-  .navLeft {background:linear-gradient(180deg,#F4C430,#E69B20)}   /* Color Library */
-  .navMid  {background:linear-gradient(180deg,#FF8E00,#FF6A13)}   /* Art Gallery  */
-  .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}   /* Illusion Lab */
+  .navLeft {background:linear-gradient(180deg,#F4C430,#E69B20)}
+  .navMid  {background:linear-gradient(180deg,#FF8E00,#FF6A13)}
+  .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}
+  .clickable{cursor:pointer}
 </style>
 </head>
 <body>
 
-<!-- failsafe -->
 <div id="failsafe"></div>
 
 <!-- intro -->
@@ -181,7 +186,6 @@
       <!-- inline sources so video works even if JS doesn't assign src -->
       <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
         <source src="assets/placeholder.mp4" type="video/mp4" />
-        <!-- <source src="assets/placeholder.webm" type="video/webm" /> -->
       </video>
       <div class="fogWrap"><div class="fog"></div></div>
     </div>
@@ -215,27 +219,39 @@
       <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
     </div>
 
-    <!-- bottom nav -->
+    <!-- bottom nav (links to external HTMLs) -->
     <div class="bottomNav">
-      <a class="navBtn navLeft"  href="color-library.html" aria-label="Color Library">Color Library</a>
-      <a class="navBtn navMid"   href="art-gallery.html"   aria-label="Art Gallery">Art Gallery</a>
-      <a class="navBtn navRight" href="illusion.html"      aria-label="Illusion Lab">Illusion Lab</a>
+      <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/" aria-label="Color Library">Color Library</a>
+      <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" aria-label="Art Gallery">Art Gallery</a>
+      <a class="navBtn navRight" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3" aria-label="Illusion Lab">Illusion Lab</a>
     </div>
   </div>
 </div>
 
 <script>
-/* failsafe remove */
+/* === Config: external destinations === */
+const URLS = {
+  home:   "https://vahetharoutounian-stack.github.io/neurOrange/",
+  color:  "https://vahetharoutounian-stack.github.io/neurOrangeV3/",
+  gallery:"https://vahetharoutounian-stack.github.io/neurOrangeV2/"
+};
+
+/* === failsafe remove === */
 (function(){ const fs=document.getElementById('failsafe'); requestAnimationFrame(()=>{ fs.style.opacity=0; setTimeout(()=>fs.remove(),300); }); })();
 
-/* palettes */
+/* === palettes === */
 const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
 const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
 const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;"];
 
-/* helpers */
+/* === helpers === */
 function $(id){return document.getElementById(id)}
 function $$(sel){return Array.from(document.querySelectorAll(sel))}
+function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
+function goColor(hex){ location.href = `${URLS.color}#step=2&cat=standards&hex=${hexNorm(hex)}`; }
+function goGallery(idx){ location.href = `${URLS.gallery}#painting=${idx}`; }
+function goIllusion(hex){ location.href = `${URLS.color}#step=3&cat=ghosts&hex=${hexNorm(hex)}`; }
+
 function sizeQuestion(){
   const b=$('question'), t=$('questionText');
   b.style.transform='translate(-50%,-50%) scale(1)';
@@ -244,29 +260,55 @@ function sizeQuestion(){
   b.style.width=D+'px'; b.style.height=D+'px';
   startBoundedSpin();
 }
+
 /* color math */
-function hexToRgb(h){h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255};}
-function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn; s=l>0.5?d/(2-mx-mn):d/(mx+mn); switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break} h/=6} return {h:h*360,s,l}}
-function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)} return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}}
+function hexToRgb(h){h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}}
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return {h:h*360,s,l}}
+function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p},q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}}
 function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}
 function opponentHex(hex){const {r,g,b}=hexToRgb(hex); const {h,s,l}=rgbToHsl(r,g,b); const opp=(h+180)%360; const {r:rr,g:gg,b:bb}=hslToRgb(opp,s,l); return rgbToHex(rr,gg,bb)}
-/* wedges */
-function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg); const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}); const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0); const large=(a1Deg-a0Deg)>180?1:0; return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
-/* draw rings */
-function drawRing(svgEl,sizePx,r0px,r1px,colors,gapDeg){
+
+/* svg wedges */
+function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
+  const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}); const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);
+  const large=(a1Deg-a0Deg)>180?1:0; return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
+
+function drawRing(svgEl,sizePx,r0px,r1px,colorObjs,gapDeg){
   svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
-  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0, n=colors.length, slice=360/n;
-  svgEl.innerHTML=''; for(let i=0;i<n;i++){const a0=i*slice,a1=(i+1)*slice-gap; const p=document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1)); p.setAttribute('fill',colors[i]); p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1'); svgEl.appendChild(p);}
+  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
+  const n=colorObjs.length, slice=360/n; svgEl.innerHTML='';
+  for(let i=0;i<n;i++){
+    const hex=(typeof colorObjs[i]==='string')? colorObjs[i] : colorObjs[i].hex;
+    const a0=i*slice, a1=(i+1)*slice-gap;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
+    p.setAttribute('fill',hex);
+    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
+    p.classList.add('clickable');
+    // click → Color Library with color selected
+    p.addEventListener('click', ()=> goColor(hex), {passive:true});
+    svgEl.appendChild(p);
+  }
 }
+
 function drawGhostRing(svgEl,sizePx,r0px,r1px,ghostHexes,gapDeg){
   svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
-  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0, n=ghostHexes.length, slice=360/n;
-  svgEl.innerHTML=''; for(let i=0;i<n;i++){const base=ghostHexes[i],opp=opponentHex(base),a0=i*slice,a1=(i+1)*slice-gap; const p=document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1)); p.classList.add('ghost-wedge'); p.style.setProperty('--c0',base); p.style.setProperty('--c1',opp);
+  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
+  const n=ghostHexes.length, slice=360/n; svgEl.innerHTML='';
+  for(let i=0;i<n;i++){
+    const base=ghostHexes[i], opp=opponentHex(base), a0=i*slice, a1=(i+1)*slice-gap;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
+    p.classList.add('ghost-wedge','clickable');
+    p.style.setProperty('--c0',base); p.style.setProperty('--c1',opp);
+    // Slow cycle with random phase so it starts immediately out-of-sync
     const dur=10+Math.random()*6, phase=Math.random()*dur; p.style.setProperty('--dur',dur.toFixed(2)+'s'); p.style.setProperty('--delay',(-phase).toFixed(2)+'s');
-    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1'); svgEl.appendChild(p);}
+    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
+    p.addEventListener('click', ()=> goIllusion(base), {passive:true});
+    svgEl.appendChild(p);
+  }
 }
+
 /* paintings */
 function buildMidNodes(){
   const mid=$('midRing'); mid.innerHTML='';
@@ -274,29 +316,30 @@ function buildMidNodes(){
     const n=document.createElement('div'); n.className='mnode withCloud';
     const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`;
     img.onerror=()=>{ n.style.background='#222'; };
+    n.addEventListener('click', ()=> goGallery(i), {passive:true});
     n.appendChild(img); mid.appendChild(n);
   }
 }
+
 /* layout */
 function layoutRings(){
-  const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap');
-  const midRing=$('midRing'); const W=innerWidth, H=innerHeight, S=Math.min(W,H);
+  const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap'), midRing=$('midRing');
+  const W=innerWidth, H=innerHeight, S=Math.min(W,H);
   document.documentElement.style.setProperty('--emoji-font',Math.round(W*0.036)+'px');
 
   const innerD=Math.round(S*0.58), innerThick=Math.max(16,Math.round(innerD*0.12));
   document.documentElement.style.setProperty('--inner-thick',innerThick+'px');
   innerWrap.style.width=innerD+'px'; innerWrap.style.height=innerD+'px';
 
-  const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter - innerThick*2);
-  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT.map(o=>o.hex), getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
+  const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter-innerThick*2);
+  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
 
   const nodeD=Math.round(innerThick*0.85*5.25*0.82), margin=2, midR=Math.max(0, (W/2)-(nodeD/2)-margin);
   const nodes=$$('#midRing .mnode'), N=6, step=2*Math.PI/N;
-  nodes.forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
-    n.style.width=nodeD+'px'; n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`});
+  nodes.forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR; n.style.width=nodeD+'px'; n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`});
 
   const outerInnerR=midR + nodeD/2 + margin, outerThick=innerThick*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult'))||2.2);
-  const outerOuterR=Math.max(outerInnerR+outerThick, W/2 + 8), outD=Math.round(outerOuterR*2);
+  const outerOuterR=Math.max(outerInnerR+outerThick, W/2+8), outD=Math.round(outerOuterR*2);
   outerWrap.style.width=outD+'px'; outerWrap.style.height=outD+'px';
   drawGhostRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
 
@@ -332,7 +375,7 @@ function startBoundedSpin(){
     const kinds=['straight','offcenter','curved']; const kind=kinds[Math.floor(Math.random()*kinds.length)];
     const n={x:-Math.sin(th),y:Math.cos(th)}, dur=4.8+Math.random()*3;
     let P0,P1,C; const ctr={x:0,y:0};
-    if(kind==='straight'){P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y+Math.sin(th)*run/2}}
+    if(kind==='straight'){P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2}}
     else if(kind==='offcenter'){const d=(Math.random()*0.35+0.15)*(W/2), sh={x:n.x*(Math.random()<0.5?-d:d), y:n.y*(Math.random()<0.5?-d:d)};
       P0={x:ctr.x-Math.cos(th)*run/2+sh.x,y:ctr.y-Math.sin(th)*run/2+sh.y}; P1={x:ctr.x+Math.cos(th)*run/2+sh.x,y:ctr.y-Math.sin(th)*run/2+sh.y}}
     else{P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2}; P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};
@@ -355,8 +398,9 @@ function startBoundedSpin(){
   (function loop(){ spawn(); setTimeout(loop, 7000 + Math.random()*5000); })();
 })();
 
-/* layout & build */
+/* build + layout once (no animation yet) */
 function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
+layoutAll();
 
 /* press the orange to start animation + video */
 (function(){
@@ -367,10 +411,6 @@ function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
     setTimeout(()=>{
       intro.remove();
 
-      // ensure everything is built and centered
-      layoutAll();
-
-      // play & reveal video now that we have a user gesture
       const v=$('bgVideo');
       if(v){
         const show=()=>v.style.opacity=1;
@@ -389,9 +429,6 @@ function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
     }, 900); // match intro fade
   }, {passive:true});
 })();
-
-/* initial build (no animation until press) */
-layoutAll();
 </script>
 </body>
 </html>
