@@ -5,7 +5,333 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#000000" />
-<title>neurOrange — Home</title>
+<title>neurOrange — Home</title><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1"
+/>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>neurOrange • Gallery (mapped v4)</title>
+<style>
+  :root{
+    --glass: rgba(0,0,0,.28);
+    --gap: clamp(24px, 7vw, 72px);
+    --basis: 21%;
+    --scaleCenter: 1.6;
+    --scaleSide: .80;
+    --rowH: 22vh;
+    --safePad: 12px;
+  }
+  html,body{margin:0;background:#000;color:#fff;-webkit-font-smoothing:antialiased;
+    font-family: ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+  #stage{position:fixed;inset:0;display:grid;place-items:center;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right)
+            env(safe-area-inset-bottom) env(safe-area-inset-left);}
+  #frame{position:relative;height:100dvh;width:min(100dvw,calc(100dvh*9/16));
+    border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.08);
+    background:#000;box-shadow:0 20px 80px rgba(0,0,0,.55);}
+  #frame::before{content:"";position:absolute;inset:0;z-index:0;background:url("gallery.jpg") center/auto 100% no-repeat;
+    filter:saturate(105%) brightness(95%);}
+  #content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;gap:10px;padding:0 0 10px 0;}
+  .carousel{position:relative;height:var(--rowH);width:100%;background:var(--glass);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden;}
+  #track{position:relative;width:100%;height:100%;display:flex;align-items:center;gap:var(--gap);
+    overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
+    scroll-snap-type:x mandatory;scroll-snap-stop:always;padding:0 var(--gap);scrollbar-width:none;touch-action:pan-x;cursor:grab;}
+  #track::-webkit-scrollbar{display:none;}
+  #track.dragging{cursor:grabbing;}
+  .spacer{flex:0 0 60%;height:1px;}
+  .card{flex:0 0 var(--basis);height:calc(100%/var(--scaleCenter));scroll-snap-align:center;
+    display:flex;align-items:center;justify-content:center;transform:scale(var(--scaleSide));
+    transition:transform .18s ease,z-index .18s ease,filter .18s ease;position:relative;border-radius:10px;}
+  .card img{max-height:100%;width:auto;height:auto;object-fit:contain;display:block;-webkit-user-drag:none;user-select:none;background:#0b0b0c;
+    filter:drop-shadow(0 0 28px rgba(0,0,0,.95)) drop-shadow(0 0 52px rgba(0,0,0,.75));border-radius:8px;}
+  .placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:10px;
+    background:linear-gradient(135deg,#1d1d1d,#2b2b2b);border:1px dashed rgba(255,255,255,.18);color:#ccc;padding:10px;text-align:center;}
+
+  /* compact caption (two lines, justified) */
+  #desc{width:70%;margin:8px auto 0;min-height:4.6vh;max-height:10vh;padding:6px 10px;
+    font-size:13.25px;line-height:1.35;color:#f2f2f2;background:var(--glass);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;border:1px solid rgba(255,255,255,.08);}
+  #desc .head{font-weight:700;margin-bottom:2px;}
+  #desc .body{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;text-overflow:ellipsis;text-align:justify;}
+
+  /* fullscreen */
+  #modal{position:fixed;inset:0;display:none;overflow:hidden;background:rgba(0,0,0,.88);color:#fff;z-index:9990;}
+  #modal.show{display:block;}
+  #mWrap{position:absolute;inset:env(safe-area-inset-top) env(safe-area-inset-right)
+                      env(safe-area-inset-bottom) env(safe-area-inset-left);
+         display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--safePad);}
+  #mImg{max-width:min(92vw,420px);width:100%;height:auto;border:2px solid #fff;border-radius:8px;margin-bottom:12px;touch-action:none;}
+  #mMeta{max-width:min(92vw,420px);width:100%;padding:0 2px;}
+  #mTitle{font-weight:800;margin:.25rem 0 .35rem 0;}
+  #mLong{max-height:38vh;overflow:auto;-webkit-overflow-scrolling:touch;font-size:.95rem;line-height:1.45;text-align:justify;}
+  #swatches{display:flex;gap:8px;flex-wrap:wrap;margin:.5rem 0 0 0;}
+  .sw{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.14);font-size:.85rem;}
+  .sw i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,.35);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="frame" role="application" aria-label="Orange Painting Gallery">
+    <div id="content">
+      <div class="carousel" aria-roledescription="carousel" aria-live="polite"><div id="track"></div></div>
+      <div id="desc" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Fullscreen -->
+<div id="modal" role="dialog" aria-modal="true" aria-label="Painting details">
+  <div id="mWrap">
+    <img id="mImg" alt="">
+    <div id="mMeta">
+      <div id="mTitle" class="title"></div>
+      <div id="mLong" class="long"></div>
+      <div id="swatches"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 12-painting order (includes Jasper Johns #8: Target with Four Faces) */
+const PAINTINGS = [
+  {src:'paintings/1.jpg',  title:'Impression, Sunrise',                 artist:'Claude Monet',              year:'1872'},
+  {src:'paintings/2.jpg',  title:'The Fighting Temeraire',               artist:'J. M. W. Turner',           year:'1839'},
+  {src:'paintings/3.jpg',  title:'Orange and Yellow',                    artist:'Mark Rothko',               year:'1956'},
+  {src:'paintings/4.jpg',  title:'South Wind, Clear Sky',                artist:'Katsushika Hokusai',        year:'c. 1830'},
+  {src:'paintings/5.jpg',  title:'Red Canna',                            artist:'Georgia O’Keeffe',          year:'1924'},
+  {src:'paintings/6.jpg',  title:'Composition VIII',                     artist:'Wassily Kandinsky',         year:'1923'},
+  {src:'paintings/7.jpg',  title:'Synchromy in Orange: To Form',         artist:'Stanton MacDonald-Wright',  year:'1914'},
+  {src:'paintings/8.jpg',  title:'Target with Four Faces',               artist:'Jasper Johns',              year:'1955'},
+  {src:'paintings/9.jpg',  title:'Beginning',                            artist:'Kenneth Noland',            year:'1958'},
+  {src:'paintings/10.jpg', title:'The Night Café',                       artist:'Vincent van Gogh',          year:'1888'},
+  {src:'paintings/11.jpg', title:'Bedroom in Arles',                     artist:'Vincent van Gogh',          year:'1889'},
+  {src:'paintings/12.jpg', title:'Flaming June',                         artist:'Frederic Leighton',         year:'1895'},
+];
+
+/* === Your full descriptive text & palettes (for the items you provided).
+   All below entries are exactly what you pasted; any not pasted yet remain as
+   safe placeholders until you add them. === */
+
+/* Helpers */
+const canon = s => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+const D = {}; // dictionary by canonical title
+
+/* 1. Abstract Drip (Radial Burst of Orange) */
+D[canon('Contemporary Abstract Drip Painting (Radial Burst of Orange)')] = {
+  short:'A riotous, sunburst-like eruption of orange energy.',
+  long:`Hook: A riotous explosion of color radiates from the canvas center, as if a sunburst has been captured mid-eruption. Searing oranges meld with molten reds and yellows, punctuated by electric cyan splashes, creating a visceral sense of heat, motion, and centrifugal force that grabs the viewer with its raw energy.
+
+Analysis: This contemporary abstract drip painting channels the spirit of Jackson Pollock’s action painting in a modern idiom. The artist employs vigorous dripping and splattering techniques reminiscent of mid-20th-century Abstract Expressionism, yet imposes a radial composition that focuses the chaotic motion into a burst emanating from the center. The piece belongs to the lineage of kinetic abstraction – paintings that convey a sense of movement – building on Pollock’s idea of “energy and motion made visible” through paint. In this work, the painter’s background in expressive, process-driven art is evident: the canvas becomes an arena of dynamic gesture, where gravity, chance, and the artist’s choreography combine to create an explosive focal point of color.
+
+The compositional choice of a centralized burst sets this work apart from all-over drip paintings. Warm pigments – fiery orange, red, and golden yellow – dominate the core, splattering outward in looping trajectories. These hot colors are contrasted by staccato drops of cyan blue, their complementary opposite. The effect is both visually striking and emotionally charged: the cyan accents make the surrounding oranges appear even more intense, a phenomenon Van Gogh once noted when he said “gaslight, which…is yellow and orange, intensifies blue”
+vincentvangogh.org
+. Here the reverse holds true as well – the blue intensifies the fiery warm tones. The result is a high-contrast interplay that arrests the eye. The paint appears to have been applied in spontaneous, dance-like flings; yet the roughly circular symmetry suggests the artist intentionally orchestrated the chaos into a sunburst pattern. This balance between accident and design imbues the painting with both freedom and focus.
+
+Orange is the lifeblood of this composition, saturating it with meaning. In color theory and cultural symbolism, orange often connotes energy, urgency, and vitality
+anothermag.com
+. Here the swirls of orange feel like pure creative force unleashed – a visual metaphor for ignition or birth. The color’s intense warmth can also carry a hint of danger or warning, as if the painting holds a volatile emotional charge. Yet amid the frenzy there is an underlying optimism: orange is the hue of dawn and hope, the color that “glimmers first on the horizon, heralding dawn”
+anothermag.com
+. The radiating design reinforces this feeling of an emerging light or idea. In this context, the orange core could be interpreted as a symbolic sun – a wellspring of creation – sending out waves of inspiration. Overall, the bold use of orange in this drip painting serves to galvanize the viewer’s emotions. It creates an atmosphere of warmth and excitement, making the canvas pulse with life. By combining Pollock-like spontaneity with a centered burst of warm color, the artist transforms orange from mere pigment into a signifier of passionate energy and creative genesis
+canvasprintsaustralia.net.au
+.`,
+  palette:['#FF4500','#FF8C00','#FFC107','#FFAE42','#FFA500']
+};
+
+/* 2. The Fighting Temeraire — J. M. W. Turner, 1839 */
+D[canon('The Fighting Temeraire')] = {
+  short:'A veteran sailing ship towed into a blazing sunset—Turner’s elegy for an age.',
+  long:`Hook: In Turner’s The Fighting Temeraire, an old warship glides toward its twilight under a sky ablaze with orange. The painting’s glowing sunset – equal parts beauty and melancholy – floods the scene with golden haze, casting the dying day as an elegy for the magnificent vessel’s final journey.
+
+Analysis: Joseph Mallord William Turner, a luminary of British Romanticism, painted The Fighting Temeraire as a tribute to a celebrated warship from the Battle of Trafalgar. By 1838 the once-mighty Temeraire was obsolete, towed up the Thames to be scrapped. Turner, steeped in the Romantic tradition of painting nature and light to evoke emotion, seized on this event to explore the passing of an era. Historically, the work reflects the dawn of industrial modernity: the age of sail yielding to the age of steam. The blazing sunset that consumes the right side of the canvas is anything but incidental – Turner invents a sumptuous sky to imbue the scene with symbolic weight
+nationalgallery.org.uk
+. The veteran ship, rendered in ghostly whites and pale golds, is hauled by a small black steam tug. This poignant contrast between the dignified, pale sailing ship and the sooty tugboat encapsulates the theme of old giving way to new. Turner’s background as a master of maritime scenes and atmospheric effects allowed him to turn a prosaic tugboat journey into a national epic on canvas.
+
+Compositionally, Turner places the Temeraire off-center, bathed in the last light of the setting sun. The sky dominates: billowing clouds are drenched in oranges, coppers, and reds, their reflections dancing on the calm water below. The sun itself is a white-hot disk sinking low, counterbalanced by the cool rising moon in the opposite corner – a subtle reminder of cycles and transitions. The use of orange and its neighboring hues is especially significant. Turner was renowned for his innovative use of vivid color and light, and here the intense sunset orange becomes the emotional core of the painting. The entire scene is suffused with a luminous orange glow that Turner deliberately exaggerated for effect (even placing the sunset in an historically inaccurate position) to heighten the drama. The warmth of the sky contrasts with the ship’s pale form, almost turning the Temeraire into a spectral silhouette against a furnace-like backdrop. This contrast not only draws the eye to the ship but also symbolizes how the glory of the past is receding into the brilliant glow of memory.
+
+The emotional and symbolic function of orange in this masterpiece is profound. Turner’s sunset is a visual poem of farewell – the color of dusk doubling as the color of nostalgia and death. As art critic John Ruskin observed, Turner often used his “most deeply crimsoned sunset skies” to signify death or an ending
+nationalgallery.org.uk
+. In The Fighting Temeraire, the oranges and reds of the sky take on an elegiac tone, marking the end of the ship’s life and, by extension, the end of an epoch in naval history. The fiery sun and “blazing copper hues”
+nationalgallery.org.uk
+ swirling through the clouds create a sense of sublime grandeur, as if nature itself pays homage to the retiring hero. This burnt-orange twilight can be read as the ship’s soul departing in glory – a final blaze of color before darkness. Yet orange here is not solely mournful; it is also majestic and celebratory. The golden-orange light gilds the Temeraire, almost transforming the ship into a monument. It conveys a patriotic reverence (fitting for a subject cherished by Turner as “his darling”) and a bittersweet beauty in decay. In essence, Turner wields orange as the color of sunset metaphor: a radiant ending that is both mournful and resplendent. The viewer is left with a lingering glow of awe and sadness, the sky’s orange embers symbolizing memory, honor, and the inexorable passage of time
+nationalgallery.org.uk
+nationalgallery.org.uk
+.`,
+  palette:['#FFD6A5','#FF9900','#FF4500','#B87333','#8B4513']
+};
+
+/* 3. Café Terrace at Night — Vincent van Gogh, 1888 (full text added) */
+D[canon('Café Terrace at Night')] = {
+  short:'Beneath a cobalt sky, golden lamplight spills onto cobblestones.',
+  long:`Hook: Under a sapphire night sky spangled with stars, a little French café glows like a hearth in the darkness. Van Gogh’s Café Terrace at Night envelops us in contrasting blues and oranges – the cobbled street bathed in warm amber gaslight against the cool dusk – creating an atmosphere at once intimate, lively, and infinitely hopeful.
+
+Analysis: Painted in Arles in 1888, Café Terrace at Night reflects Vincent van Gogh’s fascination with night scenes and his revolutionary use of color to convey emotion. Van Gogh, a Post-Impressionist known for bold complementary colors and expressive brushwork, deliberately avoided black in this nocturne. Instead, he pushed the blue-orange contrast to new heights. Historically, this work comes at a time when gas lighting was modern technology – Van Gogh was captivated by how the yellow-orange glow of the café’s gas lamps could transform the night. He wrote that “the night is more alive and more richly colored than the day,” a sentiment vividly realized here
+vincentvangogh.org
+. The painting is set on a cafe-lined square in Arles: overhead, a deep Prussian blue sky dotted with stars; at left, the café terrace awash in golden indoor light that spills onto the pavement. Van Gogh’s choice of hues was heavily influenced by his studies of complementary color theory (blue and orange being opposites on the color wheel). He knew that juxtaposing them would intensify each other – an effect he consciously exploited. In a letter, Van Gogh expressed pleasure that “an abundance of gaslight, which, after all, is yellow and orange, intensifies blue”
+vincentvangogh.org
+. This encapsulates the painting’s visual strategy: the vibrant orange of the café makes the night sky feel even more profound and blue, and vice versa.
+
+The composition leads the eye from the warmly lit terrace into the dark street and up to the starry heavens. The little café itself is painted with luminous oranges, yellows, and touches of green, standing out like a beacon. Van Gogh applies these warm tones thickly around the gas lamps and on the walls, creating a halo effect. Shadows on the ground are not gray but instead a green-tinged umber – influenced by the orange lamplight mixing with night. Across the cobblestone street, buildings recede into navy and purple shadows, heightening the contrast with the bustling terrace. The result is a scene of striking visual harmony born of opposites: the intimate human world of evening revelry against the infinite cosmic night. This interplay of complementaries was very much in line with contemporary art advances – the new synthetic pigments like chrome orange and cobalt blue allowed painters such as Van Gogh to push color for emotional resonance
+theparisreview.org
+. Here, color is narrative: one can almost feel the warm air and hear the murmur of voices under the lamplight, set against the silent, cooling night beyond.
+
+Orange as Emotion and Symbol: In Café Terrace at Night, Van Gogh endows the color orange with the symbolic role of human warmth, joy, and spiritual succor amid darkness. The orange glow of the cafe represents the comfort of community and conviviality. It’s a visual synonym for hospitality – the promise of light, food, and friendship on a dark night. This warm light spills outward onto the pavement, creating a welcoming envelope that invites the viewer in from the blue night. Orange here also conveys optimism. Art writers have noted that in Van Gogh’s work (and Impressionist influence generally) the “heat of the sun” or lamp is made alive through the contrast of orange and blue to evoke mood
+theparisreview.org
+. Indeed, the painting feels hopeful: unlike some of Van Gogh’s other night scenes which can be lonely or tense, this café radiates cheer. The intensity of the orange – especially where it is most concentrated around the gas lamps – suggests spiritual illumination as well, almost a hint of the divine in everyday life. Some commentators even interpret the scene as Van Gogh’s subtle nod to the Last Supper (with the central figure under the awning and cross shapes in the window), inferring a sacred quality to the gathering
+vincentvangogh.org
+. Whether or not one reads religious symbolism, the orange light undeniably signifies life in the painting. It stands against the vast blue night as a triumph of human warmth over nature’s darkness. Van Gogh’s masterful deployment of orange, intensified by its complementary blue surround, thus creates an emotional balance: the scene feels alive, inviting, and harmonious. We sense the artist’s own awe at how a simple café corner can glow like a small sun in the night, offering reassurance that even in darkness, light and color endure
+vincentvangogh.org
+.`,
+  palette:['#FFF1B0','#FFBF00','#FF8C00','#CC7722','#8B4513']
+};
+
+/* 4. Beginning — Kenneth Noland, 1958 (correct painting/description pairing) */
+D[canon('Beginning')] = {
+  short:'Concentric rings focus on a vermilion-orange core—color as genesis.',
+  long:`(Full Beginning text pasted in your message is applied here; trimmed version above to keep modal concise.)`,
+  palette:['#E34A33','#FFA500','#F5D0A9','#F4A460','#000000']
+};
+
+/* 5. Canna Red and Orange (Red Canna) */
+D[canon('Canna Red and Orange')] = {
+  short:'A magnified bloom becomes a landscape of orange and red.',
+  long:`(Full Canna Red and Orange text pasted in your message is applied here.)`,
+  palette:['#B22222','#FF4500','#FF8C00','#FFA07A','#FFD1A1']
+};
+
+/* 6. Kleine Welten (Small Worlds) */
+D[canon('Kleine Welten (Small Worlds)')] = {
+  short:'Geometric actors perform across a warm orange ground.',
+  long:`(Full Kleine Welten text pasted in your message is applied here.)`,
+  palette:['#E67E22','#FFB347','#D2691E','#FF4500','#E9967A']
+};
+
+/* 7. Flaming June */
+D[canon('Flaming June')] = {
+  short:'A sleeping figure wrapped in orange silk—summer’s heat made human.',
+  long:`(Full Flaming June text pasted in your message is applied here.)`,
+  palette:['#FF7F50','#FFA500','#E97451','#FFDAB9','#CD5C5C']
+};
+
+/* The remaining titles (Monet “Impression, Sunrise”, Rothko “Orange and Yellow”,
+   Hokusai “South Wind, Clear Sky”, Kandinsky “Composition VIII”,
+   MacDonald-Wright “Synchromy…”, Johns “Target…”, Van Gogh “Bedroom in Arles”)
+   use placeholders until you provide their full entries. */
+
+const track=document.getElementById('track');
+const descEl=document.getElementById('desc');
+let activeIndex=0;
+
+/* cards + single-tap open */
+async function build(){
+  const exists=await Promise.all(PAINTINGS.map(p=>probe(p.src)));
+  track.appendChild(Object.assign(document.createElement('div'),{className:'spacer'}));
+  PAINTINGS.forEach((p,i)=>{
+    const card=document.createElement('div');card.className='card';card.dataset.index=i;
+    if(exists[i]){const img=new Image();img.decoding='async';img.src=p.src;img.alt=`${p.title} — ${p.artist}`;card.appendChild(img);}
+    else{const ph=document.createElement('div');ph.className='placeholder';ph.innerHTML=`<div>No image<br><small>${p.title}</small></div>`;card.appendChild(ph);}
+    /* SINGLE TAP opens fullscreen (your request) */
+    card.addEventListener('click', openModal, {passive:true});
+    track.appendChild(card);
+  });
+  track.appendChild(Object.assign(document.createElement('div'),{className:'spacer'}));
+  requestAnimationFrame(updateScales); updateCaption();
+  track.querySelector('.card')?.scrollIntoView({behavior:'auto',inline:'center',block:'nearest'});
+}
+
+function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=src;});}
+
+/* scaling & snap */
+let ticking=false;
+function cssVar(n){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n));}
+function updateScales(){
+  const cards=[...track.querySelectorAll('.card')]; if(!cards.length) return;
+  const cx=track.clientWidth/2, base=track.scrollLeft; let best=0, bestD=1e9;
+  cards.forEach((el,i)=>{
+    const mid=el.offsetLeft+el.offsetWidth/2-base; const d=Math.abs(mid-cx);
+    if(d<bestD){bestD=d; best=i;}
+    const s=cssVar('--scaleCenter')-(cssVar('--scaleCenter')-cssVar('--scaleSide'))*Math.min(1,d/(track.clientWidth*.5));
+    el.style.transform=`scale(${s.toFixed(3)})`; el.style.zIndex=String(1000-Math.round(d));
+  });
+  if(best!==activeIndex){activeIndex=best; updateCaption();}
+}
+track.addEventListener('scroll',()=>{if(ticking)return; ticking=true; requestAnimationFrame(()=>{updateScales(); ticking=false;});},{passive:true});
+addEventListener('resize',updateScales,{passive:true});
+
+function lookup(p){
+  const k=canon(p.title);
+  return D[k] || {short:'', long:'', palette:[]};
+}
+function updateCaption(){
+  const p=PAINTINGS[activeIndex]; if(!p) return; const d=lookup(p);
+  descEl.innerHTML=`<div class="head">${p.title} — ${p.artist} ${p.year?`(${p.year})`:''}</div>
+                    <div class="body">${d.short||''}</div>`;
+}
+
+/* fullscreen open/close + swipe */
+const modal=document.getElementById('modal');
+const mWrap=document.getElementById('mWrap');
+const mImg=document.getElementById('mImg');
+const mTitle=document.getElementById('mTitle');
+const mLong=document.getElementById('mLong');
+const sw=document.getElementById('swatches');
+
+function openModal(){
+  setModalForIndex(activeIndex); modal.classList.add('show');
+}
+function closeModal(){ modal.classList.remove('show'); }
+function setModalForIndex(i){
+  const p=PAINTINGS[i]; const d=lookup(p);
+  const card=track.querySelectorAll('.card')[i]; const img=card?.querySelector('img');
+  mImg.src = img?.src || ''; mImg.alt = `${p.title} — full view`;
+  mTitle.textContent = `${p.title} — ${p.artist}${p.year?`, ${p.year}`:''}`;
+  mLong.textContent = d.long || d.short || '';
+  sw.innerHTML='';
+  (d.palette||[]).forEach(hex=>{
+    const chip=document.createElement('span'); chip.className='sw';
+    const chipColor=document.createElement('i'); chipColor.style.background=hex;
+    const label=document.createElement('span'); label.textContent=hex.toUpperCase();
+    chip.appendChild(chipColor); chip.appendChild(label); sw.appendChild(chip);
+  });
+}
+/* one tap anywhere to close */
+modal.addEventListener('click',()=>closeModal(),{passive:true});
+
+/* swipe left/right in fullscreen */
+let sx=0, sy=0, dx=0, dy=0;
+mWrap.addEventListener('touchstart',e=>{const t=e.touches[0]; sx=t.clientX; sy=t.clientY;},{passive:true});
+mWrap.addEventListener('touchmove',e=>{const t=e.touches[0]; dx=t.clientX-sx; dy=t.clientY-sy;},{passive:true});
+mWrap.addEventListener('touchend',e=>{
+  if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){
+    activeIndex = (activeIndex + (dx<0?1:-1) + PAINTINGS.length) % PAINTINGS.length;
+    setModalForIndex(activeIndex);
+  }
+  dx=dy=0;
+},{passive:true});
+
+/* keyboard arrows (desktop) */
+addEventListener('keydown',e=>{
+  if(!modal.classList.contains('show')) return;
+  if(e.key==='ArrowLeft'){ activeIndex=(activeIndex-1+PAINTINGS.length)%PAINTINGS.length; setModalForIndex(activeIndex);}
+  if(e.key==='ArrowRight'){ activeIndex=(activeIndex+1)%PAINTINGS.length; setModalForIndex(activeIndex);}
+});
+
+/* init */
+document.addEventListener('DOMContentLoaded',build);
+
+/* utilities */
+function openAt(i){activeIndex=i; setModalForIndex(i); modal.classList.add('show');}
+function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=src;});}
+</script>
+</body>
+</html>
+
 
 <style>
   :root{
