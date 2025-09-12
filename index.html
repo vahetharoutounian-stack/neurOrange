@@ -2,352 +2,773 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<title>neurOrange • Deep Research Gallery (No “Description coming soon”)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#000000" />
+<title>neurOrange — Home (press-orange to start)</title>
 
-<!-- ====== STYLES ====== -->
 <style>
   :root{
-    --glass: rgba(0,0,0,.28);
-    --gap: clamp(24px,7vw,72px);
-    --basis: 21%;
-    --scaleCenter: 1.6;
-    --scaleSide: .80;
-    --rowH: 22vh;
+    --bergamot:#FFA64D;        /* soft golden glow */
+    --pantone021:#FE5000;
+    --pure:#FFA500;
+    --nick:#FF6600;            /* Nickelodeon Orange */
+    --after:#F9751F;           /* Afterimage Orange */
+    --gap-deg:3;
+    --inner-thick:34px;        /* recomputed in JS */
+    --outer-thick-mult:2.2;
+    --emoji-font:18px;
+    --glow:0 0 10px #000, 0 0 18px #000;
   }
+  *{box-sizing:border-box}
   html,body{
-    margin:0;background:#000;color:#fff;
-    -webkit-font-smoothing:antialiased;
-    font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    margin:0; min-height:100%; background:#000; color:#fff;
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
   }
-  #stage{position:fixed;inset:0;display:grid;place-items:center;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right)
-            env(safe-area-inset-bottom) env(safe-area-inset-left)}
-  #frame{
-    position:relative;height:100dvh;width:min(100dvw,calc(100dvh*9/16));
-    border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.08);
-    background:#000;box-shadow:0 20px 80px rgba(0,0,0,.55)
+
+  /* === black failsafe (in case video paints late) === */
+  #failsafe{position:fixed; inset:0; background:#000; z-index:100000; opacity:1; transition:opacity .25s ease}
+
+  /* === splash: press the orange to start === */
+  #intro{
+    position:fixed; inset:0; background:#000; display:grid; place-items:center;
+    z-index:9999; opacity:1; pointer-events:auto; transition:opacity 900ms ease;
   }
-  /* optional background (add gallery.jpg next to this file) */
-  #frame::before{content:"";position:absolute;inset:0;z-index:0;
-    background:url("gallery.jpg") center/auto 100% no-repeat;
-    filter:saturate(105%) brightness(95%)}
+  #intro.hidden{opacity:0; pointer-events:none}
+  .intro-stack{display:grid; justify-items:center; gap:1rem}
+  #startOrange{
+    font-size:clamp(110px,30vw,240px); line-height:1; user-select:none; cursor:pointer;
+    filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25));
+    transition:transform .12s ease;
+  }
+  #startOrange:active{transform:scale(.98)}
+  .intro-title{
+    font-weight:900; letter-spacing:.14em; user-select:none;
+    font-size:clamp(18px,6.2vw,44px);
+    color:var(--bergamot);
+    text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);
+    animation:titlePulse 2.2s ease-in-out infinite;
+  }
+  @keyframes titlePulse{
+    0%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
+    50%{color:var(--pure);    text-shadow:0 0 14px rgba(255,165,0,.65), 0 0 34px rgba(255,165,0,.45)}
+    100%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
+  }
 
-  #content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;gap:10px;padding:0 0 10px}
+  /* === stage === */
+  #phone{position:fixed; inset:0; display:grid; place-items:center}
+  #canvas{position:relative; width:100%; height:100%; overflow:hidden; background:#000}
 
-  /* carousel */
-  .carousel{position:relative;height:var(--rowH);background:var(--glass);
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-    border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden}
-  #track{position:relative;height:100%;display:flex;align-items:center;gap:var(--gap);
-    overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
-    scroll-snap-type:x mandatory;scroll-snap-stop:always;padding:0 var(--gap);scrollbar-width:none;touch-action:pan-x;cursor:grab}
-  #track::-webkit-scrollbar{display:none}
-  .spacer{flex:0 0 60%;height:1px}
-  .card{flex:0 0 var(--basis);height:calc(100%/var(--scaleCenter));scroll-snap-align:center;
-    display:flex;align-items:center;justify-content:center;transform:scale(var(--scaleSide));
-    transition:transform .18s ease,z-index .18s ease,filter .18s ease;position:relative;border-radius:12px}
-  .card img{max-height:100%;width:auto;height:auto;object-fit:contain;display:block;-webkit-user-drag:none;user-select:none;background:#0b0b0c;border-radius:12px;filter:drop-shadow(0 0 28px rgba(0,0,0,.95)) drop-shadow(0 0 52px rgba(0,0,0,.75))}
-  .card.ph{background:linear-gradient(135deg,#1d1d1d,#2b2b2b);border:1px dashed rgba(255,255,255,.18);color:#ccc;text-align:center;padding:10px}
+  #brandBar{position:absolute; left:0; right:0; top:10px; display:flex; justify-content:center; z-index:6; filter:drop-shadow(var(--glow))}
+  #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500}
 
-  /* caption */
-  #desc{width:70%;margin:8px auto 0;min-height:4.6vh;max-height:10vh;padding:6px 10px;font-size:13.25px;line-height:1.35;color:#f2f2f2;background:var(--glass);
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;border:1px solid rgba(255,255,255,.08)}
-  #desc .head{font-weight:700;margin-bottom:2px}
-  #desc .body{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;text-align:justify}
+  #bgLayer{position:absolute; inset:0; z-index:1}
+  /* keep hidden until ready */
+  #bgVideo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; opacity:0; transition:opacity .4s ease}
+  .fogWrap{position:absolute; inset:-30%; z-index:0; pointer-events:none;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);
+            mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)}
+  .fog{position:absolute; inset:0; mix-blend-mode:screen; filter:blur(60px) saturate(120%);
+       background:
+         radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
+         radial-gradient(28% 24% at 80% 40%, var(--nick) 0 55%, transparent 60%),
+         radial-gradient(30% 22% at 40% 70%, var(--nick) 0 55%, transparent 60%);
+       animation:fog1 26s linear infinite alternate; opacity:.62}
+  @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
 
-  /* modal */
-  #modal{position:fixed;inset:0;display:none;overflow:hidden;background:rgba(0,0,0,.88);color:#fff;z-index:9990}
-  #modal.show{display:block}
-  #mWrap{position:absolute;inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px}
-  #mImg{max-width:94vw;max-height:60vh;border:2px solid #fff;border-radius:12px;margin-bottom:8px}
-  #mMeta{max-width:94vw}
-  #mTitle{font-weight:800;margin:6px 0 4px;font-size:18px;line-height:1.25}
-  #mLong{max-height:32vh;overflow:auto;-webkit-overflow-scrolling:touch;font-size:15px;line-height:1.55;text-align:justify}
+  #focus{position:absolute; inset:0; display:grid; place-items:center; z-index:2}
 
-  /* swatches like Color Library */
-  #swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-  #swatches .sw{position:relative;width:44px;height:44px;border-radius:12px;border:2px solid #fff;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.25) inset}
-  #swatches .sw i{position:absolute;inset:0;border-radius:inherit;border:0}
-  #swatches .sw::before,#swatches .sw::after{content:"";position:absolute;background:#222;opacity:.85}
-  #swatches .sw::before{width:1px;height:60%;left:50%;top:20%;transform:translateX(-.5px)}
-  #swatches .sw::after{height:1px;width:60%;top:50%;left:20%;transform:translateY(-.5px)}
+  /* start everything shrunk & centered until orange is pressed */
+  .wrapCenter{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1); will-change:transform,opacity}
+  .preGrow{transform:translate(-50%,-50%) scale(.05); opacity:0}
+  .grow{animation:ringGrow var(--growDur,3600ms) cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0}
+  #innerWrap.grow {--growDur:3600ms; animation-delay:0ms}
+  #midWrap.grow   {--growDur:4200ms; animation-delay:200ms}
+  #outerWrap.grow {--growDur:4600ms; animation-delay:350ms}
+  #emojiWrapA.grow{--growDur:4000ms; animation-delay:500ms}
+  #emojiWrapB.grow{--growDur:4400ms; animation-delay:650ms}
+  @keyframes ringGrow{
+    0%   {transform:translate(-50%,-50%) scale(.05) rotate(0deg);   opacity:0}
+    60%  {transform:translate(-50%,-50%) scale(1.10) rotate(45deg); opacity:1}
+    100% {transform:translate(-50%,-50%) scale(1.00) rotate(0deg);  opacity:1}
+  }
+
+  .spin{position:absolute; inset:0}
+  .halo{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border-radius:50%;
+        background:radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); filter:blur(10px);
+        pointer-events:none; z-index:-1}
+
+  /* center prompt */
+  #question{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1);
+    display:grid; place-items:center; background:#000; color:#fff; border-radius:50%; border:none;
+    z-index:5; filter:drop-shadow(var(--glow)); padding:.4rem .6rem; user-select:none;
+    animation:breathe 7s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1.00)}50%{transform:translate(-50%,-50%) scale(1.02)}}
+  #questionText{
+    font-weight:900; font-style:italic; text-align:center;
+    font-size:clamp(16px,3.6vw,22px); line-height:1.15; margin:0;
+    display:inline-block; transform-origin:50% 50%;
+    animation:colorPulse 5.5s ease-in-out infinite;
+  }
+  @keyframes colorPulse{
+    0%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
+    33%{color:var(--bergamot);text-shadow:0 0 8px rgba(255,166,77,.45)}
+    66%{color:var(--pure);text-shadow:0 0 8px rgba(255,165,0,.45)}
+    100%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
+  }
+
+  /* ring rotations */
+  #innerSVG,#outerSVG{transform-box:fill-box; transform-origin:50% 50%; animation:spinCW 60s linear infinite}
+  #outerSVG{animation-duration:70s}
+  @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .emojiSpin{position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite}
+  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+  .emoji{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:var(--emoji-font);
+         border:none; border-radius:10px; background:rgba(0,0,0,.08); padding:1px 3px;
+         filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
+
+  /* ghost flicker */
+  .ghost-wedge{fill:var(--c0); animation:ghostFlick var(--dur,12s) ease-in-out infinite; animation-delay:var(--delay,0s); cursor:pointer}
+  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
+
+  /* paintings ring */
+  #midWrap{z-index:8}
+  #midSpin{animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--glow))}
+  #midRing{position:absolute; inset:0}
+  .mnode{position:absolute; top:50%; left:50%; border-radius:50%; transform:translate(-50%,-50%);
+         background:#111; overflow:hidden; border:1.5px solid #000; filter:drop-shadow(var(--glow));
+         cursor:pointer}
+  .mnode.withCloud::before{content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
+    background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none}
+  .mnode img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
+             animation:upright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change:transform}
+
+  /* bottom nav — tighter; Color Library stays one line */
+  .bottomNav{
+    position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 10px);
+    z-index:8; display:flex; gap:10px; justify-content:space-between; padding:0 12px;
+  }
+  .navBtn{
+    flex:1; text-align:center; font-weight:900; padding:10px 8px; border-radius:12px;
+    border:1px solid rgba(0,0,0,.45); color:#140a00; user-select:none; -webkit-user-select:none; cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,.35); text-decoration:none; display:inline-block;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    font-size:clamp(12px, 3.2vw, 14px); line-height:1.05;
+  }
+  .navLeft {background:linear-gradient(180deg,#F4C430,#E69B20)}
+  .navMid  {background:linear-gradient(180deg,#FF8E00,#FF6A13)}
+  .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}
+  .clickable{cursor:pointer}
+
+  /* === TRANSITION OVERLAY (fade to black + quote) === */
+  #transition{
+    position:fixed; inset:0; background:#000; z-index:10050;
+    display:grid; place-items:center; opacity:0; pointer-events:none; transition:opacity 600ms ease;
+  }
+  #transition.show{opacity:1; pointer-events:auto}
+  #quoteBox{max-width:min(92vw,720px); padding:2.2rem 1.6rem; text-align:center}
+  #quoteText{
+    font-weight:900; font-style:italic; letter-spacing:.02em;
+    font-size:clamp(18px,5.2vw,30px); line-height:1.25; color:#ddd;
+    text-shadow:0 0 10px rgba(0,0,0,.8);
+  }
+  /* animate the word "orange" specifically */
+  .Oword{
+    animation:
+      orangeHue 2.8s ease-in-out infinite alternate,
+      orangeGlow 2.8s ease-in-out infinite alternate;
+  }
+  @keyframes orangeHue{
+    0%   { color: var(--nick); }
+    100% { color: var(--after); }
+  }
+  @keyframes orangeGlow{
+    0%   { text-shadow: 0 0 10px rgba(255,166,77,.55), 0 0 18px rgba(255,102,0,.35); }
+    100% { text-shadow: 0 0 12px rgba(255,166,77,.75), 0 0 26px rgba(255,102,0,.55); }
+  }
 </style>
 </head>
 <body>
-<div id="stage"><div id="frame"><div id="content">
-  <div class="carousel"><div id="track"></div></div>
-  <div id="desc" aria-live="polite"></div>
-</div></div></div>
 
-<!-- fullscreen modal -->
-<div id="modal" role="dialog" aria-modal="true">
-  <div id="mWrap">
-    <img id="mImg" alt="">
-    <div id="mMeta">
-      <div id="mTitle"></div>
-      <div id="mLong"></div>
-      <div id="swatches"></div>
+<div id="failsafe"></div>
+
+<!-- intro -->
+<div id="intro">
+  <div class="intro-stack">
+    <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
+    <div class="intro-title">neurOrange</div>
+  </div>
+</div>
+
+<div id="phone">
+  <div id="canvas">
+    <div id="brandBar"><div id="brand">neurOrange</div></div>
+
+    <div id="bgLayer">
+      <!-- inline sources so video works even if JS doesn't assign src -->
+      <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
+        <source src="assets/placeholder.mp4" type="video/mp4" />
+      </video>
+      <div class="fogWrap"><div class="fog"></div></div>
+    </div>
+
+    <div id="focus">
+      <!-- outer ring -->
+      <div id="outerWrap" class="wrapCenter preGrow">
+        <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
+        <div class="halo" id="outerHalo"></div>
+      </div>
+
+      <!-- inner ring -->
+      <div id="innerWrap" class="wrapCenter preGrow">
+        <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
+        <div class="halo" id="innerHalo"></div>
+      </div>
+
+      <!-- comets layer -->
+      <div id="cometField" class="wrapCenter preGrow"></div>
+
+      <!-- painting ring -->
+      <div id="midWrap" class="wrapCenter preGrow">
+        <div id="midSpin" class="spin"><div id="midRing"></div></div>
+      </div>
+
+      <!-- emojis -->
+      <div id="emojiWrapA" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
+      <div id="emojiWrapB" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
+
+      <!-- center prompt -->
+      <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
+    </div>
+
+    <!-- bottom nav (links to external HTMLs) -->
+    <div class="bottomNav">
+      <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/" aria-label="Color Library">Color Library</a>
+      <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" aria-label="Art Gallery">Art Gallery</a>
+      <a class="navBtn navRight" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3" aria-label="Illusion Lab">Illusion Lab</a>
     </div>
   </div>
 </div>
 
-<!-- ====== APP SCRIPT ====== -->
+<!-- transition overlay (fade-to-black + quote) -->
+<div id="transition">
+  <div id="quoteBox">
+    <div id="quoteText"></div>
+  </div>
+</div>
+
 <script>
-/* 12 paintings — Monet first. If your files are Turner-first, swap the first two. */
-const PAINTINGS = [
-  {src:'paintings/1.jpg',  title:'Impression, Sunrise',                 artist:'Claude Monet',              year:'1872'},
-  {src:'paintings/2.jpg',  title:'The Fighting Temeraire',               artist:'J. M. W. Turner',           year:'1839'},
-  {src:'paintings/3.jpg',  title:'Orange and Yellow',                    artist:'Mark Rothko',               year:'1956'},
-  {src:'paintings/4.jpg',  title:'South Wind, Clear Sky',                artist:'Katsushika Hokusai',        year:'c. 1830'},
-  {src:'paintings/5.jpg',  title:'Red Canna',                            artist:'Georgia O’Keeffe',          year:'1924'},
-  {src:'paintings/6.jpg',  title:'Composition VIII',                     artist:'Wassily Kandinsky',         year:'1923'},
-  {src:'paintings/7.jpg',  title:'Synchromy in Orange: To Form',         artist:'Stanton MacDonald-Wright',  year:'1914'},
-  {src:'paintings/8.jpg',  title:'Target with Four Faces',               artist:'Jasper Johns',              year:'1955'},
-  {src:'paintings/9.jpg',  title:'Beginning',                            artist:'Kenneth Noland',            year:'1958'},
-  {src:'paintings/10.jpg', title:'The Night Café',                       artist:'Vincent van Gogh',          year:'1888'},
-  {src:'paintings/11.jpg', title:'Bedroom in Arles',                     artist:'Vincent van Gogh',          year:'1889'},
-  {src:'paintings/12.jpg', title:'Flaming June',                         artist:'Frederic Leighton',         year:'1895'}
-];
-
-/* ------- canonicalizer + aliases (robust matching) ------- */
-const canon = s => s.toLowerCase()
-  .normalize('NFD').replace(/\p{Diacritic}/gu,'')
-  .replace(/[^a-z0-9 ]+/g,' ')
-  .replace(/\s+/g,' ')
-  .trim();
-
-const ALIAS = {
-  'red canna':'canna red and orange',
-  'the night cafe':'the night café',
-  'south wind, clear sky (red fuji)':'south wind, clear sky',
-  'red fuji':'south wind, clear sky'
+/* === Deep link config === */
+const URLS = {
+  home:   "https://vahetharoutounian-stack.github.io/neurOrange/",
+  color:  "https://vahetharoutounian-stack.github.io/neurOrangeV3/",
+  gallery:"https://vahetharoutounian-stack.github.io/neurOrangeV2/"
 };
 
-/* ------- authoritative description map (prevents “Description coming soon”) ------- */
-/* You can edit these, and/or override them by adding a Picture_desc.txt at repo root */
-const DESCRIPTIONS = (() => {
-  const d = {};
+/* === Quotes (the word "orange" will animate) === */
+const QUOTES_RAW = [
+  "It’s funny how the colors of the real world only seem really real when you viddy them on the screen. — A Clockwork orange (1971)",
+  "orange is the happiest color. — Frank Sinatra",
+  "There is no blue without yellow and without orange. — Vincent Van Gogh",
+  "The orange tree took time to create this masterpiece. — Thich Nhat Hanh",
+  "If the real world is orange juice, then art is like orange juice concentrate. — Martin Mull",
+  "In a world full of yellows and reds, dare to be orange."
+];
+function decorateOrangeWords(str){
+  return str.replace(/orange/gi, m => `<span class="Oword">${m}</span>`);
+}
+function pickQuote(){
+  const i = Math.floor(Math.random()*QUOTES_RAW.length);
+  return decorateOrangeWords(QUOTES_RAW[i]);
+}
 
-  // helper to add entries
-  function add(title, hook, analysis, palette){
-    d[canon(title)] = {hook, analysis, palette};
+/* === failsafe remove === */
+(function(){ const fs=document.getElementById('failsafe'); requestAnimationFrame(()=>{ fs.style.opacity=0; setTimeout(()=>fs.remove(),300); }); })();
+
+/* === palettes === */
+const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
+const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
+const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;"];
+
+/* === helpers === */
+function $(id){return document.getElementById(id)}
+function $$(sel){return Array.from(document.querySelectorAll(sel))}
+function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
+function goColor(hex){ transitionTo(`${URLS.color}#step=2&cat=standards&hex=${hexNorm(hex)}`); }
+function goGallery(idx){ transitionTo(`${URLS.gallery}#painting=${idx}`); }
+function goIllusion(hex){ transitionTo(`${URLS.color}#step=3&cat=ghosts&hex=${hexNorm(hex)}`); }
+
+function sizeQuestion(){
+  const b=$('question'), t=$('questionText');
+  b.style.transform='translate(-50%,-50%) scale(1)';
+  const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
+  const D=Math.ceil(Math.max(w,h)+pad*2);
+  b.style.width=D+'px'; b.style.height=D+'px';
+  startBoundedSpin();
+}
+
+/* color math */
+function hexToRgb(h){h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}}
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return {h:h*360,s,l}}
+function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p},q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}}
+function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}
+function opponentHex(hex){const {r,g,b}=hexToRgb(hex); const {h,s,l}=rgbToHsl(r,g,b); const opp=(h+180)%360; const {r:rr,g:gg,b:bb}=hslToRgb(opp,s,l); return rgbToHex(rr,gg,bb)}
+
+/* svg wedges */
+function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
+  const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}); const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);
+  const large=(a1Deg-a0Deg)>180?1:0; return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
+
+function drawRing(svgEl,sizePx,r0px,r1px,colorObjs,gapDeg){
+  svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
+  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
+  const n=colorObjs.length, slice=360/n; svgEl.innerHTML='';
+  for(let i=0;i<n;i++){
+    const hex=(typeof colorObjs[i]==='string')? colorObjs[i] : colorObjs[i].hex;
+    const a0=i*slice, a1=(i+1)*slice-gap;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
+    p.setAttribute('fill',hex);
+    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
+    p.classList.add('clickable');
+    p.addEventListener('click', ()=> goColor(hex), {passive:true});
+    svgEl.appendChild(p);
   }
+}
 
-  add('Impression, Sunrise',
-`From a harbor wrapped in morning haze, a small orange sun ignites sky and water with a single pulse of color.`,
-`At Le Havre Monet reduces the world to air and temperature. The tiny sun and its reflection are the picture’s axis; by placing a warm high-chroma note inside cool greys, he measures the hour more honestly than detail could. The dot reads as ignition—a modern day rising, industrial stacks in the mist.`,
-['#FF6A00','#FF7F32','#FF9E57','#FFB347','#C85A2E']);
+function drawGhostRing(svgEl,sizePx,r0px,r1px,ghostHexes,gapDeg){
+  svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
+  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
+  const n=ghostHexes.length, slice=360/n; svgEl.innerHTML='';
+  for(let i=0;i<n;i++){
+    const base=ghostHexes[i], opp=opponentHex(base), a0=i*slice, a1=(i+1)*slice-gap;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
+    p.classList.add('ghost-wedge','clickable');
+    p.style.setProperty('--c0',base); p.style.setProperty('--c1',opp);
+    const dur=10+Math.random()*6, phase=Math.random()*dur; p.style.setProperty('--dur',dur.toFixed(2)+'s'); p.style.setProperty('--delay',(-phase).toFixed(2)+'s');
+    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
+    p.addEventListener('click', ()=> goIllusion(base), {passive:true});
+    svgEl.appendChild(p);
+  }
+}
 
-  add('The Fighting Temeraire',
-`An old warship glides toward its twilight under a furnace sky—beauty and elegy in one sunset.`,
-`Turner paints farewell and modernity together: a pale hero-ship towed by a sooty tug beneath “deeply crimsoned” clouds. The oranges are not incidental—they are the emotional core, a chosen exaggeration to make time visible. Orange is dusk, memory, and radiance at once; the ship becomes a spectral monument against a world turning to steam.`,
-['#FFD6A5','#FF9900','#FF4500','#B87333','#8B4513']);
+/* paintings */
+function buildMidNodes(){
+  const mid=$('midRing'); mid.innerHTML='';
+  for(let i=1;i<=6;i++){
+    const n=document.createElement('div'); n.className='mnode withCloud';
+    const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`;
+    img.onerror=()=>{ n.style.background='#222'; };
+    n.addEventListener('click', ()=> goGallery(i), {passive:true});
+    n.appendChild(img); mid.appendChild(n);
+  }
+}
 
-  add('Orange and Yellow',
-`Two weightless fields—yellow above, orange below—breathe against each other until the air itself seems coloured.`,
-`No objects—only atmosphere. The orange panel is presence and temperature; yellow is light. Where they touch, a seam of vibration forms. Feeling arrives without a story: steadiness from the orange, lift from the yellow, stillness charged with life.`,
-['#FFA826','#FFD24A','#FFE38A','#FF8A33','#FFF3C1']);
+/* layout */
+function layoutRings(){
+  const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap'), midRing=$('midRing');
+  const W=innerWidth, H=innerHeight, S=Math.min(W,H);
+  document.documentElement.style.setProperty('--emoji-font',Math.round(W*0.036)+'px');
 
-  add('South Wind, Clear Sky',
-`After a cloudless night and south wind, Fuji’s flank flares vermilion.`,
-`One chromatic event tells weather, hour, and presence: warm banding across the slope against a cool, lifting sky. Constancy quickened by time; orange as revelation rather than ornament.`,
-['#C94F2D','#D9642A','#E87334','#F08A3C','#F4A460']);
+  const innerD=Math.round(S*0.58), innerThick=Math.max(16,Math.round(innerD*0.12));
+  document.documentElement.style.setProperty('--inner-thick',innerThick+'px');
+  innerWrap.style.width=innerD+'px'; innerWrap.style.height=innerD+'px';
 
-  add('Red Canna',
-`Petals swell into landscape—scarlet and tangerine fold until the bloom reads as heat and breath.`,
-`Enlarged and cropped, the flower becomes terrain. Orange is vitality: concentrated at the core, released along lit edges. The colour refuses to be background; it is the subject, turning a blossom into an experience of radiance.`,
-['#B22222','#FF4500','#FF8C00','#FFA07A','#FFD1A1']);
+  const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter-innerThick*2);
+  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
 
-  add('Composition VIII',
-`Circles and vectors stage a geometric conversation; orange is the warm bass note that keeps the score humane.`,
-`The space is relational, not perspectival. Orange anchors intersections and dilates light at edges; against cool blues and sharp blacks it prevents brittleness—structure with a pulse.`,
-['#E67E22','#FFA500','#FFB347','#F4A460','#D2691E']);
+  const nodeD=Math.round(innerThick*0.85*5.25*0.82), margin=2, midR=Math.max(0, (W/2)-(nodeD/2)-margin);
+  const nodes=$$('#midRing .mnode'), N=6, step=2*Math.PI/N;
+  nodes.forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR; n.style.width=nodeD+'px'; n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`});
 
-  add('Synchromy in Orange: To Form',
-`Bands and arcs hinge around an orange key, as if a chord were struck and space answered.`,
-`Synchromism treats colour like music. Orange provides the tonic while complementary cools make it flare and recede rhythmically. The eye traverses temperature and value—movement felt in the body.`,
-['#FFA500','#FF8C00','#FFB347','#E67E22','#F4A460']);
+  const outerInnerR=midR + nodeD/2 + margin, outerThick=innerThick*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult'))||2.2);
+  const outerOuterR=Math.max(outerInnerR+outerThick, W/2+8), outD=Math.round(outerOuterR*2);
+  outerWrap.style.width=outD+'px'; outerWrap.style.height=outD+'px';
+  drawGhostRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
 
-  add('Target with Four Faces',
-`A cool, impersonal target—concentric bands including a humming orange—beneath a box of cropped faces.`,
-`Encaustic traps newsprint and brushwork beneath a literal surface. Orange is attention and temperature inside an otherwise impartial schema. Between hot chroma and blind portrait, Johns stages the tension of public sign vs. private body.`,
-['#FFA500','#FF8C00','#FF7F50','#F4A460','#E07A5F']);
+  const gap=Math.max(8,Math.round(S*0.014)), rA=outerOuterR+gap, rB=rA+Math.max(22,Math.round(S*0.028));
+  placeEmojis('emojiWrapA', rA, 0); placeEmojis('emojiWrapB', rB, (Math.PI*2)/(12*2));
+}
+function placeEmojis(wrapId,R,phase=0){
+  const container=$(wrapId).querySelector('.emojiRing'); container.innerHTML=''; const n=12;
+  for(let i=0;i<n;i++){const d=document.createElement('div'); d.className='emoji'; d.innerHTML=EMOJIS[i%EMOJIS.length];
+    const a=i*(2*Math.PI/n)+phase, x=Math.cos(a)*R, y=Math.sin(a)*R;
+    d.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; container.appendChild(d);}
+}
 
-  add('Beginning',
-`Concentric rings focus on a vermilion-orange core—colour as genesis.`,
-`Stain painting makes colour atmosphere. A hot nucleus set against complement and raw canvas reads like first light. Orange functions as first cause, a centring dawn note.`,
-['#E34A33','#FFA500','#F5D0A9','#F4A460','#000000']);
+/* 1 rpm bounded center text (±45°, random flips) */
+let spinRAF, spinStarted=false;
+function startBoundedSpin(){
+  if(spinStarted) return; spinStarted=true;
+  const t=$('questionText'); let angle=0, dir=Math.random()<0.5?1:-1; const speed=360/60;
+  let change=3+Math.random()*5, last=performance.now();
+  function step(now){const dt=(now-last)/1000; last=now; angle+=dir*speed*dt;
+    if(angle>45){angle=45;dir=-1} if(angle<-45){angle=-45;dir=1}
+    change-=dt; if(change<=0){ if(Math.random()<0.35) dir*=-1; change=3+Math.random()*5; }
+    t.style.transform=`rotate(${angle.toFixed(3)}deg)`; spinRAF=requestAnimationFrame(step);}
+  spinRAF=requestAnimationFrame(step);
+}
 
-  add('The Night Café',
-`Orange and green collide in a feverish nocturne; gaslight glows like a low-grade fever.`,
-`Van Gogh paints moral temperature via complements—vermilion walls against poisonous green. Orange here is not comfort but warning; pressed against green it becomes nauseating, the glow of a night that won’t end.`,
-['#FF6347','#FF4500','#CD5C5C','#FF8C00','#C04000']);
-
-  add('Bedroom in Arles',
-`A simple room tilts toward us; orange wood glows against cool walls until the space feels steadfast.`,
-`Lines are emphatic, shadows simplified. Orange carries presence and use; blue steadies. A portrait of rest carved from two complementary families.`,
-['#FF9E57','#F4A460','#E0702A','#C68642','#8B4513']);
-
-  add('Flaming June',
-`A young woman sleeps wrapped in translucent orange silk, glowing like embers against marble and sea.`,
-`Academic craft meets a chromatic dare: orange must carry the scene. Glazes stack until the drapery appears lit from within—beauty, warmth, and danger intertwined.`,
-['#FF7F50','#FFA500','#E97451','#FFDAB9','#CD5C5C']);
-
-  return d;
+/* comets: first in cycle plain, 4th 🌱, 5th 🌹 */
+(function comet(){
+  const field=$('cometField'); const cycle=5; let count=0;
+  function spawn(){
+    count++; const idx=((count-1)%cycle)+1;
+    const W=innerWidth,H=innerHeight, run=Math.max(W,H)+400, th=Math.random()*Math.PI*2;
+    const kinds=['straight','offcenter','curved']; const kind=kinds[Math.floor(Math.random()*kinds.length)];
+    const n={x:-Math.sin(th),y:Math.cos(th)}, dur=4.8+Math.random()*3;
+    let P0,P1,C; const ctr={x:0,y:0};
+    if(kind==='straight'){P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2}}
+    else if(kind==='offcenter'){const d=(Math.random()*0.35+0.15)*(W/2), sh={x:n.x*(Math.random()<0.5?-d:d), y:n.y*(Math.random()<0.5?-d:d)};
+      P0={x:ctr.x-Math.cos(th)*run/2+sh.x,y:ctr.y-Math.sin(th)*run/2+sh.y}; P1={x:ctr.x+Math.cos(th)*run/2+sh.x,y:ctr.y-Math.sin(th)*run/2+sh.y}}
+    else{P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2}; P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};
+      const bend=(Math.random()*0.5+0.3)*(W/2); C={x:ctr.x+n.x*(Math.random()<0.5?-bend:bend), y:ctr.y+n.y*(Math.random()<0.5?-bend:bend)}}
+    const comet=document.createElement('div'); comet.className='comet';
+    const stk=document.createElement('div'); stk.className='cometStack';
+    const top=document.createElement('div'); top.className='top';
+    if(idx===1){top.innerHTML=''} else if(idx===5){top.innerHTML='🌹'} else if(idx===4){top.innerHTML='🌱'} else {top.innerHTML='🟠'}
+    const tail=document.createElement('div'); tail.innerHTML='☄️';
+    stk.appendChild(top); stk.appendChild(tail); comet.appendChild(stk); field.appendChild(comet);
+    let t0=null; function lerp(a,b,t){return a+(b-a)*t}
+    function draw(now){ if(!t0)t0=now; const u=Math.min(1,(now-t0)/(dur*1000)); let x,y;
+      if(C){const one=1-u; x=one*one*P0.x + 2*one*u*C.x + u*u*P1.x; y=one*one*P0.y + 2*one*u*C.y + u*u*P1.y;}
+      else {x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u);}
+      comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      if(u<1) requestAnimationFrame(draw); else comet.remove();
+    }
+    requestAnimationFrame(draw);
+  }
+  (function loop(){ spawn(); setTimeout(loop, 7000 + Math.random()*5000); })();
 })();
 
-/* ------- try to merge Picture_desc.txt overrides if present ------- */
-async function loadMergedDescriptions(){
-  const text = await (async()=>{
-    try{ const r = await fetch('Picture_desc.txt',{cache:'no-store'}); if(r.ok) return await r.text(); }
-    catch(e){}
-    const el = document.getElementById('desc-data'); return el?el.textContent:'';
-  })();
-  if(!text) return DESCRIPTIONS;
+/* build + layout once (no animation yet) */
+function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
+layoutAll();
 
-  const t = text.replace(/\r/g,'');
-  const parts = t.split(/\n(?=\d+\.\s+)/);
-  const merged = {...DESCRIPTIONS};
-  for(const chunk of parts){
-    const head = chunk.match(/^\s*(\d+)\.\s*(.+)\n/); if(!head) continue;
-    const titleLine = head[2].trim();
-    const key = canon(
-      titleLine
-        .replace(/\s*[—–-].*$/, '')
-        .replace(/\s*\(c\.\s*\d+\)\s*$/i,'')
-        .replace(/\s*\(\d{4}\)\s*$/,'')
-    );
-    const hook = (chunk.match(/Hook:\s*([\s\S]*?)(?:\n\n|Analysis:|\nDominant Orange Palette:|$)/i)||[])[1]?.trim()||'';
-    const analysis = (chunk.match(/Analysis:\s*([\s\S]*?)(?:\n\nDominant Orange Palette:|\nDominant Orange Palette:|$)/i)||[])[1]?.trim()||hook;
-    const palette = [...chunk.matchAll(/#[0-9a-f]{6}/gi)].map(m=>m[0].toUpperCase());
-    merged[key] = {hook, analysis, palette:[...new Set(palette)]};
+/* ===== TRANSITION: fade to black + randomized quote, then navigate ===== */
+let isTransitioning = false;
+function transitionTo(url){
+  if(isTransitioning) return;
+  isTransitioning = true;
+
+  const tr = $('transition');
+  const qT = $('quoteText');
+  qT.innerHTML = pickQuote();
+  tr.classList.add('show');
+
+  // Wait for fade-in + a short read time, then go
+  const hold = 2200;  // total time showing quote
+  setTimeout(()=>{ location.href = url; }, hold);
+}
+
+/* ===== press the orange to start animation + video ===== */
+(function(){
+  const orange=$('startOrange');
+  orange.addEventListener('click', ()=>{
+    const intro=$('intro');
+    intro.classList.add('hidden');
+    setTimeout(()=>{
+      intro.remove();
+
+      const v=$('bgVideo');
+      if(v){
+        const show=()=>v.style.opacity=1;
+        v.addEventListener('loadeddata', show, {once:true});
+        v.addEventListener('playing',    show, {once:true});
+        const p=v.play(); if(p && p.catch) p.catch(()=>{});
+      }
+
+      // run grow-out from center
+      ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
+        const el=$(id); if(!el) return;
+        el.classList.remove('grow'); el.classList.add('preGrow');
+        requestAnimationFrame(()=> el.classList.add('grow'));
+      });
+
+    }, 900); // match intro fade
+  }, {passive:true});
+})();
+
+/* === Bounded 1 rpm text rotation === */
+let spinRAF, spinStarted=false;
+function startBoundedSpin(){
+  if(spinStarted) return; spinStarted=true;
+  const t=$('questionText'); let angle=0, dir=Math.random()<0.5?1:-1; const speed=360/60;
+  let change=3+Math.random()*5, last=performance.now();
+  function step(now){const dt=(now-last)/1000; last=now; angle+=dir*speed*dt;
+    if(angle>45){angle=45;dir=-1} if(angle<-45){angle=-45;dir=1}
+    change-=dt; if(change<=0){ if(Math.random()<0.35) dir*=-1; change=3+Math.random()*5; }
+    t.style.transform=`rotate(${angle.toFixed(3)}deg)`; spinRAF=requestAnimationFrame(step);}
+  spinRAF=requestAnimationFrame(step);
+}
+</script>
+
+<!-- neurOrange Audio Dock — drop-in kit (safe if duplicated) -->
+<style id="audioDock2-kit-css">
+  /* bail if already defined elsewhere */
+  :root { --_noop: initial; }
+  #audioDock2 { all: initial; }
+
+  #audioDock2 {
+    position: fixed;
+    left: calc(8px + env(safe-area-inset-left));
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: #FF6600;
+    color: #fff;
+    border: 1px solid rgba(0,0,0,.35);
+    box-shadow: 0 8px 22px rgba(255,102,0,.35);
+    -webkit-user-select: none;
+    user-select: none;
   }
-  return merged;
-}
+  .ad-stop,
+  .ad-btn {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    border: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    line-height: 1;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    transition: transform .06s ease, box-shadow .2s ease, opacity .15s ease;
+  }
+  .ad-stop:active,
+  .ad-btn:active { transform: translateY(1px); }
+  .ad-btn.active {
+    outline: 2px solid rgba(255,255,255,.85);
+    box-shadow: 0 4px 14px rgba(0,0,0,.35),0 0 0 2px #fff inset;
+    background: #fdfdfd;
+  }
+  #audioDock2 .ad-wrap { position: relative; }
+  .ad-vol {
+    position: absolute;
+    bottom: 58px;
+    width: 44px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    background: rgba(22,22,22,.92);
+    border: 1px solid rgba(255,255,255,.2);
+    box-shadow: 0 10px 24px rgba(0,0,0,.45);
+    display: none;
+  }
+  .ad-vol.visible { display: block; }
+  .ad-vol label {
+    color: #fff;
+    font-size: 11px;
+    opacity: .8;
+    text-align: center;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .ad-vol input[type="range"] {
+    writing-mode: bt-lr;
+    -webkit-appearance: slider-vertical;
+    width: 30px;
+    height: 110px;
+    background: transparent;
+    padding: 0;
+    margin: 0 auto;
+  }
+  .ad-vol input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #FF6600;
+    border: 1px solid rgba(0,0,0,.35);
+    box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  }
+  .ad-vol input[type="range"]::-webkit-slider-runnable-track{
+    width: 6px;
+    background: #ddd;
+    border-radius: 999px;
+    border: 0;
+  }
+  .ad-vol input[type="range"]::-moz-range-thumb{
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #FF6600;
+    border: 1px solid rgba(0,0,0,.35);
+  }
+  .ad-vol input[type="range"]::-moz-range-track{
+    width: 6px;
+    background: #ddd;
+    border-radius: 999px;
+    border: 0;
+  }
+</style>
 
-/* paragraphs */
-function asParagraphs(txt){
-  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const t = (txt||'').trim(); if(!t) return '';
-  return '<p>'+esc(t).replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br>')+'</p>';
-}
+<div id="audioDock2" role="group" aria-label="Audio Player" hidden>
+  <!-- stop all -->
+  <button class="ad-stop" id="adStop" title="Stop all">🟧</button>
 
-/* ------- UI hooks ------- */
-const track = document.getElementById('track');
-const descEl = document.getElementById('desc');
-let activeIndex = 0;
-let LOOKUP = DESCRIPTIONS; // will be replaced by merged map on build()
+  <!-- sparkle -->
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="sparkle" title="Sparkle ✨">🌱</button>
+    <div class="ad-vol" data-for="sparkle">
+      <label>✨</label><input type="range" min="0" max="1" step="0.01" value="1"/>
+    </div>
+  </div>
+  <!-- orange -->
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="orange" title="Orange 🍊">🌱</button>
+    <div class="ad-vol" data-for="orange">
+      <label>🍊</label><input type="range" min="0" max="1" step="0.01" value="1"/>
+    </div>
+  </div>
+  <!-- autumn -->
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="autumn" title="Autumn 🍂">🌱</button>
+    <div class="ad-vol" data-for="autumn">
+      <label>🍂</label><input type="range" min="0" max="1" step="0.01" value="1"/>
+    </div>
+  </div>
+  <!-- storm -->
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="storm" title="Storm ⛈️">🌱</button>
+    <div class="ad-vol" data-for="storm">
+      <label>⛈️</label><input type="range" min="0" max="1" step="0.01" value="1"/>
+    </div>
+  </div>
+  <!-- negin -->
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="negin" title="Negin 💫">🌱</button>
+    <div class="ad-vol" data-for="negin">
+      <label>💫</label><input type="range" min="0" max="1" step="0.01" value="1"/>
+    </div>
+  </div>
 
-async function build(){
-  LOOKUP = await loadMergedDescriptions();
+  <!-- hidden audio elements (looping) -->
+  <audio id="aud_sparkle" preload="metadata" playsinline loop>
+    <source src="tracks/sparkle.mp3" type="audio/mpeg"><source src="media/sparkle.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="aud_orange"  preload="metadata" playsinline loop>
+    <source src="tracks/orange.mp3"  type="audio/mpeg"><source src="media/orange.mp3"  type="audio/mpeg">
+  </audio>
+  <audio id="aud_autumn"  preload="metadata" playsinline loop>
+    <source src="tracks/autumn.mp3"  type="audio/mpeg"><source src="media/autumn.mp3"  type="audio/mpeg">
+  </audio>
+  <audio id="aud_storm"   preload="metadata" playsinline loop>
+    <source src="tracks/storm.mp3"   type="audio/mpeg"><source src="media/storm.mp3"   type="audio/mpeg">
+  </audio>
+  <audio id="aud_negin"   preload="metadata" playsinline loop>
+    <source src="tracks/negin.mp3"   type="audio/mpeg"><source src="media/negin.mp3"   type="audio/mpeg">
+  </audio>
+</div>
 
-  track.appendChild(Object.assign(document.createElement('div'),{className:'spacer'}));
-  PAINTINGS.forEach((p,i)=>{
-    const card=document.createElement('div'); card.className='card'; card.dataset.index=i;
-    const img=new Image(); img.decoding='async';
-    img.onload=()=>card.appendChild(img);
-    img.onerror=()=>{ card.classList.add('ph'); card.innerHTML=`<div>No image<br><small>${p.title}</small></div>`; };
-    img.src=p.src;
+<script id="audioDock2-kit-js">
+(function(){
+  // bail if another page has already bound audioDock2
+  if (document.getElementById('audioDock2')?.__bound) return;
+  const DOCK = document.getElementById('audioDock2');
+  if (!DOCK) return;
 
-    // Single tap: center → expand
-    card.addEventListener('click', ()=>{
-      const cards=[...track.querySelectorAll('.card')];
-      activeIndex=i;
-      cards[i]?.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
-      setTimeout(()=>openModal(), 220);
-      updateCaption();
+  // iOS unlock on first touch
+  const unlock = () => {
+    DOCK.querySelectorAll('audio').forEach(a => {
+      try {
+        const p = a.play();
+        if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+      } catch (_) {}
+    });
+    document.removeEventListener('pointerdown', unlock, true);
+  };
+  document.addEventListener('pointerdown', unlock, true);
+
+  const ACTIVE = new Set();
+  const btn = name => DOCK.querySelector(`.ad-btn[data-track="${name}"]`);
+  const vol = name => DOCK.querySelector(`.ad-vol[data-for="${name}"]`);
+  const aud = name => document.getElementById('aud_' + name);
+
+  function positionSlider(button, slider){
+    const dockRect = DOCK.getBoundingClientRect();
+    const btnRect  = button.getBoundingClientRect();
+    const offset = (btnRect.left + btnRect.width / 2) - (dockRect.left + 22);
+    slider.style.left = Math.max(-6, Math.min(offset - 22, 220)) + 'px';
+  }
+
+  function stop(name){
+    const audio  = aud(name);
+    const button = btn(name);
+    const slider = vol(name);
+    try { audio.pause(); audio.currentTime = 0; } catch (_) {}
+    ACTIVE.delete(name);
+    if (button) {
+      button.textContent = '🌱';
+      button.classList.remove('active');
+    }
+    if (slider) slider.classList.remove('visible');
+  }
+
+  function toggle(name){
+    const audio  = aud(name);
+    const button = btn(name);
+    const slider = vol(name);
+    if (!audio || !button || !slider) return;
+
+    if (ACTIVE.has(name)){
+      stop(name);
+      return;
+    }
+    const exclusive = ['sparkle','orange','autumn','negin'];
+    if (exclusive.includes(name)){
+      exclusive.forEach(x => { if (x !== name && ACTIVE.has(x)) stop(x); });
+    }
+    try { audio.play().catch(() => {}); } catch (_) {}
+    ACTIVE.add(name);
+    const icons = { sparkle:'✨', orange:'🍊', autumn:'🍂', storm:'⛈️', negin:'💫' };
+    button.textContent = icons[name] || '✨';
+    button.classList.add('active');
+    positionSlider(button, slider);
+    slider.classList.add('visible');
+  }
+
+  // bind controls
+  DOCK.querySelectorAll('.ad-btn').forEach(el => {
+    el.addEventListener('click', () => toggle(el.getAttribute('data-track')), {passive:true});
+  });
+  DOCK.querySelectorAll('.ad-vol').forEach(wrap => {
+    const name = wrap.getAttribute('data-for');
+    const audio = aud(name);
+    const range = wrap.querySelector('input[type="range"]');
+    if (!audio || !range) return;
+    // restore last volume or default to slider value
+    try {
+      const saved = localStorage.getItem('advol_' + name);
+      audio.volume = range.value = (saved !== null) ? parseFloat(saved) : parseFloat(range.value);
+    } catch (_) {}
+    range.addEventListener('input', () => {
+      audio.volume = parseFloat(range.value);
+      try { localStorage.setItem('advol_' + name, audio.volume); } catch (_) {}
     }, {passive:true});
-
-    track.appendChild(card);
+    window.addEventListener('resize', () => {
+      if (wrap.classList.contains('visible')) positionSlider(btn(name), wrap);
+    });
   });
-  track.appendChild(Object.assign(document.createElement('div'),{className:'spacer'}));
-  requestAnimationFrame(updateScales);
-  updateCaption();
-}
-
-function cssVar(n){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n));}
-function updateScales(){
-  const cards=[...track.querySelectorAll('.card')]; if(!cards.length) return;
-  const cx=track.clientWidth/2, base=track.scrollLeft; let best=0, bestD=1e9;
-  cards.forEach((el,i)=>{
-    const mid=el.offsetLeft+el.offsetWidth/2-base;
-    const d=Math.abs(mid-cx);
-    if(d<bestD){bestD=d; best=i;}
-    const s=cssVar('--scaleCenter')-(cssVar('--scaleCenter')-cssVar('--scaleSide'))*Math.min(1,d/(track.clientWidth*.5));
-    el.style.transform=`scale(${s.toFixed(3)})`;
-    el.style.zIndex=String(1000-Math.round(d));
-  });
-  if(best!==activeIndex){ activeIndex=best; updateCaption(); }
-}
-
-function entryFor(title){
-  const k = canon(title);
-  return LOOKUP[k] || LOOKUP[canon(ALIAS[k]||'')] || null;
-}
-function updateCaption(){
-  const p=PAINTINGS[activeIndex]; if(!p) return;
-  const d=entryFor(p.title);
-  const short=d?.hook || '—';   /* we will not show "Description coming soon" anymore */
-  descEl.innerHTML=`<div class="head">${p.title} — ${p.artist} ${p.year?`(${p.year})`:''}</div>
-                    <div class="body">${short}</div>`;
-}
-
-/* modal */
-const modal=document.getElementById('modal');
-const mWrap=document.getElementById('mWrap');
-const mImg=document.getElementById('mImg');
-const mTitle=document.getElementById('mTitle');
-const mLong=document.getElementById('mLong');
-const sw=document.getElementById('swatches');
-
-function openModal(){
-  const p=PAINTINGS[activeIndex];
-  const d=entryFor(p.title);
-  const card=track.querySelectorAll('.card')[activeIndex];
-  const img=card?.querySelector('img');
-
-  mImg.src=img?.src||''; mImg.alt=`${p.title} — full view`;
-  mTitle.textContent=`${p.title} — ${p.artist}${p.year?', '+p.year:''}`;
-
-  const body = d ? (d.analysis || d.hook || '') : '';
-  mLong.innerHTML = asParagraphs(body);
-
-  sw.innerHTML='';
-  (d?.palette||[]).forEach(hex=>{
-    const chip=document.createElement('span'); chip.className='sw';
-    const fill=document.createElement('i'); fill.style.background=hex; chip.appendChild(fill);
-    sw.appendChild(chip);
-  });
-
-  modal.classList.add('show');
-}
-modal.addEventListener('click',()=>modal.classList.remove('show'),{passive:true});
-
-/* swipe in fullscreen */
-let sx=0,sy=0,dx=0,dy=0;
-mWrap.addEventListener('touchstart',e=>{const t=e.touches[0]; sx=t.clientX; sy=t.clientY;},{passive:true});
-mWrap.addEventListener('touchmove',e=>{const t=e.touches[0]; dx=t.clientX-sx; dy=t.clientY-sy;},{passive:true});
-mWrap.addEventListener('touchend',()=>{
-  if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){
-    activeIndex=(activeIndex+(dx<0?1:-1)+PAINTINGS.length)%PAINTINGS.length;
-    openModal();
-  }
-  dx=dy=0;
-},{passive:true});
-
-/* start */
-document.addEventListener('DOMContentLoaded', build);
+  const stopButton = DOCK.querySelector('.ad-stop');
+  if (stopButton) stopButton.addEventListener('click', () => ['sparkle','orange','autumn','storm','negin'].forEach(stop), {passive:true});
+  DOCK.hidden = false;
+  DOCK.__bound = true;
+})();
 </script>
+<!-- /Audio Dock Kit -->
 
-<!-- ===== OPTIONAL EMBEDDED FALLBACK =====
-     If you open this file locally (file://), the app uses the block below.
-     On GitHub Pages it will use Picture_desc.txt at repo root if present.  -->
-<script id="desc-data" type="text/plain">
-<!-- You can paste the same numbered entries you keep in Picture_desc.txt here for offline use. -->
-</script>
 </body>
 </html>
