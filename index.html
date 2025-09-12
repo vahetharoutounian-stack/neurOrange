@@ -124,9 +124,7 @@
     font-size:clamp(18px,5.2vw,30px); line-height:1.25; color:#ddd;
     text-shadow:0 0 10px rgba(0,0,0,.8);
   }
-  .Oword{
-    animation: orangeHue 2.8s ease-in-out infinite alternate, orangeGlow 2.8s ease-in-out infinite alternate;
-  }
+  .Oword{ animation: orangeHue 2.8s ease-in-out infinite alternate, orangeGlow 2.8s ease-in-out infinite alternate; }
   @keyframes orangeHue{0%{color:var(--nick)}100%{color:var(--after)}}
   @keyframes orangeGlow{
     0%{ text-shadow:0 0 10px rgba(255,166,77,.55),0 0 18px rgba(255,102,0,.35) }
@@ -188,7 +186,7 @@ const URLS = {
   gallery:"https://vahetharoutounian-stack.github.io/neurOrangeV2/"
 };
 
-/* NEW: exact quotes you provided (nothing else) */
+/* exact quotes */
 const QUOTES_RAW = [
   "“It’s funny how the colors of the real world only seem really real when you viddy them on the screen.” — A Clockwork Orange (1971)",
   "“Orange is the happiest color.” — Frank Sinatra",
@@ -197,34 +195,15 @@ const QUOTES_RAW = [
   "“If the real world is orange juice, then art is like orange juice concentrate.” — Martin Mull",
   "“In a world full of yellows and reds, dare to be orange.”"
 ];
+function decorateOrangeWords(str){ return str.replace(/orange/gi, m => `<span class="Oword">${m}</span>`); }
+function randIndex(len){ try{const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%len;}catch{return Math.floor(Math.random()*len);} }
+function pickQuoteHTML(){ return decorateOrangeWords(QUOTES_RAW[randIndex(QUOTES_RAW.length)]); }
 
-/* decorate 'orange' with animated span */
-function decorateOrangeWords(str){
-  return str.replace(/orange/gi, m => `<span class="Oword">${m}</span>`);
-}
-
-/* robust random index (works across Safari bfcache) */
-function randIndex(len){
-  try {
-    const a = new Uint32Array(1);
-    crypto.getRandomValues(a);
-    return a[0] % len;
-  } catch {
-    return Math.floor(Math.random()*len);
-  }
-}
-
-/* build quote HTML */
-function pickQuoteHTML(){
-  return decorateOrangeWords(QUOTES_RAW[randIndex(QUOTES_RAW.length)]);
-}
-
-/* sizes */
 function $(id){return document.getElementById(id)}
 function $$(sel){return Array.from(document.querySelectorAll(sel))}
 
-/* center bubble size and gentle spin (1 rpm bounded) */
-(function startBoundedSpin(){
+/* center text rotation (1 rpm bounded) */
+(function(){
   const t=$('questionText'); let angle=0, dir=Math.random()<0.5?1:-1; const speed=360/60;
   let change=3+Math.random()*5, last=performance.now();
   const b=$('question'); const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
@@ -239,7 +218,10 @@ function $$(sel){return Array.from(document.querySelectorAll(sel))}
   requestAnimationFrame(step);
 })();
 
-/* ring drawing helpers */
+/* ring drawing */
+const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
+const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
+
 function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
   const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
@@ -263,9 +245,6 @@ function drawRing(svgEl,sizePx,r0px,r1px,colors,gapDeg, onClickHex){
 }
 
 /* layout rings + painting nodes */
-const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
-const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
-
 function layoutRings(){
   const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap'), midRing=$('midRing');
   const W=innerWidth, H=innerHeight, S=Math.min(W,H);
@@ -281,8 +260,10 @@ function layoutRings(){
   const N=6, step=2*Math.PI/N;
   if(!midRing.children.length){
     for(let i=1;i<=6;i++){
-      const n=document.createElement('div'); n.className='mnode withCloud'; n.addEventListener('click', ()=> transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV2/#painting=${i}`), {passive:true});
-      const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`; n.appendChild(img); midRing.appendChild(n);
+      const n=document.createElement('div'); n.className='mnode withCloud';
+      n.addEventListener('click', ()=> transitionTo(`${URLS.gallery}#painting=${i}`), {passive:true});
+      const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`; n.appendChild(img);
+      midRing.appendChild(n);
     }
   }
   Array.from(midRing.children).forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
@@ -299,25 +280,25 @@ function layoutRings(){
 layoutRings();
 addEventListener('resize', layoutRings, {passive:true});
 
-/* transition overlay logic — ALWAYS pick anew (handles Safari back/forward cache) */
+/* transition overlay logic — randomize every time (incl. Safari bfcache) */
 let transitioning=false;
 function transitionTo(url){
   if(transitioning) return;
   transitioning=true;
   const tr = $('transition');
-  const qt = document.getElementById('quoteText');
-  qt.innerHTML = pickQuoteHTML();
+  const qt = $('quoteText');
+  qt.innerHTML = decorateOrangeWords(QUOTES_RAW[randIndex(QUOTES_RAW.length)]);
   tr.classList.add('show');
   setTimeout(()=>{ location.href = url; }, 2000);
 }
-
-/* ensure new random on Safari back/forward cache */
-window.addEventListener('pageshow', (e)=>{
-  // hide any residual overlay and ensure next click re-randomizes
+function randIndex(len){
+  try{ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%len; }
+  catch{ return Math.floor(Math.random()*len); }
+}
+window.addEventListener('pageshow', ()=>{
   $('transition').classList.remove('show');
   transitioning=false;
-  // re-seed by a no-op crypto call (optional, harmless)
-  try { crypto.getRandomValues(new Uint32Array(1)); } catch {}
+  try{ crypto.getRandomValues(new Uint32Array(1)); }catch{}
 });
 
 /* optional video reveal if you add a source */
