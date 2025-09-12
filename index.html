@@ -1,214 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="color-scheme" content="dark" />
-<meta name="theme-color" content="#000000" />
-<title>neurOrange — Home</title>
-
-<style>
-  :root{
-    --bergamot:#FFA64D;
-    --pure:#FFA500;
-    --nick:#FF6600;
-    --after:#F9751F;
-    --gap-deg:3;
-    --inner-thick:34px;
-    --outer-thick-mult:2.2;
-    --emoji-font:18px;
-    --glow:0 0 10px #000, 0 0 18px #000;
-  }
-
-  *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%;background:#000;color:#fff;
-    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-    -webkit-font-smoothing:antialiased;overflow:hidden}
-
-  /* === Splash: press the orange to start === */
-  #intro{
-    position:fixed;inset:0;background:#000;display:grid;place-items:center;
-    z-index:2147483646;                /* ABOVE player tray */
-    opacity:1;pointer-events:auto;transition:opacity 900ms ease
-  }
-  #intro.hidden{opacity:0;pointer-events:none}
-  .intro-stack{display:grid;justify-items:center;gap:1rem;cursor:pointer}
-  #startOrange{font-size:clamp(110px,30vw,240px);line-height:1;user-select:none;cursor:pointer;filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25));transition:transform .12s ease}
-  #startOrange:active{transform:scale(.98)}
-  .intro-title{font-weight:900;letter-spacing:.14em;user-select:none;font-size:clamp(18px,6.2vw,44px);color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);animation:titlePulse 2.2s ease-in-out infinite}
-  @keyframes titlePulse{0%{color:var(--bergamot)}50%{color:var(--pure)}100%{color:var(--bergamot)}}
-
-  /* === Stage === */
-  #phone{position:fixed;inset:0;display:grid;place-items:center}
-  #canvas{position:relative;width:100%;height:100%;overflow:hidden;background:#000}
-  #brandBar{position:absolute;left:0;right:0;top:10px;display:flex;justify-content:center;z-index:6;filter:drop-shadow(var(--glow))}
-  #brand{font-weight:900;letter-spacing:.12em;font-size:clamp(18px,5vw,32px);color:#FFA500}
-
-  /* background (video optional; fog always on) */
-  #bgLayer{position:absolute;inset:0;z-index:1}
-  #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s ease}
-  .fogWrap{position:absolute;inset:-30%;z-index:0;pointer-events:none;-webkit-mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)}
-  .fog{position:absolute;inset:0;mix-blend-mode:screen;filter:blur(60px) saturate(120%);background:
-     radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
-     radial-gradient(28% 24% at 80% 40%, var(--nick) 0 55%, transparent 60%),
-     radial-gradient(30% 22% at 40% 70%, var(--nick) 0 55%, transparent 60%);animation:fog1 26s linear infinite alternate;opacity:.62}
-  @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
-
-  #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
-
-  /* start shrunk & centered; grow on start */
-  .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);will-change:transform,opacity}
-  .preGrow{transform:translate(-50%,-50%) scale(.05);opacity:0}
-  .grow{animation:ringGrow var(--growDur,3600ms) cubic-bezier(.17,.9,.24,1.08) forwards;opacity:0}
-  #innerWrap.grow {--growDur:3600ms;animation-delay:0ms}
-  #midWrap.grow   {--growDur:4200ms;animation-delay:200ms}
-  #outerWrap.grow {--growDur:4600ms;animation-delay:350ms}
-  #emojiWrapA.grow{--growDur:4000ms;animation-delay:500ms}
-  #emojiWrapB.grow{--growDur:4400ms;animation-delay:650ms}
-  @keyframes ringGrow{0%{transform:translate(-50%,-50%) scale(.05) rotate(0deg);opacity:0}60%{transform:translate(-50%,-50%) scale(1.10) rotate(45deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1.00) rotate(0deg);opacity:1}}
-
-  .spin{position:absolute;inset:0}
-  .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0));filter:blur(10px);pointer-events:none;z-index:-1}
-
-  /* center prompt */
-  #question{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none;animation:breathe 7s ease-in-out infinite}
-  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1.00)}50%{transform:translate(-50%,-50%) scale(1.02)}}
-  #questionText{font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;display:inline-block;transform-origin:50% 50%;animation:colorPulse 5.5s ease-in-out infinite}
-  @keyframes colorPulse{0%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}33%{color:var(--bergamot)}66%{color:#FFA500}100%{color:#fff}}
-
-  /* rings rotate continuously */
-  #innerSVG,#outerSVG{transform-box:fill-box;transform-origin:50% 50%;animation:spinCW 60s linear infinite}
-  #outerSVG{animation-duration:70s}
-  @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-
-  /* emoji rings (optional) */
-  #emojiWrapA,#emojiWrapB{z-index:4}
-  .emojiRing{position:absolute;inset:0}
-  .emojiSpin{position:absolute;inset:0;animation:spinCCW var(--dur,60s) linear infinite}
-  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
-  .emoji{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:var(--emoji-font);border:none;border-radius:10px;background:rgba(0,0,0,.08);padding:1px 3px;filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
-
-  /* ghost flicker (outer ring) */
-  .ghost-wedge{fill:var(--c0);animation:ghostFlick var(--dur,12s) ease-in-out infinite;animation-delay:var(--delay,0s);cursor:pointer}
-  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
-
-  /* painting ring */
-  #midWrap{z-index:8}
-  #midSpin{animation:spinCCW 56s linear infinite;filter:drop-shadow(var(--glow))}
-  #midRing{position:absolute;inset:0}
-  .mnode{position:absolute;top:50%;left:50%;border-radius:50%;transform:translate(-50%,-50%);background:#111;overflow:hidden;border:1.5px solid #000;filter:drop-shadow(var(--glow));cursor:pointer}
-  .mnode.withCloud::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% + 16px);height:calc(100% + 16px);border-radius:inherit;background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0));filter:blur(8px);pointer-events:none}
-  .mnode img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;animation:upright 56s linear infinite;transform-origin:center;backface-visibility:hidden}
-  @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-
-  /* bottom nav */
-  .bottomNav{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:8;display:flex;gap:10px;justify-content:space-between;padding:0 12px}
-  .navBtn{flex:1;text-align:center;font-weight:900;padding:10px 8px;border-radius:12px;border:1px solid rgba(0,0,0,.45);color:#140a00;user-select:none;-webkit-user-select:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);text-decoration:none;display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(12px, 3.2vw, 14px);line-height:1.05}
-  .navLeft{background:linear-gradient(180deg,#F4C430,#E69B20)}
-  .navMid{background:linear-gradient(180deg,#FF8E00,#FF6A13)}
-  .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}
-
-  /* === Transition overlay === */
-  #transition{position:fixed;inset:0;background:#000;z-index:10050;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity 600ms ease}
-  #transition.show{opacity:1;pointer-events:auto}
-  #quoteBox{max-width:min(92vw,720px);padding:2.2rem 1.6rem;text-align:center}
-  #quoteText{font-weight:900;font-style:italic;letter-spacing:.02em;font-size:clamp(18px,5.2vw,30px);line-height:1.25;color:#ddd;text-shadow:0 0 10px rgba(0,0,0,.8)}
-  .Oword{animation: orangeHue 2.8s ease-in-out infinite alternate, orangeGlow 2.8s ease-in-out infinite alternate}
-  @keyframes orangeHue{0%{color:var(--nick)}100%{color:var(--after)}}
-  @keyframes orangeGlow{0%{text-shadow:0 0 10px rgba(255,166,77,.55),0 0 18px rgba(255,102,0,.35)}100%{text-shadow:0 0 12px rgba(255,166,77,.75),0 0 26px rgba(255,102,0,.55)}}
-</style>
-</head>
-<body>
-
-<!-- Splash -->
-<div id="intro">
-  <div class="intro-stack" id="introTap">
-    <div id="startOrange" aria-label="Start">🍊</div>
-    <div class="intro-title">neurOrange</div>
-  </div>
-</div>
-
-<div id="phone">
-  <div id="canvas">
-    <div id="brandBar"><div id="brand">neurOrange</div></div>
-
-    <div id="bgLayer">
-      <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
-        <source src="assets/placeholder.mp4" type="video/mp4" />
-      </video>
-      <div class="fogWrap"><div class="fog"></div></div>
-    </div>
-
-    <div id="focus">
-      <!-- Outer ring -->
-      <div id="outerWrap" class="wrapCenter preGrow">
-        <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
-        <div class="halo" id="outerHalo"></div>
-      </div>
-
-      <!-- Inner ring -->
-      <div id="innerWrap" class="wrapCenter preGrow">
-        <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
-        <div class="halo" id="innerHalo"></div>
-      </div>
-
-      <!-- Comets layer -->
-      <div id="cometField" class="wrapCenter preGrow"></div>
-
-      <!-- Painting ring -->
-      <div id="midWrap" class="wrapCenter preGrow">
-        <div id="midSpin" class="spin"><div id="midRing"></div></div>
-      </div>
-
-      <!-- Optional emoji rings -->
-      <div id="emojiWrapA" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
-      <div id="emojiWrapB" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
-
-      <!-- Center prompt -->
-      <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
-    </div>
-
-    <!-- Bottom nav -->
-    <div class="bottomNav">
-      <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/">Color Library</a>
-      <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/">Art Gallery</a>
-      <a class="navBtn navRight" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3">Illusion Lab</a>
-    </div>
-  </div>
-</div>
-
-<!-- Transition overlay -->
-<div id="transition"><div id="quoteBox"><div id="quoteText"></div></div></div>
-
 <!-- === AUDIO PLAYER START (fixed, 2× size, no 💫, Safari-safe) === -->
 <style>
-  :root { --nick2:#FF3B00; --berg-a:#ffeca7; --berg-b:#ffd45c; }
+  /* All styles scoped under #dock so nothing outside is affected */
   #dock{
-    position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));
-    z-index:2147483647;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:999px;
-    background:linear-gradient(135deg,var(--nick),var(--nick2));color:#fff;border:1px solid rgba(0,0,0,.35);
-    box-shadow:0 8px 20px rgba(255,102,0,0.32);transform:scale(.5);transform-origin:left bottom;overflow:visible;touch-action:none
+    position:fixed;
+    left:calc(12px + env(safe-area-inset-left));
+    bottom:calc(12px + env(safe-area-inset-bottom));
+    z-index:2147483647;
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px; border-radius:999px;
+    /* Nickelodeon orange gradient; no reliance on page variables */
+    background:linear-gradient(135deg,#FF6600,#FF3B00);
+    color:#fff;
+    border:1px solid rgba(0,0,0,.35);
+    box-shadow:0 8px 20px rgba(255,102,0,0.32);
+    transform:scale(.5);            /* 2× size */
+    transform-origin:left bottom;
+    overflow:visible;               /* sliders pop outside */
+    touch-action:none;              /* no dragging */
   }
-  /* lock dock until splash is dismissed so it can’t swallow taps */
-  #dock.locked{ pointer-events:none !important; }
+  /* Lock tray (no pointer events) until splash starts, so taps go to splash */
+  #dock.locked { pointer-events:none !important; }
   #dock *{ -webkit-user-drag:none; user-drag:none; }
-  #dock.collapsed .hideable{display:none!important}
-  .bubble{position:relative;width:46px;height:46px;border:0;background:transparent;cursor:pointer;padding:0;outline:0}
-  .bubble::before{content:"";position:absolute;inset:-2px;border-radius:999px;background:linear-gradient(135deg,var(--nick),var(--nick2));box-shadow:0 6px 16px rgba(0,0,0,.35)}
-  .bubble .inner{position:absolute;inset:5px;border-radius:999px;background:radial-gradient(60% 60% at 35% 25%,#fff6c2 0%,var(--berg-a) 40%,var(--berg-b) 100%)}
-  .bubble .glyph{position:relative;z-index:2;font-size:22px;line-height:46px;text-align:center}
-  .orb{width:42px;height:42px;border-radius:999px;display:grid;place-items:center;font-size:20px;font-weight:900;background:rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.35);cursor:pointer;position:relative;touch-action:manipulation}
-  .glyph{pointer-events:none}
-  .ad-wrap{position:relative}
-  .ad-vol{position:absolute;bottom:58px;left:50%;transform:translateX(-50%);width:44px;padding:8px 6px;border-radius:12px;background:rgba(22,22,22,.92);border:1px solid rgba(255,255,255,.2);box-shadow:0 10px 24px rgba(0,0,0,.45);display:none;z-index:999999}
-  .ad-vol.visible{display:block}
-  .ad-vol label{color:#fff;font-size:11px;opacity:.8;text-align:center;margin-bottom:6px;display:block}
-  .ad-vol input[type=range]{writing-mode:bt-lr;-webkit-appearance:slider-vertical;width:30px;height:110px;background:transparent;margin:0 auto}
-  .ad-vol input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#FF6600;border:1px solid rgba(0,0,0,.35);box-shadow:0 1px 4px rgba(0,0,0,.35)}
-  .ad-vol input[type=range]::-webkit-slider-runnable-track{width:6px;background:#ddd;border-radius:999px;border:0}
-  .ad-vol input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#FF6600;border:1px solid rgba(0,0,0,.35)}
-  .ad-vol input[type=range]::-moz-range-track{width:6px;background:#ddd;border-radius:999px;border:0}
+  #dock.collapsed .hideable{ display:none !important; }
+
+  /* Toggle bubble */
+  #dock .bubble{ position:relative; width:46px; height:46px; border:0; background:transparent; cursor:pointer; padding:0; outline:0; }
+  #dock .bubble::before{ content:""; position:absolute; inset:-2px; border-radius:999px;
+    background:linear-gradient(135deg,#FF6600,#FF3B00); box-shadow:0 6px 16px rgba(0,0,0,.35); }
+  #dock .bubble .inner{ position:absolute; inset:5px; border-radius:999px;
+    background:radial-gradient(60% 60% at 35% 25%,#fff6c2 0%,#ffeca7 40%,#ffd45c 100%); }
+  #dock .bubble .glyph{ position:relative; z-index:2; font-size:22px; line-height:46px; text-align:center; }
+
+  /* Orbs */
+  #dock .orb{
+    width:42px; height:42px; border-radius:999px; display:grid; place-items:center;
+    font-size:20px; font-weight:900; background:rgba(0,0,0,.18); border:1px solid rgba(0,0,0,.35);
+    cursor:pointer; position:relative; touch-action:manipulation;
+  }
+  #dock .glyph{ pointer-events:none; }
+
+  /* Volume popovers — centered above emoji */
+  #dock .ad-wrap{ position:relative; }
+  #dock .ad-vol{
+    position:absolute; bottom:58px; left:50%; transform:translateX(-50%);
+    width:44px; padding:8px 6px; border-radius:12px;
+    background:rgba(22,22,22,.92); border:1px solid rgba(255,255,255,.2);
+    box-shadow:0 10px 24px rgba(0,0,0,.45); display:none; z-index:999999;
+  }
+  #dock .ad-vol.visible{ display:block; }
+  #dock .ad-vol label{ color:#fff; font-size:11px; opacity:.8; text-align:center; margin-bottom:6px; display:block; }
+  #dock .ad-vol input[type=range]{ writing-mode:bt-lr; -webkit-appearance:slider-vertical; width:30px; height:110px; background:transparent; margin:0 auto; }
+  #dock .ad-vol input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:#FF6600; border:1px solid rgba(0,0,0,.35); box-shadow:0 1px 4px rgba(0,0,0,.35) }
+  #dock .ad-vol input[type=range]::-webkit-slider-runnable-track{ width:6px; background:#ddd; border-radius:999px; border:0; }
+  #dock .ad-vol input[type=range]::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:#FF6600; border:1px solid rgba(0,0,0,.35) }
+  #dock .ad-vol input[type=range]::-moz-range-track{ width:6px; background:#ddd; border-radius:999px; border:0; }
 </style>
+
+<!-- Audio sources (element volume stays 1.0; GainNodes control loudness) -->
 <audio id="a_sparkle" loop preload="metadata" playsinline>
   <source src="tracks/sparkle.mp3" type="audio/mpeg" />
   <source src="tracks/sparkle.m4a" type="audio/mp4" />
@@ -225,122 +73,165 @@
   <source src="tracks/storm.mp3" type="audio/mpeg" />
   <source src="tracks/storm.m4a" type="audio/mp4" />
 </audio>
+
+<!-- Fixed, non-draggable tray -->
 <div id="dock" class="locked collapsed" role="group" aria-label="Audio controls">
   <button id="b_toggle" class="bubble" aria-label="Toggle"><span class="inner"></span><span class="glyph">🟡</span></button>
   <button id="b_stop"   class="orb"    aria-label="Stop / Reset"><span class="glyph">🟧</span></button>
+
   <div class="hideable ad-wrap">
     <button id="b_sparkle" class="orb" aria-label="Sparkle"><span class="glyph">🌱</span></button>
     <div class="ad-vol" data-for="sparkle"><label>✨</label><input id="v_sparkle" type="range" min="0" max="1" step="0.01" value="0.75"/></div>
   </div>
+
   <div class="hideable ad-wrap">
     <button id="b_orangeTr" class="orb" aria-label="Orange"><span class="glyph">🌱</span></button>
     <div class="ad-vol" data-for="orange"><label>🍊</label><input id="v_orange" type="range" min="0" max="1" step="0.01" value="0.75"/></div>
   </div>
+
   <div class="hideable ad-wrap">
     <button id="b_autumn" class="orb" aria-label="Autumn"><span class="glyph">🌱</span></button>
     <div class="ad-vol" data-for="autumn"><label>🍂</label><input id="v_autumn" type="range" min="0" max="1" step="0.01" value="0.75"/></div>
   </div>
+
   <div class="hideable ad-wrap">
     <button id="b_storm"  class="orb" aria-label="Storm"><span class="glyph">🌱</span></button>
     <div class="ad-vol" data-for="storm"><label>⛈️</label><input id="v_storm" type="range" min="0" max="1" step="0.01" value="0.75"/></div>
   </div>
 </div>
-<!-- === AUDIO PLAYER END === -->
 
 <script>
-/* ========= Rings, Ghosts, Comets & Audio glue ========= */
-const URLS={color:"https://vahetharoutounian-stack.github.io/neurOrangeV3/",gallery:"https://vahetharoutounian-stack.github.io/neurOrangeV2/"};
-function layoutRings(){/* (defined above) */}  // already declared earlier
-function startComets(){/* (defined above) */}  // already declared earlier
-
-/* ========= Audio Player (WebAudio Gain) ========= */
+/* ===================== Audio Player (namespaced; zero globals) ===================== */
 (function(){
   let ctx, unlocked=false;
-  const AudioCtx=window.AudioContext||window.webkitAudioContext;
-  const tracks=[
-    {id:'sparkle',emoji:'✨',el:document.getElementById('a_sparkle'),btn:document.getElementById('b_sparkle'),volUI:document.getElementById('v_sparkle'),exclusive:true},
-    {id:'orange', emoji:'🍊',el:document.getElementById('a_orange'), btn:document.getElementById('b_orangeTr'),volUI:document.getElementById('v_orange'), exclusive:true},
-    {id:'autumn', emoji:'🍂',el:document.getElementById('a_autumn'), btn:document.getElementById('b_autumn'), volUI:document.getElementById('v_autumn'), exclusive:true},
-    {id:'storm',  emoji:'⛈️',el:document.getElementById('a_storm'),  btn:document.getElementById('b_storm'),  volUI:document.getElementById('v_storm'),  exclusive:false}
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+  const tracks = [
+    { id:'sparkle', emoji:'✨', el:document.getElementById('a_sparkle'), btn:document.getElementById('b_sparkle'), volUI:document.getElementById('v_sparkle'), exclusive:true },
+    { id:'orange',  emoji:'🍊', el:document.getElementById('a_orange'),  btn:document.getElementById('b_orangeTr'), volUI:document.getElementById('v_orange'),  exclusive:true },
+    { id:'autumn',  emoji:'🍂', el:document.getElementById('a_autumn'),  btn:document.getElementById('b_autumn'),  volUI:document.getElementById('v_autumn'),  exclusive:true },
+    { id:'storm',   emoji:'⛈️', el:document.getElementById('a_storm'),   btn:document.getElementById('b_storm'),   volUI:document.getElementById('v_storm'),   exclusive:false } // layers
   ];
-  const BOOST={sparkle:1.6,storm:2.2,orange:1.0,autumn:1.0}, BASE=0.75;
 
-  function ensureCtx(){ if(!ctx){ctx=new AudioCtx()} tracks.forEach(t=>{ if(!t.src){ t.src=ctx.createMediaElementSource(t.el); t.gain=ctx.createGain(); t.src.connect(t.gain).connect(ctx.destination); t.el.volume=1.0; applyGain(t,true);} }) }
-  function setGlyph(btn,s){const g=btn.querySelector('.glyph'); if(g) g.textContent=s}
-  function applyGain(t,fromUI=false){const u=t.volUI?parseFloat(t.volUI.value||BASE):BASE; const v=Math.min(1,u*(BOOST[t.id]||1)); if(t.gain)t.gain.gain.value=v; if(!fromUI&&t.volUI)t.volUI.value=v}
-  function showSliderFor(id,show){const pop=document.querySelector(`.ad-vol[data-for="${id}"]`); if(pop) pop.classList.toggle('visible',show)}
-  function hideAllSliders(){document.querySelectorAll('.ad-vol.visible').forEach(p=>p.classList.remove('visible'))}
-  async function startTrack(t,showSlider=true){ ensureCtx(); await ctx.resume(); if(t.exclusive){tracks.forEach(x=>{ if(x!==t&&x.exclusive&&!x.el.paused) stopTrack(x) })} try{t.el.currentTime=0}catch{} applyGain(t,true); try{ await t.el.play(); setGlyph(t.btn,t.emoji); if(showSlider){ hideAllSliders(); showSliderFor(t.id,true) } }catch{ setGlyph(t.btn,'🌱') } }
-  function stopTrack(t){ try{t.el.pause()}catch{} setGlyph(t.btn,'🌱'); showSliderFor(t.id,false) }
+  // -25% base volume + gentle per-track boosts (capped to 1.0)
+  const BOOST = { sparkle:1.6, storm:2.2, orange:1.0, autumn:1.0 };
+  const BASE  = 0.75;
 
-  const dock=document.getElementById('dock'); const bToggle=document.getElementById('b_toggle'); const bStop=document.getElementById('b_stop');
-  bToggle.addEventListener('click',()=>{ dock.classList.toggle('collapsed'); hideAllSliders(); },{passive:true});
-  bStop.addEventListener('click',()=>{ tracks.forEach(stopTrack); hideAllSliders(); dock.classList.add('collapsed'); },{passive:true});
+  function ensureCtx(){
+    if (!ctx){ ctx = new AudioCtx(); }
+    tracks.forEach(t=>{
+      if (!t.src){
+        t.src  = ctx.createMediaElementSource(t.el);
+        t.gain = ctx.createGain();
+        t.src.connect(t.gain).connect(ctx.destination);
+        t.el.volume = 1.0;          // element full; gain controls loudness
+        applyGain(t, true);
+      }
+    });
+  }
+  function setGlyph(btn, symbol){ const g=btn.querySelector('.glyph'); if(g) g.textContent = symbol; }
+  function applyGain(t, fromUI=false){
+    const u = t.volUI ? parseFloat(t.volUI.value || BASE) : BASE;
+    const boosted = Math.min(1, u * (BOOST[t.id] || 1));
+    if (t.gain) t.gain.gain.value = boosted;                    // WebAudio gain
+    if (!fromUI && t.volUI) t.volUI.value = boosted;
+  }
+  function showSliderFor(id, show){ const pop=document.querySelector(`.ad-vol[data-for="${id}"]`); if(pop) pop.classList.toggle('visible', show); }
+  function hideAllSliders(){ document.querySelectorAll('.ad-vol.visible').forEach(p=>p.classList.remove('visible')); }
 
+  async function startTrack(t, showSlider=true){
+    ensureCtx(); await ctx.resume();
+    if (t.exclusive){
+      tracks.forEach(x => { if (x!==t && x.exclusive && !x.el.paused) stopTrack(x); });
+    }
+    try { t.el.currentTime = 0; } catch(_){}
+    applyGain(t, true);
+    try{
+      await t.el.play();
+      setGlyph(t.btn, t.emoji);
+      if (showSlider){ hideAllSliders(); showSliderFor(t.id, true); }
+    }catch{ setGlyph(t.btn, '🌱'); }
+  }
+  function stopTrack(t){
+    try { t.el.pause(); } catch(_){}
+    setGlyph(t.btn, '🌱');
+    showSliderFor(t.id, false);
+  }
+
+  const dock      = document.getElementById('dock');
+  const btnToggle = document.getElementById('b_toggle');
+  const btnStop   = document.getElementById('b_stop');
+
+  // Toggle tray — sliders always close when opening/closing
+  btnToggle.addEventListener('click', ()=>{
+    dock.classList.toggle('collapsed');
+    hideAllSliders();
+  }, {passive:true});
+
+  // Stop all
+  btnStop.addEventListener('click', ()=>{
+    tracks.forEach(stopTrack);
+    hideAllSliders();
+    dock.classList.add('collapsed');
+  }, {passive:true});
+
+  // Hook up each track
   tracks.forEach(t=>{
-    applyGain(t,true);
-    t.btn.addEventListener('click',async()=>{
-      if(!unlocked){ ensureCtx(); await ctx.resume(); unlocked=true; }
-      if(t.el.paused) startTrack(t,true); else stopTrack(t);
-    },{passive:true});
-    if(t.volUI) t.volUI.addEventListener('input',()=>applyGain(t,true),{passive:true});
-    t.el.addEventListener('ended',()=>setGlyph(t.btn,'🌱')); t.el.addEventListener('pause',()=>{if(!t.el.ended)setGlyph(t.btn,'🌱')});
+    applyGain(t, true); // init to BASE
+    t.btn.addEventListener('click', async ()=>{
+      if (!unlocked){ ensureCtx(); await ctx.resume(); unlocked = true; }
+      if (t.el.paused) startTrack(t, true); else stopTrack(t);
+    }, {passive:true});
+
+    if (t.volUI) t.volUI.addEventListener('input', ()=> applyGain(t, true), {passive:true});
+    t.el.addEventListener('ended', ()=> setGlyph(t.btn,'🌱'));
+    t.el.addEventListener('pause',  ()=> { if (!t.el.ended) setGlyph(t.btn,'🌱'); });
   });
 
-  /* Robust splash starter — accepts click, pointerup, touchend; also whole splash area */
-  function bindStarter(){
-    const introTap=document.getElementById('introTap');
-    const startOrange=document.getElementById('startOrange');
-    const go = async (ev)=>{
-      ev && ev.preventDefault && ev.preventDefault();
-      // Hide splash
-      document.getElementById('intro').classList.add('hidden');
-      setTimeout(()=>{ const i=document.getElementById('intro'); i && i.remove(); },900);
+  // Start from the neurOrange splash emoji: Sparkle at EXACT 50%
+  const startOrange = document.getElementById('startOrange');
+  const introTap    = document.getElementById('introTap') || document.getElementById('intro'); // whole splash tap-safe
+  const startNow = async (ev)=>{
+    ev && ev.preventDefault && ev.preventDefault();
 
-      // Unlock tray & open
-      dock.classList.remove('locked');     /* <— let player receive taps now */
-      dock.classList.remove('collapsed');
+    // Unlock and show tray (but keep collapsed until user opens)
+    dock.classList.remove('locked');
 
-      // Layout + grow out + comets
-      layoutRings();
-      ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
-        const el=document.getElementById(id);
-        if(el){ el.classList.remove('grow'); el.classList.add('preGrow'); requestAnimationFrame(()=> el.classList.add('grow')); }
-      });
-      startComets();
+    // Ensure audio context + 50% sparkle immediately
+    ensureCtx(); await ctx.resume(); unlocked = true;
+    const sp = tracks.find(x=>x.id==='sparkle');
+    if (sp){
+      if (sp.volUI) sp.volUI.value = "0.50";
+      applyGain(sp, true);
+      startTrack(sp, false);  // slider closed on auto-start
+    }
 
-      // Background video reveal
-      const v=document.getElementById('bgVideo');
-      if(v){const show=()=>v.style.opacity=1; v.addEventListener('loadeddata',show,{once:true}); v.addEventListener('playing',show,{once:true}); try{const p=v.play(); p&&p.catch(()=>{})}catch{}}
+    // Remove listeners so it only runs once
+    startOrange && startOrange.removeEventListener('click', startNow, true);
+    introTap    && introTap.removeEventListener('click',   startNow, true);
+    window.removeEventListener('pointerup', startNow, true);
+    window.removeEventListener('touchend',  startNow, true);
+  };
 
-      // Start audio immediately — Sparkle at 50%
-      ensureCtx(); await ctx.resume(); unlocked=true;
-      const sp=tracks.find(x=>x.id==='sparkle');
-      if(sp){ if(sp.volUI) sp.volUI.value="0.50"; applyGain(sp,true); startTrack(sp,false); } // slider closed on auto-start
+  // Bind multiple event types for reliability on iOS
+  startOrange && startOrange.addEventListener('click', startNow, true);
+  introTap    && introTap.addEventListener('click',   startNow, true);
+  window.addEventListener('pointerup', startNow, {once:true, capture:true, passive:true});
+  window.addEventListener('touchend',  startNow, {once:true, capture:true, passive:true});
 
-      // Unbind to avoid multiple starts
-      introTap && introTap.removeEventListener('click',go,true);
-      startOrange && startOrange.removeEventListener('click',go,true);
-      window.removeEventListener('pointerup',go,true);
-      window.removeEventListener('touchend',go,true);
-    };
-
-    // Multiple entry points (for Safari quirks)
-    introTap && introTap.addEventListener('click',go,true);
-    startOrange && startOrange.addEventListener('click',go,true);
-    window.addEventListener('pointerup',go,{once:true,capture:true,passive:true});
-    window.addEventListener('touchend',go,{once:true,capture:true,passive:true});
-  }
-  bindStarter();
-
-  // iOS unlock on first gesture (fallback)
+  // iOS unlock fallback on first touch
   function unlockOnce(){
     window.removeEventListener('pointerdown', unlockOnce, true);
-    ensureCtx(); ctx.resume().then(()=>{ /* unlocked later in go() as well */ });
-    tracks.forEach(t=>{ try{ const p=t.el.play(); p&&p.then(()=>{ t.el.pause(); t.el.currentTime=0; }).catch(()=>{});}catch{} });
+    ensureCtx(); ctx.resume().catch(()=>{}); // allow later
+    // Prime each element for iOS gesture policy
+    tracks.forEach(t=>{
+      try{
+        const p=t.el.play();
+        p && p.then(()=>{ t.el.pause(); t.el.currentTime=0; }).catch(()=>{});
+      }catch{}
+    });
   }
-  window.addEventListener('pointerdown', unlockOnce, {once:true,capture:true,passive:true});
+  window.addEventListener('pointerdown', unlockOnce, {once:true, capture:true, passive:true});
 })();
 </script>
-</body>
-</html>
+<!-- === AUDIO PLAYER END === -->
