@@ -1,21 +1,22 @@
-<!DOCTYPE html>
+<!doctype html><meta charset="utf-8"><title>404</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:16px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0f0d0c;color:#fff;display:grid;place-items:center;height:100vh;margin:0}</style><h1>Not Found</h1><!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#000000" />
-<title>neurOrange — Home (press-orange to start)</title>
+<title>neurOrange — Home (press-orange to start + quote fade)</title>
 
 <style>
   :root{
-    --bergamot:#FFA64D;        /* soft golden glow */
-    --pantone021:#FE5000;
-    --pure:#FFA500;
-    --nick:#FF6600;            /* Nickelodeon Orange */
-    --after:#F9751F;           /* Afterimage Orange */
+    --bergamot:#FFA64D;    /* Bergamot */
+    --pantone021:#FE5000;  /* Pantone 021 C */
+    --pure:#FFA500;        /* Pure orange */
+    --nick:#FF6600;        /* Nickelodeon */
+    --afterimage:#F9751F;  /* Afterimage Orange */
+    --saffron:#F4C430;     /* Saffron glow */
     --gap-deg:3;
-    --inner-thick:34px;        /* recomputed in JS */
+    --inner-thick:34px;
     --outer-thick-mult:2.2;
     --emoji-font:18px;
     --glow:0 0 10px #000, 0 0 18px #000;
@@ -120,19 +121,24 @@
     100%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
   }
 
-  /* ring rotations */
+  /* ring rotations (running by default; grow effect still from center) */
   #innerSVG,#outerSVG{transform-box:fill-box; transform-origin:50% 50%; animation:spinCW 60s linear infinite}
   #outerSVG{animation-duration:70s}
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+  .ghost-wedge{
+    fill:var(--c0);
+    animation:ghostFlick var(--dur,12s) ease-in-out infinite;
+    animation-delay:var(--delay,0s)
+  }
+  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
+
+  #emojiWrapA,#emojiWrapB{z-index:4} .emojiRing{position:absolute; inset:0}
   .emojiSpin{position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite}
   @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
   .emoji{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:var(--emoji-font);
          border:none; border-radius:10px; background:rgba(0,0,0,.08); padding:1px 3px;
          filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
-
-  /* ghost flicker */
-  .ghost-wedge{fill:var(--c0); animation:ghostFlick var(--dur,12s) ease-in-out infinite; animation-delay:var(--delay,0s); cursor:pointer}
-  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
 
   /* paintings ring */
   #midWrap{z-index:8}
@@ -146,6 +152,7 @@
     background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none}
   .mnode img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
              animation:upright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change:transform}
+  @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
   /* bottom nav — tighter; Color Library stays one line */
   .bottomNav{
@@ -164,31 +171,33 @@
   .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}
   .clickable{cursor:pointer}
 
-  /* === TRANSITION OVERLAY (fade to black + quote) === */
-  #transition{
-    position:fixed; inset:0; background:#000; z-index:10050;
-    display:grid; place-items:center; opacity:0; pointer-events:none; transition:opacity 600ms ease;
+  /* ===== interstitial quote overlay ===== */
+  #interstitial{
+    position:fixed; inset:0; background:#000; z-index:10001;
+    opacity:0; pointer-events:none; transition:opacity .55s ease;
+    display:grid; place-items:center;
   }
-  #transition.show{opacity:1; pointer-events:auto}
-  #quoteBox{max-width:min(92vw,720px); padding:2.2rem 1.6rem; text-align:center}
-  #quoteText{
-    font-weight:900; font-style:italic; letter-spacing:.02em;
-    font-size:clamp(18px,5.2vw,30px); line-height:1.25; color:#ddd;
-    text-shadow:0 0 10px rgba(0,0,0,.8);
+  #interstitial.show{ opacity:1; pointer-events:auto; }
+  #interstitialText{
+    text-align:center; font-weight:900; font-style:italic;
+    font-size:clamp(18px,5.4vw,30px); line-height:1.25; letter-spacing:.01em;
+    color:#ffffffcc; padding:0 7vw;
   }
-  /* animate the word "orange" specifically */
-  .Oword{
+  #interstitialText .accent{
+    color:var(--nick);
     animation:
-      orangeHue 2.8s ease-in-out infinite alternate,
-      orangeGlow 2.8s ease-in-out infinite alternate;
+      quoteColor 1.6s linear infinite,
+      saffronGlow 1.6s ease-in-out infinite;
   }
-  @keyframes orangeHue{
-    0%   { color: var(--nick); }
-    100% { color: var(--after); }
+  @keyframes quoteColor{
+    0%  { color:var(--nick) }
+    33% { color:var(--afterimage) }
+    66% { color:var(--bergamot) }
+    100%{ color:var(--nick) }
   }
-  @keyframes orangeGlow{
-    0%   { text-shadow: 0 0 10px rgba(255,166,77,.55), 0 0 18px rgba(255,102,0,.35); }
-    100% { text-shadow: 0 0 12px rgba(255,166,77,.75), 0 0 26px rgba(255,102,0,.55); }
+  @keyframes saffronGlow{
+    0%,100%{ text-shadow: 0 0 10px var(--saffron), 0 0 22px var(--saffron), 0 0 0 var(--nick); }
+    50%    { text-shadow: 0 0 16px var(--saffron), 0 0 36px var(--saffron), 0 0 10px var(--nick); }
   }
 </style>
 </head>
@@ -209,7 +218,7 @@
     <div id="brandBar"><div id="brand">neurOrange</div></div>
 
     <div id="bgLayer">
-      <!-- inline sources so video works even if JS doesn't assign src -->
+      <!-- background video -->
       <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
         <source src="assets/placeholder.mp4" type="video/mp4" />
       </video>
@@ -217,19 +226,19 @@
     </div>
 
     <div id="focus">
-      <!-- outer ring -->
+      <!-- outer ghost ring -->
       <div id="outerWrap" class="wrapCenter preGrow">
         <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
         <div class="halo" id="outerHalo"></div>
       </div>
 
-      <!-- inner ring -->
+      <!-- inner bright ring -->
       <div id="innerWrap" class="wrapCenter preGrow">
         <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
         <div class="halo" id="innerHalo"></div>
       </div>
 
-      <!-- comets layer -->
+      <!-- comets -->
       <div id="cometField" class="wrapCenter preGrow"></div>
 
       <!-- painting ring -->
@@ -237,7 +246,7 @@
         <div id="midSpin" class="spin"><div id="midRing"></div></div>
       </div>
 
-      <!-- emojis -->
+      <!-- emoji rings -->
       <div id="emojiWrapA" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
       <div id="emojiWrapB" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
 
@@ -245,7 +254,7 @@
       <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
     </div>
 
-    <!-- bottom nav (links to external HTMLs) -->
+    <!-- bottom nav (links to other HTMLs) -->
     <div class="bottomNav">
       <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/" aria-label="Color Library">Color Library</a>
       <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" aria-label="Art Gallery">Art Gallery</a>
@@ -254,36 +263,38 @@
   </div>
 </div>
 
-<!-- transition overlay (fade-to-black + quote) -->
-<div id="transition">
-  <div id="quoteBox">
-    <div id="quoteText"></div>
-  </div>
+<!-- interstitial quote overlay -->
+<div id="interstitial" aria-hidden="true">
+  <div id="interstitialText"></div>
 </div>
 
 <script>
-/* === Deep link config === */
+/* === external destinations (deep links) === */
 const URLS = {
   home:   "https://vahetharoutounian-stack.github.io/neurOrange/",
   color:  "https://vahetharoutounian-stack.github.io/neurOrangeV3/",
   gallery:"https://vahetharoutounian-stack.github.io/neurOrangeV2/"
 };
+function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
+function toColor(hex){ return `${URLS.color}#step=2&cat=standards&hex=${hexNorm(hex)}`; }
+function toGallery(idx){ return `${URLS.gallery}#painting=${idx}`; }
+function toIllusion(hex){return `${URLS.color}#step=3&cat=ghosts&hex=${hexNorm(hex)}`; }
 
-/* === Quotes (the word "orange" will animate) === */
-const QUOTES_RAW = [
-  "It’s funny how the colors of the real world only seem really real when you viddy them on the screen. — A Clockwork orange (1971)",
-  "orange is the happiest color. — Frank Sinatra",
-  "There is no blue without yellow and without orange. — Vincent Van Gogh",
-  "The orange tree took time to create this masterpiece. — Thich Nhat Hanh",
-  "If the real world is orange juice, then art is like orange juice concentrate. — Martin Mull",
-  "In a world full of yellows and reds, dare to be orange."
+/* === interstitial quote handling === */
+const QUOTES = [
+  "In a world of yellows and reds, dare to be <span class='accent'>orange</span>.",
+  "Find the signal where the noise glows <span class='accent'>orange</span>.",
+  "Between day and fire there is <span class='accent'>orange</span>.",
+  "Courage wears <span class='accent'>orange</span>.",
+  "Make the margin of the ordinary blaze <span class='accent'>orange</span>.",
+  "Think in gradients; choose <span class='accent'>orange</span>."
 ];
-function decorateOrangeWords(str){
-  return str.replace(/orange/gi, m => `<span class="Oword">${m}</span>`);
-}
-function pickQuote(){
-  const i = Math.floor(Math.random()*QUOTES_RAW.length);
-  return decorateOrangeWords(QUOTES_RAW[i]);
+function showQuoteThenGo(url, dwell=1600){
+  const overlay = document.getElementById('interstitial');
+  const text = document.getElementById('interstitialText');
+  text.innerHTML = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  overlay.classList.add('show');
+  setTimeout(()=>{ location.href = url; }, dwell);
 }
 
 /* === failsafe remove === */
@@ -297,11 +308,6 @@ const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127
 /* === helpers === */
 function $(id){return document.getElementById(id)}
 function $$(sel){return Array.from(document.querySelectorAll(sel))}
-function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
-function goColor(hex){ transitionTo(`${URLS.color}#step=2&cat=standards&hex=${hexNorm(hex)}`); }
-function goGallery(idx){ transitionTo(`${URLS.gallery}#painting=${idx}`); }
-function goIllusion(hex){ transitionTo(`${URLS.color}#step=3&cat=ghosts&hex=${hexNorm(hex)}`); }
-
 function sizeQuestion(){
   const b=$('question'), t=$('questionText');
   b.style.transform='translate(-50%,-50%) scale(1)';
@@ -335,7 +341,7 @@ function drawRing(svgEl,sizePx,r0px,r1px,colorObjs,gapDeg){
     p.setAttribute('fill',hex);
     p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
     p.classList.add('clickable');
-    p.addEventListener('click', ()=> goColor(hex), {passive:true});
+    p.addEventListener('click', ()=> showQuoteThenGo(toColor(hex)), {passive:true});
     svgEl.appendChild(p);
   }
 }
@@ -352,7 +358,7 @@ function drawGhostRing(svgEl,sizePx,r0px,r1px,ghostHexes,gapDeg){
     p.style.setProperty('--c0',base); p.style.setProperty('--c1',opp);
     const dur=10+Math.random()*6, phase=Math.random()*dur; p.style.setProperty('--dur',dur.toFixed(2)+'s'); p.style.setProperty('--delay',(-phase).toFixed(2)+'s');
     p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
-    p.addEventListener('click', ()=> goIllusion(base), {passive:true});
+    p.addEventListener('click', ()=> showQuoteThenGo(toIllusion(base)), {passive:true});
     svgEl.appendChild(p);
   }
 }
@@ -364,22 +370,22 @@ function buildMidNodes(){
     const n=document.createElement('div'); n.className='mnode withCloud';
     const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`;
     img.onerror=()=>{ n.style.background='#222'; };
-    n.addEventListener('click', ()=> goGallery(i), {passive:true});
+    n.addEventListener('click', ()=> showQuoteThenGo(toGallery(i)), {passive:true});
     n.appendChild(img); mid.appendChild(n);
   }
 }
 
 /* layout */
 function layoutRings(){
-  const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap'), midRing=$('midRing');
-  const W=innerWidth, H=innerHeight, S=Math.min(W,H);
+  const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap');
+  const midRing=$('midRing'); const W=innerWidth, H=innerHeight, S=Math.min(W,H);
   document.documentElement.style.setProperty('--emoji-font',Math.round(W*0.036)+'px');
 
   const innerD=Math.round(S*0.58), innerThick=Math.max(16,Math.round(innerD*0.12));
   document.documentElement.style.setProperty('--inner-thick',innerThick+'px');
   innerWrap.style.width=innerD+'px'; innerWrap.style.height=innerD+'px';
 
-  const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter-innerThick*2);
+  const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter - innerThick*2);
   drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
 
   const nodeD=Math.round(innerThick*0.85*5.25*0.82), margin=2, midR=Math.max(0, (W/2)-(nodeD/2)-margin);
@@ -450,23 +456,7 @@ function startBoundedSpin(){
 function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
 layoutAll();
 
-/* ===== TRANSITION: fade to black + randomized quote, then navigate ===== */
-let isTransitioning = false;
-function transitionTo(url){
-  if(isTransitioning) return;
-  isTransitioning = true;
-
-  const tr = $('transition');
-  const qT = $('quoteText');
-  qT.innerHTML = pickQuote();
-  tr.classList.add('show');
-
-  // Wait for fade-in + a short read time, then go
-  const hold = 2200;  // total time showing quote
-  setTimeout(()=>{ location.href = url; }, hold);
-}
-
-/* ===== press the orange to start animation + video ===== */
+/* press the orange to start animation + video */
 (function(){
   const orange=$('startOrange');
   orange.addEventListener('click', ()=>{
@@ -493,282 +483,6 @@ function transitionTo(url){
     }, 900); // match intro fade
   }, {passive:true});
 })();
-
-/* === Bounded 1 rpm text rotation === */
-let spinRAF, spinStarted=false;
-function startBoundedSpin(){
-  if(spinStarted) return; spinStarted=true;
-  const t=$('questionText'); let angle=0, dir=Math.random()<0.5?1:-1; const speed=360/60;
-  let change=3+Math.random()*5, last=performance.now();
-  function step(now){const dt=(now-last)/1000; last=now; angle+=dir*speed*dt;
-    if(angle>45){angle=45;dir=-1} if(angle<-45){angle=-45;dir=1}
-    change-=dt; if(change<=0){ if(Math.random()<0.35) dir*=-1; change=3+Math.random()*5; }
-    t.style.transform=`rotate(${angle.toFixed(3)}deg)`; spinRAF=requestAnimationFrame(step);}
-  spinRAF=requestAnimationFrame(step);
-}
 </script>
-
-<!-- neurOrange Audio Dock — drop-in kit (safe if duplicated) -->
-<style id="audioDock2-kit-css">
-  /* bail if already defined elsewhere */
-  :root { --_noop: initial; }
-  #audioDock2 { all: initial; }
-
-  #audioDock2 {
-    position: fixed;
-    left: calc(8px + env(safe-area-inset-left));
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    z-index: 2147483647;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 999px;
-    background: #FF6600;
-    color: #fff;
-    border: 1px solid rgba(0,0,0,.35);
-    box-shadow: 0 8px 22px rgba(255,102,0,.35);
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .ad-stop,
-  .ad-btn {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-    border-radius: 50%;
-    border: 0;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    line-height: 1;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,.25);
-    transition: transform .06s ease, box-shadow .2s ease, opacity .15s ease;
-  }
-  .ad-stop:active,
-  .ad-btn:active { transform: translateY(1px); }
-  .ad-btn.active {
-    outline: 2px solid rgba(255,255,255,.85);
-    box-shadow: 0 4px 14px rgba(0,0,0,.35),0 0 0 2px #fff inset;
-    background: #fdfdfd;
-  }
-  #audioDock2 .ad-wrap { position: relative; }
-  .ad-vol {
-    position: absolute;
-    bottom: 58px;
-    width: 44px;
-    padding: 8px 6px;
-    border-radius: 12px;
-    background: rgba(22,22,22,.92);
-    border: 1px solid rgba(255,255,255,.2);
-    box-shadow: 0 10px 24px rgba(0,0,0,.45);
-    display: none;
-  }
-  .ad-vol.visible { display: block; }
-  .ad-vol label {
-    color: #fff;
-    font-size: 11px;
-    opacity: .8;
-    text-align: center;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .ad-vol input[type="range"] {
-    writing-mode: bt-lr;
-    -webkit-appearance: slider-vertical;
-    width: 30px;
-    height: 110px;
-    background: transparent;
-    padding: 0;
-    margin: 0 auto;
-  }
-  .ad-vol input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #FF6600;
-    border: 1px solid rgba(0,0,0,.35);
-    box-shadow: 0 1px 4px rgba(0,0,0,.35);
-  }
-  .ad-vol input[type="range"]::-webkit-slider-runnable-track{
-    width: 6px;
-    background: #ddd;
-    border-radius: 999px;
-    border: 0;
-  }
-  .ad-vol input[type="range"]::-moz-range-thumb{
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #FF6600;
-    border: 1px solid rgba(0,0,0,.35);
-  }
-  .ad-vol input[type="range"]::-moz-range-track{
-    width: 6px;
-    background: #ddd;
-    border-radius: 999px;
-    border: 0;
-  }
-</style>
-
-<div id="audioDock2" role="group" aria-label="Audio Player" hidden>
-  <!-- stop all -->
-  <button class="ad-stop" id="adStop" title="Stop all">🟧</button>
-
-  <!-- sparkle -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="sparkle" title="Sparkle ✨">🌱</button>
-    <div class="ad-vol" data-for="sparkle">
-      <label>✨</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- orange -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="orange" title="Orange 🍊">🌱</button>
-    <div class="ad-vol" data-for="orange">
-      <label>🍊</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- autumn -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="autumn" title="Autumn 🍂">🌱</button>
-    <div class="ad-vol" data-for="autumn">
-      <label>🍂</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- storm -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="storm" title="Storm ⛈️">🌱</button>
-    <div class="ad-vol" data-for="storm">
-      <label>⛈️</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- negin -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="negin" title="Negin 💫">🌱</button>
-    <div class="ad-vol" data-for="negin">
-      <label>💫</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-
-  <!-- hidden audio elements (looping) -->
-  <audio id="aud_sparkle" preload="metadata" playsinline loop>
-    <source src="tracks/sparkle.mp3" type="audio/mpeg"><source src="media/sparkle.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="aud_orange"  preload="metadata" playsinline loop>
-    <source src="tracks/orange.mp3"  type="audio/mpeg"><source src="media/orange.mp3"  type="audio/mpeg">
-  </audio>
-  <audio id="aud_autumn"  preload="metadata" playsinline loop>
-    <source src="tracks/autumn.mp3"  type="audio/mpeg"><source src="media/autumn.mp3"  type="audio/mpeg">
-  </audio>
-  <audio id="aud_storm"   preload="metadata" playsinline loop>
-    <source src="tracks/storm.mp3"   type="audio/mpeg"><source src="media/storm.mp3"   type="audio/mpeg">
-  </audio>
-  <audio id="aud_negin"   preload="metadata" playsinline loop>
-    <source src="tracks/negin.mp3"   type="audio/mpeg"><source src="media/negin.mp3"   type="audio/mpeg">
-  </audio>
-</div>
-
-<script id="audioDock2-kit-js">
-(function(){
-  // bail if another page has already bound audioDock2
-  if (document.getElementById('audioDock2')?.__bound) return;
-  const DOCK = document.getElementById('audioDock2');
-  if (!DOCK) return;
-
-  // iOS unlock on first touch
-  const unlock = () => {
-    DOCK.querySelectorAll('audio').forEach(a => {
-      try {
-        const p = a.play();
-        if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-      } catch (_) {}
-    });
-    document.removeEventListener('pointerdown', unlock, true);
-  };
-  document.addEventListener('pointerdown', unlock, true);
-
-  const ACTIVE = new Set();
-  const btn = name => DOCK.querySelector(`.ad-btn[data-track="${name}"]`);
-  const vol = name => DOCK.querySelector(`.ad-vol[data-for="${name}"]`);
-  const aud = name => document.getElementById('aud_' + name);
-
-  function positionSlider(button, slider){
-    const dockRect = DOCK.getBoundingClientRect();
-    const btnRect  = button.getBoundingClientRect();
-    const offset = (btnRect.left + btnRect.width / 2) - (dockRect.left + 22);
-    slider.style.left = Math.max(-6, Math.min(offset - 22, 220)) + 'px';
-  }
-
-  function stop(name){
-    const audio  = aud(name);
-    const button = btn(name);
-    const slider = vol(name);
-    try { audio.pause(); audio.currentTime = 0; } catch (_) {}
-    ACTIVE.delete(name);
-    if (button) {
-      button.textContent = '🌱';
-      button.classList.remove('active');
-    }
-    if (slider) slider.classList.remove('visible');
-  }
-
-  function toggle(name){
-    const audio  = aud(name);
-    const button = btn(name);
-    const slider = vol(name);
-    if (!audio || !button || !slider) return;
-
-    if (ACTIVE.has(name)){
-      stop(name);
-      return;
-    }
-    const exclusive = ['sparkle','orange','autumn','negin'];
-    if (exclusive.includes(name)){
-      exclusive.forEach(x => { if (x !== name && ACTIVE.has(x)) stop(x); });
-    }
-    try { audio.play().catch(() => {}); } catch (_) {}
-    ACTIVE.add(name);
-    const icons = { sparkle:'✨', orange:'🍊', autumn:'🍂', storm:'⛈️', negin:'💫' };
-    button.textContent = icons[name] || '✨';
-    button.classList.add('active');
-    positionSlider(button, slider);
-    slider.classList.add('visible');
-  }
-
-  // bind controls
-  DOCK.querySelectorAll('.ad-btn').forEach(el => {
-    el.addEventListener('click', () => toggle(el.getAttribute('data-track')), {passive:true});
-  });
-  DOCK.querySelectorAll('.ad-vol').forEach(wrap => {
-    const name = wrap.getAttribute('data-for');
-    const audio = aud(name);
-    const range = wrap.querySelector('input[type="range"]');
-    if (!audio || !range) return;
-    // restore last volume or default to slider value
-    try {
-      const saved = localStorage.getItem('advol_' + name);
-      audio.volume = range.value = (saved !== null) ? parseFloat(saved) : parseFloat(range.value);
-    } catch (_) {}
-    range.addEventListener('input', () => {
-      audio.volume = parseFloat(range.value);
-      try { localStorage.setItem('advol_' + name, audio.volume); } catch (_) {}
-    }, {passive:true});
-    window.addEventListener('resize', () => {
-      if (wrap.classList.contains('visible')) positionSlider(btn(name), wrap);
-    });
-  });
-  const stopButton = DOCK.querySelector('.ad-stop');
-  if (stopButton) stopButton.addEventListener('click', () => ['sparkle','orange','autumn','storm','negin'].forEach(stop), {passive:true});
-  DOCK.hidden = false;
-  DOCK.__bound = true;
-})();
-</script>
-<!-- /Audio Dock Kit -->
-
 </body>
 </html>
