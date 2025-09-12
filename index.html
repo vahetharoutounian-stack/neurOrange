@@ -5,17 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#000000" />
-<title>neurOrange — Home (press-orange to start)</title>
+<title>neurOrange — Home</title>
 
 <style>
   :root{
-    --bergamot:#FFA64D;        /* soft golden glow */
-    --pantone021:#FE5000;
+    --bergamot:#FFA64D;  /* soft golden glow */
     --pure:#FFA500;
-    --nick:#FF6600;            /* Nickelodeon Orange */
-    --after:#F9751F;           /* Afterimage Orange */
+    --nick:#FF6600;      /* Nickelodeon */
+    --after:#F9751F;     /* Afterimage */
     --gap-deg:3;
-    --inner-thick:34px;        /* recomputed in JS */
+    --inner-thick:34px;  /* recomputed in JS */
     --outer-thick-mult:2.2;
     --emoji-font:18px;
     --glow:0 0 10px #000, 0 0 18px #000;
@@ -27,48 +26,19 @@
     -webkit-font-smoothing:antialiased; overflow:hidden;
   }
 
-  /* === black failsafe (in case video paints late) === */
-  #failsafe{position:fixed; inset:0; background:#000; z-index:100000; opacity:1; transition:opacity .25s ease}
-
-  /* === splash: press the orange to start === */
-  #intro{
-    position:fixed; inset:0; background:#000; display:grid; place-items:center;
-    z-index:9999; opacity:1; pointer-events:auto; transition:opacity 900ms ease;
-  }
-  #intro.hidden{opacity:0; pointer-events:none}
-  .intro-stack{display:grid; justify-items:center; gap:1rem}
-  #startOrange{
-    font-size:clamp(110px,30vw,240px); line-height:1; user-select:none; cursor:pointer;
-    filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25));
-    transition:transform .12s ease;
-  }
-  #startOrange:active{transform:scale(.98)}
-  .intro-title{
-    font-weight:900; letter-spacing:.14em; user-select:none;
-    font-size:clamp(18px,6.2vw,44px);
-    color:var(--bergamot);
-    text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);
-    animation:titlePulse 2.2s ease-in-out infinite;
-  }
-  @keyframes titlePulse{
-    0%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
-    50%{color:var(--pure);    text-shadow:0 0 14px rgba(255,165,0,.65), 0 0 34px rgba(255,165,0,.45)}
-    100%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
-  }
-
-  /* === stage === */
+  /* stage */
   #phone{position:fixed; inset:0; display:grid; place-items:center}
   #canvas{position:relative; width:100%; height:100%; overflow:hidden; background:#000}
 
   #brandBar{position:absolute; left:0; right:0; top:10px; display:flex; justify-content:center; z-index:6; filter:drop-shadow(var(--glow))}
   #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500}
 
+  /* background (video optional; fog always on) */
   #bgLayer{position:absolute; inset:0; z-index:1}
-  /* keep hidden until ready */
-  #bgVideo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; opacity:0; transition:opacity .4s ease}
+  #bgVideo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .4s ease}
   .fogWrap{position:absolute; inset:-30%; z-index:0; pointer-events:none;
     -webkit-mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);
-            mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)}
+            mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);}
   .fog{position:absolute; inset:0; mix-blend-mode:screen; filter:blur(60px) saturate(120%);
        background:
          radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
@@ -79,21 +49,7 @@
 
   #focus{position:absolute; inset:0; display:grid; place-items:center; z-index:2}
 
-  /* start everything shrunk & centered until orange is pressed */
-  .wrapCenter{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1); will-change:transform,opacity}
-  .preGrow{transform:translate(-50%,-50%) scale(.05); opacity:0}
-  .grow{animation:ringGrow var(--growDur,3600ms) cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0}
-  #innerWrap.grow {--growDur:3600ms; animation-delay:0ms}
-  #midWrap.grow   {--growDur:4200ms; animation-delay:200ms}
-  #outerWrap.grow {--growDur:4600ms; animation-delay:350ms}
-  #emojiWrapA.grow{--growDur:4000ms; animation-delay:500ms}
-  #emojiWrapB.grow{--growDur:4400ms; animation-delay:650ms}
-  @keyframes ringGrow{
-    0%   {transform:translate(-50%,-50%) scale(.05) rotate(0deg);   opacity:0}
-    60%  {transform:translate(-50%,-50%) scale(1.10) rotate(45deg); opacity:1}
-    100% {transform:translate(-50%,-50%) scale(1.00) rotate(0deg);  opacity:1}
-  }
-
+  .wrapCenter{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); will-change:transform,opacity}
   .spin{position:absolute; inset:0}
   .halo{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border-radius:50%;
         background:radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); filter:blur(10px);
@@ -116,27 +72,19 @@
   @keyframes colorPulse{
     0%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
     33%{color:var(--bergamot);text-shadow:0 0 8px rgba(255,166,77,.45)}
-    66%{color:var(--pure);text-shadow:0 0 8px rgba(255,165,0,.45)}
+    66%{color:#FFA500;text-shadow:0 0 8px rgba(255,165,0,.45)}
     100%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
   }
 
-  /* ring rotations */
+  /* rings rotate continuously */
   #innerSVG,#outerSVG{transform-box:fill-box; transform-origin:50% 50%; animation:spinCW 60s linear infinite}
   #outerSVG{animation-duration:70s}
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-  .emojiSpin{position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite}
-  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
-  .emoji{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:var(--emoji-font);
-         border:none; border-radius:10px; background:rgba(0,0,0,.08); padding:1px 3px;
-         filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
 
-  /* ghost flicker */
-  .ghost-wedge{fill:var(--c0); animation:ghostFlick var(--dur,12s) ease-in-out infinite; animation-delay:var(--delay,0s); cursor:pointer}
-  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
-
-  /* paintings ring */
+  /* painting ring */
   #midWrap{z-index:8}
   #midSpin{animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--glow))}
+  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
   #midRing{position:absolute; inset:0}
   .mnode{position:absolute; top:50%; left:50%; border-radius:50%; transform:translate(-50%,-50%);
          background:#111; overflow:hidden; border:1.5px solid #000; filter:drop-shadow(var(--glow));
@@ -145,9 +93,10 @@
     width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
     background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none}
   .mnode img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
-             animation:upright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change:transform}
+             animation:upright 56s linear infinite; transform-origin:center; backface-visibility:hidden}
+  @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* bottom nav — tighter; Color Library stays one line */
+  /* bottom nav — simple + tight */
   .bottomNav{
     position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 10px);
     z-index:8; display:flex; gap:10px; justify-content:space-between; padding:0 12px;
@@ -162,7 +111,6 @@
   .navLeft {background:linear-gradient(180deg,#F4C430,#E69B20)}
   .navMid  {background:linear-gradient(180deg,#FF8E00,#FF6A13)}
   .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}
-  .clickable{cursor:pointer}
 
   /* === TRANSITION OVERLAY (fade to black + quote) === */
   #transition{
@@ -176,562 +124,211 @@
     font-size:clamp(18px,5.2vw,30px); line-height:1.25; color:#ddd;
     text-shadow:0 0 10px rgba(0,0,0,.8);
   }
-  /* animate the word "orange" specifically */
   .Oword{
-    animation:
-      orangeHue 2.8s ease-in-out infinite alternate,
-      orangeGlow 2.8s ease-in-out infinite alternate;
+    animation: orangeHue 2.8s ease-in-out infinite alternate, orangeGlow 2.8s ease-in-out infinite alternate;
   }
-  @keyframes orangeHue{
-    0%   { color: var(--nick); }
-    100% { color: var(--after); }
-  }
+  @keyframes orangeHue{0%{color:var(--nick)}100%{color:var(--after)}}
   @keyframes orangeGlow{
-    0%   { text-shadow: 0 0 10px rgba(255,166,77,.55), 0 0 18px rgba(255,102,0,.35); }
-    100% { text-shadow: 0 0 12px rgba(255,166,77,.75), 0 0 26px rgba(255,102,0,.55); }
+    0%{ text-shadow:0 0 10px rgba(255,166,77,.55),0 0 18px rgba(255,102,0,.35) }
+    100%{ text-shadow:0 0 12px rgba(255,166,77,.75),0 0 26px rgba(255,102,0,.55) }
   }
 </style>
 </head>
 <body>
-
-<div id="failsafe"></div>
-
-<!-- intro -->
-<div id="intro">
-  <div class="intro-stack">
-    <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
-    <div class="intro-title">neurOrange</div>
-  </div>
-</div>
 
 <div id="phone">
   <div id="canvas">
     <div id="brandBar"><div id="brand">neurOrange</div></div>
 
     <div id="bgLayer">
-      <!-- inline sources so video works even if JS doesn't assign src -->
       <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
-        <source src="assets/placeholder.mp4" type="video/mp4" />
+        <!-- <source src="assets/placeholder.mp4" type="video/mp4" /> -->
       </video>
       <div class="fogWrap"><div class="fog"></div></div>
     </div>
 
     <div id="focus">
       <!-- outer ring -->
-      <div id="outerWrap" class="wrapCenter preGrow">
+      <div id="outerWrap" class="wrapCenter">
         <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
         <div class="halo" id="outerHalo"></div>
       </div>
 
       <!-- inner ring -->
-      <div id="innerWrap" class="wrapCenter preGrow">
+      <div id="innerWrap" class="wrapCenter">
         <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
         <div class="halo" id="innerHalo"></div>
       </div>
 
-      <!-- comets layer -->
-      <div id="cometField" class="wrapCenter preGrow"></div>
-
       <!-- painting ring -->
-      <div id="midWrap" class="wrapCenter preGrow">
+      <div id="midWrap" class="wrapCenter">
         <div id="midSpin" class="spin"><div id="midRing"></div></div>
       </div>
-
-      <!-- emojis -->
-      <div id="emojiWrapA" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
-      <div id="emojiWrapB" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
 
       <!-- center prompt -->
       <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
     </div>
 
-    <!-- bottom nav (links to external HTMLs) -->
+    <!-- bottom nav -->
     <div class="bottomNav">
-      <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/" aria-label="Color Library">Color Library</a>
-      <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" aria-label="Art Gallery">Art Gallery</a>
-      <a class="navBtn navRight" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3" aria-label="Illusion Lab">Illusion Lab</a>
+      <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/">Color Library</a>
+      <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/">Art Gallery</a>
+      <a class="navBtn navRight" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3">Illusion Lab</a>
     </div>
   </div>
 </div>
 
-<!-- transition overlay (fade-to-black + quote) -->
-<div id="transition">
-  <div id="quoteBox">
-    <div id="quoteText"></div>
-  </div>
-</div>
+<!-- transition overlay -->
+<div id="transition"><div id="quoteBox"><div id="quoteText"></div></div></div>
 
 <script>
-/* QUICK failsafe clear in multiple ways in case of other JS errors */
-(function(){
-  function clearFS(){
-    const fs=document.getElementById('failsafe');
-    if(!fs) return;
-    fs.style.opacity=0;
-    setTimeout(()=>{ try{fs.remove();}catch(_){fs.parentNode&&fs.parentNode.removeChild(fs);} },300);
-  }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', ()=> requestAnimationFrame(clearFS), {once:true});
-  }else{
-    requestAnimationFrame(clearFS);
-  }
-  setTimeout(clearFS,1500);
-})();
-</script>
-
-<script>
-/* === Deep link config === */
+/* external targets */
 const URLS = {
-  home:   "https://vahetharoutounian-stack.github.io/neurOrange/",
   color:  "https://vahetharoutounian-stack.github.io/neurOrangeV3/",
   gallery:"https://vahetharoutounian-stack.github.io/neurOrangeV2/"
 };
 
-/* === Quotes (the word "orange" will animate) === */
+/* NEW: exact quotes you provided (nothing else) */
 const QUOTES_RAW = [
-  "It’s funny how the colors of the real world only seem really real when you viddy them on the screen. — A Clockwork orange (1971)",
-  "orange is the happiest color. — Frank Sinatra",
-  "There is no blue without yellow and without orange. — Vincent Van Gogh",
-  "The orange tree took time to create this masterpiece. — Thich Nhat Hanh",
-  "If the real world is orange juice, then art is like orange juice concentrate. — Martin Mull",
-  "In a world full of yellows and reds, dare to be orange."
+  "“It’s funny how the colors of the real world only seem really real when you viddy them on the screen.” — A Clockwork Orange (1971)",
+  "“Orange is the happiest color.” — Frank Sinatra",
+  "“There is no blue without yellow and without orange.” — Vincent Van Gogh",
+  "“The orange tree took time to create this masterpiece.” — Thich Nhat Hanh",
+  "“If the real world is orange juice, then art is like orange juice concentrate.” — Martin Mull",
+  "“In a world full of yellows and reds, dare to be orange.”"
 ];
+
+/* decorate 'orange' with animated span */
 function decorateOrangeWords(str){
   return str.replace(/orange/gi, m => `<span class="Oword">${m}</span>`);
 }
-function pickQuote(){
-  const i = Math.floor(Math.random()*QUOTES_RAW.length);
-  return decorateOrangeWords(QUOTES_RAW[i]);
+
+/* robust random index (works across Safari bfcache) */
+function randIndex(len){
+  try {
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return a[0] % len;
+  } catch {
+    return Math.floor(Math.random()*len);
+  }
 }
 
-/* palettes */
-const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
-const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
-const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;"];
+/* build quote HTML */
+function pickQuoteHTML(){
+  return decorateOrangeWords(QUOTES_RAW[randIndex(QUOTES_RAW.length)]);
+}
 
-/* helpers */
+/* sizes */
 function $(id){return document.getElementById(id)}
 function $$(sel){return Array.from(document.querySelectorAll(sel))}
+
+/* center bubble size and gentle spin (1 rpm bounded) */
+(function startBoundedSpin(){
+  const t=$('questionText'); let angle=0, dir=Math.random()<0.5?1:-1; const speed=360/60;
+  let change=3+Math.random()*5, last=performance.now();
+  const b=$('question'); const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
+  const D=Math.ceil(Math.max(w,h)+pad*2); b.style.width=D+'px'; b.style.height=D+'px';
+  function step(now){
+    const dt=(now-last)/1000; last=now; angle+=dir*speed*dt;
+    if(angle>45){angle=45;dir=-1} if(angle<-45){angle=-45;dir=1}
+    change-=dt; if(change<=0){ if(Math.random()<0.35) dir*=-1; change=3+Math.random()*5; }
+    t.style.transform=`rotate(${angle.toFixed(3)}deg)`;
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+
+/* ring drawing helpers */
 function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
-function goColor(hex){ transitionTo(`${URLS.color}#step=2&cat=standards&hex=${hexNorm(hex)}`); }
-function goGallery(idx){ transitionTo(`${URLS.gallery}#painting=${idx}`); }
-function goIllusion(hex){ transitionTo(`${URLS.color}#step=3&cat=ghosts&hex=${hexNorm(hex)}`); }
-
-function sizeQuestion(){
-  const b=$('question'), t=$('questionText');
-  b.style.transform='translate(-50%,-50%) scale(1)';
-  const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
-  const D=Math.ceil(Math.max(w,h)+pad*2);
-  b.style.width=D+'px'; b.style.height=D+'px';
-  startBoundedSpin();
-}
-
-/* color math */
-function hexToRgb(h){h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}}
-function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return {h:h*360,s,l}}
-function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p},q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}}
-function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}
-function opponentHex(hex){const {r,g,b}=hexToRgb(hex); const {h,s,l}=rgbToHsl(r,g,b); const opp=(h+180)%360; const {r:rr,g:gg,b:bb}=hslToRgb(opp,s,l); return rgbToHex(rr,gg,bb)}
-
-/* svg wedges */
-function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
+function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
+  const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
   const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}); const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);
-  const large=(a1Deg-a0Deg)>180?1:0; return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
-
-function drawRing(svgEl,sizePx,r0px,r1px,colorObjs,gapDeg){
+  const large=(a1Deg-a0Deg)>180?1:0; return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`;
+}
+function drawRing(svgEl,sizePx,r0px,r1px,colors,gapDeg, onClickHex){
   svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
   const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
-  const n=colorObjs.length, slice=360/n; svgEl.innerHTML='';
+  const n=colors.length, slice=360/n; svgEl.innerHTML='';
   for(let i=0;i<n;i++){
-    const hex=(typeof colorObjs[i]==='string')? colorObjs[i] : colorObjs[i].hex;
+    const hex=(typeof colors[i]==='string')? colors[i] : colors[i].hex;
     const a0=i*slice, a1=(i+1)*slice-gap;
     const p=document.createElementNS('http://www.w3.org/2000/svg','path');
     p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
     p.setAttribute('fill',hex);
     p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
-    p.classList.add('clickable');
-    p.addEventListener('click', ()=> goColor(hex), {passive:true});
+    if(onClickHex) p.addEventListener('click', ()=> onClickHex(hex), {passive:true});
     svgEl.appendChild(p);
   }
 }
 
-function drawGhostRing(svgEl,sizePx,r0px,r1px,ghostHexes,gapDeg){
-  svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
-  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
-  const n=ghostHexes.length, slice=360/n; svgEl.innerHTML='';
-  for(let i=0;i<n;i++){
-    const base=ghostHexes[i], opp=opponentHex(base), a0=i*slice, a1=(i+1)*slice-gap;
-    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
-    p.classList.add('ghost-wedge','clickable');
-    p.style.setProperty('--c0',base); p.style.setProperty('--c1',opp);
-    const dur=10+Math.random()*6, phase=Math.random()*dur; p.style.setProperty('--dur',dur.toFixed(2)+'s'); p.style.setProperty('--delay',(-phase).toFixed(2)+'s');
-    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
-    p.addEventListener('click', ()=> goIllusion(base), {passive:true});
-    svgEl.appendChild(p);
-  }
-}
+/* layout rings + painting nodes */
+const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
+const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
 
-/* paintings */
-function buildMidNodes(){
-  const mid=$('midRing'); mid.innerHTML='';
-  for(let i=1;i<=6;i++){
-    const n=document.createElement('div'); n.className='mnode withCloud';
-    const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`;
-    img.onerror=()=>{ n.style.background='#222'; };
-    n.addEventListener('click', ()=> goGallery(i), {passive:true});
-    n.appendChild(img); mid.appendChild(n);
-  }
-}
-
-/* layout */
 function layoutRings(){
   const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap'), midRing=$('midRing');
   const W=innerWidth, H=innerHeight, S=Math.min(W,H);
   document.documentElement.style.setProperty('--emoji-font',Math.round(W*0.036)+'px');
 
   const innerD=Math.round(S*0.58), innerThick=Math.max(16,Math.round(innerD*0.12));
-  document.documentElement.style.setProperty('--inner-thick',innerThick+'px');
   innerWrap.style.width=innerD+'px'; innerWrap.style.height=innerD+'px';
-
   const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter-innerThick*2);
-  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
+  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3,
+    (hex)=>transitionTo(`${URLS.color}#step=2&cat=standards&hex=${hexNorm(hex)}`));
 
   const nodeD=Math.round(innerThick*0.85*5.25*0.82), margin=2, midR=Math.max(0, (W/2)-(nodeD/2)-margin);
-  const nodes=$$('#midRing .mnode'), N=6, step=2*Math.PI/N;
-  nodes.forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR; n.style.width=nodeD+'px'; n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`});
+  const N=6, step=2*Math.PI/N;
+  if(!midRing.children.length){
+    for(let i=1;i<=6;i++){
+      const n=document.createElement('div'); n.className='mnode withCloud'; n.addEventListener('click', ()=> transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV2/#painting=${i}`), {passive:true});
+      const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`; n.appendChild(img); midRing.appendChild(n);
+    }
+  }
+  Array.from(midRing.children).forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
+    n.style.width=nodeD+'px'; n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;});
 
-  const outerInnerR=midR + nodeD/2 + margin, outerThick=innerThick*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult'))||2.2);
-  const outerOuterR=Math.max(outerInnerR+outerThick, W/2+8), outD=Math.round(outerOuterR*2);
+  const outerInnerR=midR + nodeD/2 + margin;
+  const outerThick  = innerThick * 2.2;
+  const outerOuterR = Math.max(outerInnerR + outerThick, W/2 + 8);
+  const outD = Math.round(outerOuterR*2);
   outerWrap.style.width=outD+'px'; outerWrap.style.height=outD+'px';
-  drawGhostRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
-
-  const gap=Math.max(8,Math.round(S*0.014)), rA=outerOuterR+gap, rB=rA+Math.max(22,Math.round(S*0.028));
-  placeEmojis('emojiWrapA', rA, 0); placeEmojis('emojiWrapB', rB, (Math.PI*2)/(12*2));
+  drawRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3,
+    (hex)=>transitionTo(`${URLS.color}#step=3&cat=ghosts&hex=${hexNorm(hex)}`));
 }
-function placeEmojis(wrapId,R,phase=0){
-  const container=$(wrapId).querySelector('.emojiRing'); container.innerHTML=''; const n=12;
-  for(let i=0;i<n;i++){const d=document.createElement('div'); d.className='emoji'; d.innerHTML=EMOJIS[i%EMOJIS.length];
-    const a=i*(2*Math.PI/n)+phase, x=Math.cos(a)*R, y=Math.sin(a)*R;
-    d.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; container.appendChild(d);}
-}
+layoutRings();
+addEventListener('resize', layoutRings, {passive:true});
 
-/* 1 rpm bounded center text (±45°, random flips) */
-let spinRAF, spinStarted=false;
-function startBoundedSpin(){
-  if(spinStarted) return; spinStarted=true;
-  const t=$('questionText'); let angle=0, dir=Math.random()<0.5?1:-1; const speed=360/60;
-  let change=3+Math.random()*5, last=performance.now();
-  function step(now){const dt=(now-last)/1000; last=now; angle+=dir*speed*dt;
-    if(angle>45){angle=45;dir=-1} if(angle<-45){angle=-45;dir=1}
-    change-=dt; if(change<=0){ if(Math.random()<0.35) dir*=-1; change=3+Math.random()*5; }
-    t.style.transform=`rotate(${angle.toFixed(3)}deg)`; spinRAF=requestAnimationFrame(step);}
-  spinRAF=requestAnimationFrame(step);
-}
-
-/* ===== TRANSITION: fade to black + randomized quote, then navigate ===== */
-let isTransitioning = false;
+/* transition overlay logic — ALWAYS pick anew (handles Safari back/forward cache) */
+let transitioning=false;
 function transitionTo(url){
-  if(isTransitioning) return;
-  isTransitioning = true;
-  const tr = document.getElementById('transition');
-  const qT = document.getElementById('quoteText');
-  qT.innerHTML = pickQuote();
+  if(transitioning) return;
+  transitioning=true;
+  const tr = $('transition');
+  const qt = document.getElementById('quoteText');
+  qt.innerHTML = pickQuoteHTML();
   tr.classList.add('show');
-  setTimeout(()=>{ location.href = url; }, 2200);
+  setTimeout(()=>{ location.href = url; }, 2000);
 }
 
-/* ===== press the orange to start animation + video ===== */
+/* ensure new random on Safari back/forward cache */
+window.addEventListener('pageshow', (e)=>{
+  // hide any residual overlay and ensure next click re-randomizes
+  $('transition').classList.remove('show');
+  transitioning=false;
+  // re-seed by a no-op crypto call (optional, harmless)
+  try { crypto.getRandomValues(new Uint32Array(1)); } catch {}
+});
+
+/* optional video reveal if you add a source */
 (function(){
-  const orange=document.getElementById('startOrange');
-  orange.addEventListener('click', ()=>{
-    const intro=document.getElementById('intro');
-    intro.classList.add('hidden');
-    setTimeout(()=>{
-      intro.remove();
-      const v=document.getElementById('bgVideo');
-      if(v){
-        const show=()=>v.style.opacity=1;
-        v.addEventListener('loadeddata', show, {once:true});
-        v.addEventListener('playing',    show, {once:true});
-        const p=v.play(); if(p && p.catch) p.catch(()=>{});
-      }
-      // run grow-out from center
-      ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
-        const el=document.getElementById(id); if(!el) return;
-        el.classList.remove('grow'); el.classList.add('preGrow');
-        requestAnimationFrame(()=> el.classList.add('grow'));
-      });
-    }, 900);
-  }, {passive:true});
-})();
-
-/* build + layout once (no animation yet) */
-(function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); })();
-</script>
-
-<!-- neurOrange Audio Dock — drop-in kit (NEW player; old players removed) -->
-<style id="audioDock2-kit-css">
-  /* bail if already defined elsewhere */
-  :root { --_noop: initial; }
-  #audioDock2 { all: initial; }
-
-  #audioDock2 {
-    position: fixed;
-    left: calc(8px + env(safe-area-inset-left));
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    z-index: 2147483647;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 999px;
-    background: #FF6600;
-    color: #fff;
-    border: 1px solid rgba(0,0,0,.35);
-    box-shadow: 0 8px 22px rgba(255,102,0,.35);
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .ad-stop,
-  .ad-btn {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-    border-radius: 50%;
-    border: 0;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    line-height: 1;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,.25);
-    transition: transform .06s ease, box-shadow .2s ease, opacity .15s ease;
-  }
-  .ad-stop:active,
-  .ad-btn:active { transform: translateY(1px); }
-  .ad-btn.active {
-    outline: 2px solid rgba(255,255,255,.85);
-    box-shadow: 0 4px 14px rgba(0,0,0,.35),0 0 0 2px #fff inset;
-    background: #fdfdfd;
-  }
-  #audioDock2 .ad-wrap { position: relative; }
-  .ad-vol {
-    position: absolute;
-    bottom: 58px;
-    width: 44px;
-    padding: 8px 6px;
-    border-radius: 12px;
-    background: rgba(22,22,22,.92);
-    border: 1px solid rgba(255,255,255,.2);
-    box-shadow: 0 10px 24px rgba(0,0,0,.45);
-    display: none;
-  }
-  .ad-vol.visible { display: block; }
-  .ad-vol label {
-    color: #fff;
-    font-size: 11px;
-    opacity: .8;
-    text-align: center;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .ad-vol input[type="range"] {
-    writing-mode: bt-lr;
-    -webkit-appearance: slider-vertical;
-    width: 30px;
-    height: 110px;
-    background: transparent;
-    padding: 0;
-    margin: 0 auto;
-  }
-  .ad-vol input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #FF6600;
-    border: 1px solid rgba(0,0,0,.35);
-    box-shadow: 0 1px 4px rgba(0,0,0,.35);
-  }
-  .ad-vol input[type="range"]::-webkit-slider-runnable-track{
-    width: 6px;
-    background: #ddd;
-    border-radius: 999px;
-    border: 0;
-  }
-  .ad-vol input[type="range"]::-moz-range-thumb{
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #FF6600;
-    border: 1px solid rgba(0,0,0,.35);
-  }
-  .ad-vol input[type="range"]::-moz-range-track{
-    width: 6px;
-    background: #ddd;
-    border-radius: 999px;
-    border: 0;
-  }
-</style>
-
-<div id="audioDock2" role="group" aria-label="Audio Player" hidden>
-  <!-- stop all -->
-  <button class="ad-stop" id="adStop" title="Stop all">🟧</button>
-
-  <!-- sparkle -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="sparkle" title="Sparkle ✨">🌱</button>
-    <div class="ad-vol" data-for="sparkle">
-      <label>✨</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- orange -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="orange" title="Orange 🍊">🌱</button>
-    <div class="ad-vol" data-for="orange">
-      <label>🍊</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- autumn -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="autumn" title="Autumn 🍂">🌱</button>
-    <div class="ad-vol" data-for="autumn">
-      <label>🍂</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- storm -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="storm" title="Storm ⛈️">🌱</button>
-    <div class="ad-vol" data-for="storm">
-      <label>⛈️</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-  <!-- negin -->
-  <div class="ad-wrap">
-    <button class="ad-btn" data-track="negin" title="Negin 💫">🌱</button>
-    <div class="ad-vol" data-for="negin">
-      <label>💫</label><input type="range" min="0" max="1" step="0.01" value="1"/>
-    </div>
-  </div>
-
-  <!-- hidden audio elements (looping) -->
-  <audio id="aud_sparkle" preload="metadata" playsinline loop>
-    <source src="tracks/sparkle.mp3" type="audio/mpeg"><source src="media/sparkle.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="aud_orange"  preload="metadata" playsinline loop>
-    <source src="tracks/orange.mp3"  type="audio/mpeg"><source src="media/orange.mp3"  type="audio/mpeg">
-  </audio>
-  <audio id="aud_autumn"  preload="metadata" playsinline loop>
-    <source src="tracks/autumn.mp3"  type="audio/mpeg"><source src="media/autumn.mp3"  type="audio/mpeg">
-  </audio>
-  <audio id="aud_storm"   preload="metadata" playsinline loop>
-    <source src="tracks/storm.mp3"   type="audio/mpeg"><source src="media/storm.mp3"   type="audio/mpeg">
-  </audio>
-  <audio id="aud_negin"   preload="metadata" playsinline loop>
-    <source src="tracks/negin.mp3"   type="audio/mpeg"><source src="media/negin.mp3"   type="audio/mpeg">
-  </audio>
-</div>
-
-<script id="audioDock2-kit-js">
-(function(){
-  // bail if another page has already bound audioDock2
-  if (document.getElementById('audioDock2')?.__bound) return;
-  const DOCK = document.getElementById('audioDock2');
-  if (!DOCK) return;
-
-  // iOS unlock on first touch
-  const unlock = () => {
-    DOCK.querySelectorAll('audio').forEach(a => {
-      try {
-        const p = a.play();
-        if (p) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-      } catch (_) {}
-    });
-    document.removeEventListener('pointerdown', unlock, true);
-  };
-  document.addEventListener('pointerdown', unlock, true);
-
-  const ACTIVE = new Set();
-  const btn = name => DOCK.querySelector(`.ad-btn[data-track="${name}"]`);
-  const vol = name => DOCK.querySelector(`.ad-vol[data-for="${name}"]`);
-  const aud = name => document.getElementById('aud_' + name);
-
-  function positionSlider(button, slider){
-    const dockRect = DOCK.getBoundingClientRect();
-    const btnRect  = button.getBoundingClientRect();
-    const offset = (btnRect.left + btnRect.width / 2) - (dockRect.left + 22);
-    slider.style.left = Math.max(-6, Math.min(offset - 22, 220)) + 'px';
-  }
-
-  function stop(name){
-    const audio  = aud(name);
-    const button = btn(name);
-    const slider = vol(name);
-    try { audio.pause(); audio.currentTime = 0; } catch (_) {}
-    ACTIVE.delete(name);
-    if (button) {
-      button.textContent = '🌱';
-      button.classList.remove('active');
-    }
-    if (slider) slider.classList.remove('visible');
-  }
-
-  function toggle(name){
-    const audio  = aud(name);
-    const button = btn(name);
-    const slider = vol(name);
-    if (!audio || !button || !slider) return;
-
-    if (ACTIVE.has(name)){
-      stop(name);
-      return;
-    }
-    const exclusive = ['sparkle','orange','autumn','negin'];
-    if (exclusive.includes(name)){
-      exclusive.forEach(x => { if (x !== name && ACTIVE.has(x)) stop(x); });
-    }
-    try { audio.play().catch(() => {}); } catch (_) {}
-    ACTIVE.add(name);
-    const icons = { sparkle:'✨', orange:'🍊', autumn:'🍂', storm:'⛈️', negin:'💫' };
-    button.textContent = icons[name] || '✨';
-    button.classList.add('active');
-    positionSlider(button, slider);
-    slider.classList.add('visible');
-  }
-
-  // bind controls
-  DOCK.querySelectorAll('.ad-btn').forEach(el => {
-    el.addEventListener('click', () => toggle(el.getAttribute('data-track')), {passive:true});
-  });
-  DOCK.querySelectorAll('.ad-vol').forEach(wrap => {
-    const name = wrap.getAttribute('data-for');
-    const audio = aud(name);
-    const range = wrap.querySelector('input[type="range"]');
-    if (!audio || !range) return;
-    try {
-      const saved = localStorage.getItem('advol_' + name);
-      audio.volume = range.value = (saved !== null) ? parseFloat(saved) : parseFloat(range.value);
-    } catch (_) {}
-    range.addEventListener('input', () => {
-      audio.volume = parseFloat(range.value);
-      try { localStorage.setItem('advol_' + name, audio.volume); } catch (_) {}
-    }, {passive:true});
-    window.addEventListener('resize', () => {
-      if (wrap.classList.contains('visible')) positionSlider(btn(name), wrap);
-    });
-  });
-
-  const stopButton = DOCK.querySelector('.ad-stop');
-  if (stopButton) stopButton.addEventListener('click', () => ['sparkle','orange','autumn','storm','negin'].forEach(stop), {passive:true});
-
-  DOCK.hidden = false;
-  DOCK.__bound = true;
+  const v=$('bgVideo');
+  if(!v) return;
+  const show=()=> v.style.opacity=1;
+  v.addEventListener('loadeddata', show, {once:true});
+  v.addEventListener('playing',    show, {once:true});
+  // const p=v.play(); if(p&&p.catch) p.catch(()=>{});
 })();
 </script>
-<!-- /Audio Dock Kit -->
-
 </body>
 </html>
