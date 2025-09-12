@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
-<title>neurOrange — Home (grow-out rings + instant ghost flicker + nav)</title>
+<title>neurOrange — Home (slower grow-out + rotating-out + instant flicker)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
@@ -21,9 +21,7 @@
             -webkit-font-smoothing:antialiased;overflow:hidden}
 
   /* ===== BLACK FAILSAFE (removed once frame paints) ===== */
-  #failsafe{
-    position:fixed; inset:0; background:#000; z-index:100000; opacity:1; transition:opacity .25s ease;
-  }
+  #failsafe{position:fixed; inset:0; background:#000; z-index:100000; opacity:1; transition:opacity .25s ease;}
 
   /* ===== Intro (tap-to-enter) ===== */
   #intro{
@@ -65,18 +63,22 @@
 
   #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
 
-  /* Centered wrappers + pronounced grow-out from center */
+  /* Centered wrappers: start pre-shrunk (preGrow), then animate 'grow' */
   .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1); will-change:transform,opacity;}
-  .grow{ animation:ringGrow 1400ms cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0; }
-  #innerWrap.grow { animation-delay:   0ms; }
-  #midWrap.grow   { animation-delay: 120ms; }
-  #outerWrap.grow { animation-delay: 240ms; }
-  #emojiWrapA.grow{ animation-delay: 360ms; }
-  #emojiWrapB.grow{ animation-delay: 480ms; }
+  .preGrow{transform:translate(-50%,-50%) scale(.05); opacity:0;}
+  .grow{ animation: ringGrow var(--growDur, 3600ms) cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0; }
+  /* Staggers & per-ring slower durations */
+  #innerWrap.grow { --growDur: 3600ms; animation-delay:   0ms; }
+  #midWrap.grow   { --growDur: 4200ms; animation-delay: 200ms; }
+  #outerWrap.grow { --growDur: 4600ms; animation-delay: 350ms; }
+  #emojiWrapA.grow{ --growDur: 4000ms; animation-delay: 500ms; }
+  #emojiWrapB.grow{ --growDur: 4400ms; animation-delay: 650ms; }
+
+  /* Rotate while moving out (visible spin during the grow) */
   @keyframes ringGrow{
-    0%   { transform:translate(-50%,-50%) scale(.05); opacity:0 }
-    55%  { transform:translate(-50%,-50%) scale(1.10); opacity:1 }
-    100% { transform:translate(-50%,-50%) scale(1.00); opacity:1 }
+    0%   { transform:translate(-50%,-50%) scale(.05) rotate(0deg);    opacity:0 }
+    60%  { transform:translate(-50%,-50%) scale(1.10) rotate(45deg);  opacity:1 }
+    100% { transform:translate(-50%,-50%) scale(1.00) rotate(0deg);   opacity:1 }
   }
 
   .spin{position:absolute;inset:0}
@@ -98,16 +100,16 @@
   }
   @keyframes colorPulse{0%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}33%{color:var(--bergamot);text-shadow:0 0 8px rgba(255,166,77,.45)}66%{color:var(--pure);text-shadow:0 0 8px rgba(255,165,0,.45)}100%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}}
 
-  /* SVG rings rotate CW (rotation continues during grow-out) */
+  /* SVG rings rotate CW (continues after grow) */
   #innerSVG,#outerSVG{ transform-box: fill-box; transform-origin:50% 50%; animation:spinCW 60s linear infinite; }
   #outerSVG{ animation-duration:70s; }
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* GHOST WEDGE flicker (slower, start immediately) */
+  /* GHOST WEDGE flicker (slower, start immediately via negative delay) */
   .ghost-wedge{
     fill: var(--c0);
     animation: ghostFlick var(--dur, 12s) ease-in-out infinite;
-    animation-delay: var(--delay, 0s);    /* negative delays set in JS => starts right away */
+    animation-delay: var(--delay, 0s);
   }
   @keyframes ghostFlick{
     0%, 88%, 100% { fill: var(--c0); }
@@ -168,26 +170,26 @@
 
     <div id="focus">
       <!-- Outer ring (SVG) -->
-      <div id="outerWrap" class="wrapCenter">
+      <div id="outerWrap" class="wrapCenter preGrow">
         <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg>
         <div class="halo" id="outerHalo"></div>
       </div>
 
       <!-- Inner ring (SVG) -->
-      <div id="innerWrap" class="wrapCenter">
+      <div id="innerWrap" class="wrapCenter preGrow">
         <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg>
         <div class="halo" id="innerHalo"></div>
       </div>
 
       <!-- Comet layer -->
-      <div id="cometField" class="wrapCenter"></div>
+      <div id="cometField" class="wrapCenter preGrow"></div>
 
       <!-- Paintings -->
-      <div id="midWrap" class="wrapCenter"><div id="midSpin" class="spin"><div id="midRing"></div></div></div>
+      <div id="midWrap" class="wrapCenter preGrow"><div id="midSpin" class="spin"><div id="midRing"></div></div></div>
 
       <!-- Emoji rings -->
-      <div id="emojiWrapA" class="wrapCenter"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
-      <div id="emojiWrapB" class="wrapCenter"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
+      <div id="emojiWrapA" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
+      <div id="emojiWrapB" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
 
       <!-- Center prompt -->
       <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
@@ -216,30 +218,35 @@ Dare to be orange</div></div>
 (function introOnce(){
   const intro=document.getElementById('intro');
 
-  function addGrowClasses(){
-    const ids=['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'];
-    ids.forEach(id=>{
+  function startGrow(){
+    // swap preGrow -> grow so the animation begins *immediately* after intro fades
+    ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
       const el=document.getElementById(id);
-      if(el){
-        el.classList.remove('grow'); void el.offsetWidth; /* reflow = restart animation */
+      if(!el) return;
+      el.classList.remove('grow');  // reset if present
+      // ensure we start from preGrow baseline
+      el.classList.add('preGrow');
+      // next frame: run the grow animation (with rotation built in)
+      requestAnimationFrame(()=>{
         el.classList.add('grow');
-      }
+      });
     });
   }
 
   function layoutKick(){ try{
     sizeQuestion(); layoutRings(); buildMidNodes();
+    // video reveal
     const v=document.getElementById('bgVideo');
     if(v){
       v.addEventListener('playing',   ()=> v.style.opacity = 1, {once:true});
       v.addEventListener('loadeddata',()=> v.style.opacity = 1, {once:true});
-      const p=v.play(); if(p&&p.catch) p.catch(()=>{});  // best effort
+      const p=v.play(); if(p&&p.catch) p.catch(()=>{});
     }
-    // ensure grow-out starts AFTER layout has applied
-    requestAnimationFrame(addGrowClasses);
+    // begin grow-out now
+    startGrow();
   }catch(e){}}
 
-  function dismiss(){ intro.classList.add('hidden'); setTimeout(()=>{ intro.remove(); requestAnimationFrame(layoutKick); },950); }
+  function dismiss(){ intro.classList.add('hidden'); setTimeout(()=>{ intro.remove(); layoutKick(); },950); }
   function onTap(e){ e.preventDefault(); e.stopPropagation(); dismiss(); }
   function onKey(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); dismiss(); } }
   document.addEventListener('pointerdown',onTap,{once:true,capture:true});
@@ -299,7 +306,7 @@ function drawRing(svgEl, sizePx, r0px, r1px, colors, gapDeg) {
   svgEl.setAttribute('viewBox', '0 0 1000 1000');
   svgEl.style.width  = sizePx + 'px';
   svgEl.style.height = sizePx + 'px';
-  const k  = 1000 / sizePx;               // px → viewBox units
+  const k  = 1000 / sizePx;
   const r0 = Math.max(2, r0px * k), r1 = r1px * k;
   const cx = 500, cy = 500;
   const gap = Number(gapDeg) || 0;
@@ -336,7 +343,7 @@ function drawGhostRing(svgEl, sizePx, r0px, r1px, ghostHexes, gapDeg){
     path.classList.add('ghost-wedge');
     path.style.setProperty('--c0', base);
     path.style.setProperty('--c1', opp);
-    // Slower cycle (10–16s) and start NOW with a random negative delay (random phase)
+    // Slower cycle (10–16s) and start at a random phase (negative delay)
     const durSec   = 10 + Math.random()*6;
     const phaseSec = Math.random()*durSec;
     path.style.setProperty('--dur',   durSec.toFixed(2) + 's');
@@ -380,11 +387,8 @@ function layoutRings() {
   const innerOuter = innerD / 2;
   const innerInner = Math.max(2, innerOuter - innerThick * 2);
 
-  drawRing(
-    innerSVG, innerD, innerInner, innerOuter,
-    BRIGHT.map(o => o.hex),
-    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3
-  );
+  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT.map(o => o.hex),
+           parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3);
 
   // ----- Paintings around inner -----
   const nodeD  = Math.round(innerThick * 0.85 * 5.25 * 0.82);
@@ -408,11 +412,8 @@ function layoutRings() {
   outerWrap.style.width  = outD + 'px';
   outerWrap.style.height = outD + 'px';
 
-  drawGhostRing(
-    outerSVG, outD, outerInnerR, outerOuterR,
-    GHOSTS,
-    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3
-  );
+  drawGhostRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS,
+                parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3);
 
   // ----- Emoji orbits (outside outer ring) -----
   const gap = Math.max(8, Math.round(S * 0.014));
@@ -459,7 +460,7 @@ function startBoundedSpin(){
 /* ===== Comet flourish: cycle starts with plain comet, then 4th=🌱, 5th=🌹 ===== */
 (function comet(){
   const field=document.getElementById('cometField');
-  const cycleLen = 5; // define a "cycle" of 5 spawns
+  const cycleLen = 5;
   let cometCount = 0;
   function spawn(){
     cometCount++;
@@ -470,7 +471,7 @@ function startBoundedSpin(){
     if(kind==='straight'){ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2}; P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2}; }
     else if(kind==='offcenter'){ const d=(Math.random()*0.35+0.15)*(W/2); const sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};
       P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};
-      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y+Math.sin(theta)*run/2+sh.y}; }
+      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y}; }
     else{ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       const bend=(Math.random()*0.5+0.3)*(W/2); C={x:center.x+n.x*(Math.random()<0.5?-bend:bend), y:center.y+n.y*(Math.random()<0.5?-bend:bend)}; }
@@ -478,7 +479,6 @@ function startBoundedSpin(){
     const comet=document.createElement('div'); comet.className='comet';
     const stk=document.createElement('div'); stk.className='cometStack';
     const top=document.createElement('div'); top.className='top';
-    // Rule: first in cycle has nothing, 4th sprout, 5th rose, others orange
     if(idxInCycle === 1){ top.innerHTML = ''; }
     else if(idxInCycle === 5){ top.innerHTML = '🌹'; }
     else if(idxInCycle === 4){ top.innerHTML = '🌱'; }
@@ -500,12 +500,14 @@ function startBoundedSpin(){
 
 /* ===== Boot ===== */
 (function boot(){
-  const v=document.getElementById('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; /* reveal opacity on 'playing'/'loadeddata' */ }
+  const v=document.getElementById('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; }
   buildMidNodes(); sizeQuestion(); layoutRings();
-  // grow-out after initial layout (for first load without intro)
+  // ensure preGrow -> grow even without intro (e.g. reload mid-session)
   requestAnimationFrame(()=>{
     ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
-      const el=document.getElementById(id); if(el){ el.classList.remove('grow'); void el.offsetWidth; el.classList.add('grow'); }
+      const el=document.getElementById(id); if(!el) return;
+      el.classList.add('preGrow');
+      el.classList.remove('grow'); void el.offsetWidth; el.classList.add('grow');
     });
   });
   addEventListener('resize', ()=>{ sizeQuestion(); layoutRings(); }, {passive:true});
