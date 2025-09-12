@@ -1,70 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="color-scheme" content="dark" />
-<meta name="theme-color" content="#000000" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="dark"/>
+<meta name="theme-color" content="#000000"/>
 <title>neurOrange — press 🍊 to begin</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pure:#FFA500; --nick:#FF6600; --after:#F9751F;
-    --gap-deg:3; --outer-thick-mult:2.2; --emoji-font:18px; --glow:0 0 10px #000, 0 0 18px #000;
+    --gap-deg:3; --outer-thick-mult:2.2; --emoji-font:18px;
+    --dock-scale:2;                /* 2× dock size */
+    --asteroid-min:14;             /* px */
+    --asteroid-max:36;             /* px */
+    --asteroid-speed-min:18;       /* s */
+    --asteroid-speed-max:38;       /* s */
+    --asteroid-rotate-min:12;      /* s */
+    --asteroid-rotate-max:26;      /* s */
   }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%;background:#000;color:#fff;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;overflow:hidden;-webkit-font-smoothing:antialiased}
-  /* Intro (tap orange) */
-  #intro{position:fixed;inset:0;background:#000;display:grid;place-items:center;z-index:9999;opacity:1;pointer-events:auto;transition:opacity 900ms ease}
+
+  /* Intro */
+  #intro{position:fixed;inset:0;display:grid;place-items:center;background:#000;z-index:9999;opacity:1;pointer-events:auto;transition:opacity 900ms ease}
   #intro.hidden{opacity:0;pointer-events:none}
   .intro-stack{display:grid;justify-items:center;gap:1rem}
-  #startOrange{font-size:clamp(110px,30vw,240px);line-height:1;cursor:pointer;filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25));transition:transform .12s ease}
+  #startOrange{font-size:clamp(110px,30vw,240px);line-height:1;cursor:pointer;
+    filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25));
+    transition:transform .12s ease}
   #startOrange:active{transform:scale(.98)}
   .intro-title{font-weight:900;letter-spacing:.14em;font-size:clamp(18px,6.2vw,44px);color:var(--bergamot);
     text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35);animation:titlePulse 2.2s ease-in-out infinite}
   @keyframes titlePulse{0%{color:var(--bergamot)}50%{color:var(--pure)}100%{color:var(--bergamot)}}
-  /* Stage + background */
+
+  /* Stage */
   #phone{position:fixed;inset:0;display:grid;place-items:center}
   #canvas{position:relative;width:100%;height:100%;overflow:hidden;background:#000}
-  #brandBar{position:absolute;left:0;right:0;top:10px;display:flex;justify-content:center;z-index:6;filter:drop-shadow(var(--glow))}
+  #brandBar{position:absolute;left:0;right:0;top:10px;display:flex;justify-content:center;z-index:6;filter:drop-shadow(0 0 10px #000,0 0 18px #000)}
   #brand{font-weight:900;letter-spacing:.12em;font-size:clamp(18px,5vw,32px);color:#FFA500}
   #bgLayer{position:absolute;inset:0;z-index:1}
   #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s ease}
-  .fogWrap{position:absolute;inset:-30%;pointer-events:none; -webkit-mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%); mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)}
+  .fogWrap{position:absolute;inset:-30%;pointer-events:none;-webkit-mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)}
   .fog{position:absolute;inset:0;mix-blend-mode:screen;filter:blur(60px) saturate(120%);
     background:radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
                radial-gradient(28% 24% at 80% 40%, var(--nick) 0 55%, transparent 60%),
                radial-gradient(30% 22% at 40% 70%, var(--nick) 0 55%, transparent 60%);
     animation:fog1 26s linear infinite alternate; opacity:.62}
   @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
+
+  /* Focus (rings etc.) */
   #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
   .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1)}
   .preGrow{transform:translate(-50%,-50%) scale(.05);opacity:0}
   .grow{animation:ringGrow var(--growDur,3600ms) cubic-bezier(.17,.9,.24,1.08) forwards;opacity:0}
   #innerWrap.grow {--growDur:3600ms} #midWrap.grow{--growDur:4200ms;animation-delay:200ms} #outerWrap.grow{--growDur:4600ms;animation-delay:350ms}
-  @keyframes ringGrow{0%{transform:translate(-50%,-50%) scale(.05) rotate(0deg);opacity:0}60%{transform:translate(-50%,-50%) scale(1.10) rotate(45deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1.00) rotate(0deg);opacity:1}}
+  @keyframes ringGrow{0%{transform:translate(-50%,-50%) scale(.05) rotate(0)}60%{transform:translate(-50%,-50%) scale(1.10) rotate(45deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1.00) rotate(0);opacity:1}}
   .spin{position:absolute;inset:0}
   .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0));filter:blur(10px);pointer-events:none;z-index:-1}
-  /* Center prompt */
-  #question{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;border-radius:50%;filter:drop-shadow(var(--glow));padding:.4rem .6rem;animation:breathe 7s ease-in-out infinite}
-  #questionText{font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;animation:colorPulse 5.5s ease-in-out infinite}
-  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.02)}}
-  @keyframes colorPulse{0%{color:#fff}33%{color:var(--bergamot)}66%{color:#FFA500}100%{color:#fff}}
-
-  /* Rings */
   #innerSVG,#outerSVG{transform-box:fill-box;transform-origin:50% 50%;animation:spinCW 60s linear infinite}
   #outerSVG{animation-duration:70s}
-  @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  @keyframes spinCW{from{transform:rotate(0)}to{transform:rotate(360deg)}}
   .ghost-wedge{fill:var(--c0);animation:ghostFlick var(--dur,12s) ease-in-out infinite;animation-delay:var(--delay,0s);cursor:pointer}
   @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
 
   /* Painting ring */
   #midWrap{z-index:8}
-  #midSpin{animation:spinCCW 56s linear infinite;filter:drop-shadow(var(--glow))}
-  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+  #midSpin{animation:spinCCW 56s linear infinite;filter:drop-shadow(0 0 10px #000,0 0 18px #000)}
+  @keyframes spinCCW{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
   #midRing{position:absolute;inset:0}
-  .mnode{position:absolute;top:50%;left:50%;border-radius:50%;transform:translate(-50%,-50%);background:#111;overflow:hidden;border:1.5px solid #000;filter:drop-shadow(var(--glow));cursor:pointer}
+  .mnode{position:absolute;top:50%;left:50%;border-radius:50%;transform:translate(-50%,-50%);background:#111;overflow:hidden;border:1.5px solid #000;filter:drop-shadow(0 0 10px #000,0 0 18px #000);cursor:pointer}
   .mnode.withCloud::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% + 16px);height:calc(100% + 16px);border-radius:inherit;background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0));filter:blur(8px);pointer-events:none}
   .mnode img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;transform-origin:center;backface-visibility:hidden}
+
   /* Bottom nav */
   .bottomNav{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:8;display:flex;gap:10px;justify-content:space-between;padding:0 12px}
   .navBtn{flex:1;text-align:center;font-weight:900;padding:10px 8px;border-radius:12px;border:1px solid rgba(0,0,0,.45);color:#140a00;user-select:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(12px,3.2vw,14px);line-height:1.05}
@@ -79,10 +86,40 @@
   #quoteText{font-weight:900;font-style:italic;letter-spacing:.02em;font-size:clamp(18px,5.2vw,30px);line-height:1.25;color:#ddd;text-shadow:0 0 10px rgba(0,0,0,.8)}
   .Oword{animation:orangeHue 2.8s ease-in-out infinite alternate, orangeGlow 2.8s ease-in-out infinite alternate}
   @keyframes orangeHue{0%{color:var(--nick)}100%{color:var(--after)}}
-  @keyframes orangeGlow{0%{text-shadow:0 0 10px rgba(255,166,77,.55),0 0 18px rgba(255,102,0,.35)}100%{text-shadow:0 0 12px rgba(255,166,77,.75),0 0 26px rgba(255,102,0,.55)}}
+  @keyframes orangeGlow{0%{text-shadow:0 0 10px rgba(255,166,77,.55),0 0 26px rgba(255,102,0,.55)}100%{text-shadow:0 0 12px rgba(255,166,77,.75),0 0 26px rgba(255,102,0,.75)}}
 
-  /* 🔇 Audio player UI is intentionally INVISIBLE */
-  .audio-ui{display:none !important}
+  /* ===== Visible audio dock (2×) ===== */
+  #audioDock{
+    position:fixed;left:calc(10px + env(safe-area-inset-left));bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:2147483647;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:999px;
+    background:radial-gradient(120% 120% at 20% 15%, #FFA94D, #FF6A13 60%, #7a2c07 120%);
+    border:1px solid rgba(0,0,0,.35);box-shadow:0 10px 26px rgba(255,102,0,.35), inset 0 0 12px rgba(255,255,255,.08);
+    color:#fff;transform:scale(var(--dock-scale));transform-origin:bottom left;transition:opacity .35s ease, transform .35s ease}
+  #audioDock.dock--hide{opacity:0;pointer-events:none}
+  #dockToggle{all:unset;display:grid;place-items:center;cursor:pointer;width:44px;height:44px;border-radius:12px;background:linear-gradient(180deg,#FF8E00,#FF6A13);border:1px solid rgba(0,0,0,.45);box-shadow:0 6px 18px rgba(0,0,0,.35);font-size:26px}
+  #dockToggle.play::after{content:"▶"}
+  #dockToggle.stop::after{content:"🟧"}
+  .sprouts{display:flex;align-items:center;gap:10px}
+  .track{position:relative;display:grid;place-items:center}
+  .sprout{all:unset;cursor:pointer;display:grid;place-items:center;width:40px;height:40px;border-radius:999px;background:radial-gradient(120% 120% at 20% 15%, #FFD28A, #FF7A1A 60%, #7a2c07 120%);border:1px solid rgba(0,0,0,.45);box-shadow:0 6px 16px rgba(0,0,0,.35);font-size:22px}
+  .track .vol{position:absolute;bottom:54px;width:110px;height:26px;transform:rotate(-90deg);-webkit-appearance:none;appearance:none;background:linear-gradient(#fff,#fff) center/2px 90% no-repeat;outline:none;opacity:0;pointer-events:none;transition:opacity .18s ease}
+  .track.on .vol{opacity:1;pointer-events:auto}
+  .track .vol::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 50% 50%, #FFA94D 35%, #FF6A13 70%, #7a2c07 100%);border:1px solid rgba(0,0,0,.2);box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .track .vol::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 50% 50%, #FFA94D 35%, #FF6A13 70%, #7a2c07 100%);border:1px solid rgba(0,0,0,.2);box-shadow:0 2px 6px rgba(0,0,0,.35)}
+
+  /* ===== Emoji orbit rings ===== */
+  .emojiRing{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:9}
+  .emojiRing .orbit{position:absolute;inset:0;animation:orbit 38s linear infinite}
+  .emojiRing.outer .orbit{animation-duration:52s}
+  @keyframes orbit{to{transform:rotate(360deg)}}
+  .emojiRing .item{position:absolute;display:grid;place-items:center;transform:translate(-50%,-50%)}
+  .emojiRing .item span{filter:drop-shadow(0 0 6px rgba(0,0,0,.65));font-size:clamp(16px,3.2vw,26px)}
+
+  /* ===== Asteroids ===== */
+  #asteroids{position:absolute;inset:-10% -10% -10% -10%;z-index:7;pointer-events:none}
+  .asteroid{position:absolute;display:inline-grid;place-items:center;will-change:transform,opacity;opacity:.95}
+  .asteroid .rock{font-size:var(--sz,20px);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+  .asteroid .badge{position:absolute;right:-10%;bottom:-10%;font-size:calc(var(--sz,20px)*0.8);transform:rotate(-18deg);filter:drop-shadow(0 1px 4px rgba(0,0,0,.6))}
 </style>
 </head>
 <body>
@@ -101,16 +138,36 @@
 
     <div id="bgLayer">
       <video id="bgVideo" muted playsinline preload="auto" loop>
-        <source src="assets/placeholder.mp4" type="video/mp4" />
+        <source src="assets/placeholder.mp4" type="video/mp4"/>
       </video>
       <div class="fogWrap"><div class="fog"></div></div>
     </div>
 
     <div id="focus">
-      <!-- outer/internal rings + paintings -->
-      <div id="outerWrap" class="wrapCenter preGrow"><svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg><div class="halo"></div></div>
-      <div id="innerWrap" class="wrapCenter preGrow"><svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg><div class="halo"></div></div>
-      <div id="midWrap"   class="wrapCenter preGrow"><div id="midSpin" class="spin"><div id="midRing"></div></div></div>
+      <!-- SVG rings -->
+      <div id="outerWrap" class="wrapCenter preGrow">
+        <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg>
+        <div class="halo"></div>
+      </div>
+
+      <div id="innerWrap" class="wrapCenter preGrow">
+        <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute;inset:0"></svg>
+        <div class="halo"></div>
+      </div>
+
+      <!-- Painting ring -->
+      <div id="midWrap" class="wrapCenter preGrow"><div id="midSpin" class="spin"><div id="midRing"></div></div></div>
+
+      <!-- Emoji orbit rings (overlay) -->
+      <div id="emojiInner" class="emojiRing inner">
+        <div class="orbit"></div>
+      </div>
+      <div id="emojiOuter" class="emojiRing outer">
+        <div class="orbit"></div>
+      </div>
+
+      <!-- Asteroid sky -->
+      <div id="asteroids"></div>
 
       <!-- center prompt -->
       <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
@@ -128,36 +185,59 @@
 <!-- Transition overlay -->
 <div id="transition"><div id="quoteBox"><div id="quoteText"></div></div></div>
 
-<!-- 🔈 Hidden audio engine (no visible controls) -->
-<div class="audio-ui" aria-hidden="true">
+<!-- Hidden audio engine -->
+<div style="display:none" aria-hidden="true">
   <audio id="a_sparkle" loop preload="metadata" playsinline>
-    <source src="tracks/sparkle.mp3" type="audio/mpeg" />
-    <source src="tracks/sparkle.m4a" type="audio/mp4" />
+    <source src="tracks/sparkle.mp3" type="audio/mpeg"/>
+    <source src="tracks/sparkle.m4a" type="audio/mp4"/>
   </audio>
   <audio id="a_orange" loop preload="metadata" playsinline>
-    <source src="tracks/orange.mp3" type="audio/mpeg" />
-    <source src="tracks/orange.m4a" type="audio/mp4" />
+    <source src="tracks/orange.mp3" type="audio/mpeg"/>
+    <source src="tracks/orange.m4a" type="audio/mp4"/>
   </audio>
   <audio id="a_autumn" loop preload="metadata" playsinline>
-    <source src="tracks/autumn.mp3" type="audio/mpeg" />
-    <source src="tracks/autumn.m4a" type="audio/mp4" />
+    <source src="tracks/autumn.mp3" type="audio/mpeg"/>
+    <source src="tracks/autumn.m4a" type="audio/mp4"/>
   </audio>
   <audio id="a_storm" loop preload="metadata" playsinline>
-    <source src="tracks/storm.mp3" type="audio/mpeg" />
-    <source src="tracks/storm.m4a" type="audio/mp4" />
+    <source src="tracks/storm.mp3" type="audio/mpeg"/>
+    <source src="tracks/storm.m4a" type="audio/mp4"/>
   </audio>
   <audio id="a_negin" loop preload="metadata" playsinline>
-    <source src="tracks/negin.mp3" type="audio/mpeg" />
-    <source src="tracks/negin.m4a" type="audio/mp4" />
+    <source src="tracks/negin.mp3" type="audio/mpeg"/>
+    <source src="tracks/negin.m4a" type="audio/mp4"/>
   </audio>
 </div>
 
-<script>
-/* ===== miniature helpers ===== */
-function $(id){return document.getElementById(id)}
-function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
+<!-- Visible audio dock -->
+<div id="audioDock" class="dock--hide" role="group" aria-label="Audio controls">
+  <button id="dockToggle" class="play" aria-label="Open/Stop"></button>
+  <div class="sprouts">
+    <div class="track" data-k="sparkle" title="sparkle">
+      <button class="sprout">✨</button>
+      <input class="vol" type="range" min="0" max="1" step="0.01" value="0.90">
+    </div>
+    <div class="track" data-k="orange"  title="orange">
+      <button class="sprout">🍊</button>
+      <input class="vol" type="range" min="0" max="1" step="0.01" value="1.00">
+    </div>
+    <div class="track" data-k="autumn"  title="amber">
+      <button class="sprout">🟠</button>
+      <input class="vol" type="range" min="0" max="1" step="0.01" value="1.00">
+    </div>
+    <div class="track" data-k="storm"   title="storm">
+      <button class="sprout">🌧️</button>
+      <input class="vol" type="range" min="0" max="1" step="0.01" value="0.90">
+    </div>
+  </div>
+</div>
 
-/* ===== quotes for transition ===== */
+<script>
+/* ===== helpers ===== */
+const $ = (q,el=document)=>el.querySelector(q);
+const $$ = (q,el=document)=>Array.from(el.querySelectorAll(q));
+
+/* ===== quotes ===== */
 const QUOTES_RAW = [
   "“It’s funny how the colors of the real world only seem really real when you viddy them on the screen.” — A Clockwork Orange (1971)",
   "“Orange is the happiest color.” — Frank Sinatra",
@@ -166,10 +246,10 @@ const QUOTES_RAW = [
   "“If the real world is orange juice, then art is like orange juice concentrate.” — Martin Mull",
   "“In a world full of yellows and reds, dare to be orange.”"
 ];
-function decorateOrangeWords(str){ return str.replace(/orange/gi, m => `<span class="Oword">${m}</span>`); }
-function pickQuoteHTML(){ const i = (crypto?.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random()*1e9)) % QUOTES_RAW.length; return decorateOrangeWords(QUOTES_RAW[i]); }
+const decorateOrangeWords = s => s.replace(/orange/gi, m=>`<span class="Oword">${m}</span>`);
+const pickQuoteHTML = () => { const i=(crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Math.floor(Math.random()*1e9))%QUOTES_RAW.length; return decorateOrangeWords(QUOTES_RAW[i]); };
 
-/* ===== rings drawing (trimmed core) ===== */
+/* ===== color rings ===== */
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){
   const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
   const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}); const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);
@@ -209,20 +289,21 @@ function opponent(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('
 function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return {h:h*360,s,l}}
 function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}}
 
-/* ===== layout rings ===== */
+/* ===== layout (rings + paintings + emoji rings) ===== */
 const BRIGHT=["#FE5000","#FFA500","#FF8E00","#FF6600","#FF6A00","#FF9400","#F28500","#FF7F24","#ED9121","#FFBF00","#FF5E00","#FF6A13"];
 const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
 
 function layoutRings(){
-  const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap'), midRing=$('midRing');
+  const innerSVG=$('#innerSVG'), outerSVG=$('#outerSVG'), innerWrap=$('#innerWrap'), outerWrap=$('#outerWrap'), midRing=$('#midRing');
   const W=innerWidth, H=innerHeight, S=Math.min(W,H);
   document.documentElement.style.setProperty('--emoji-font',Math.round(W*0.036)+'px');
 
+  /* inner color ring */
   const innerD=Math.round(S*0.58), innerThick=Math.max(16,Math.round(innerD*0.12));
   innerWrap.style.width=innerD+'px'; innerWrap.style.height=innerD+'px';
   const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter-innerThick*2);
-  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3,
-    (hex)=>transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=2&cat=standards&hex=${hexNorm(hex)}`));
+  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getCss('--gap-deg'),
+    (hex)=>transitionTo(`https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=2&cat=standards&hex=${hex.replace('#','').toUpperCase()}`));
 
   /* paintings ring */
   const nodeD=Math.round(innerThick*0.85*5.25*0.82), margin=2, midR=Math.max(0,(W/2)-(nodeD/2)-margin);
@@ -235,66 +316,190 @@ function layoutRings(){
       midRing.appendChild(n);
     }
   }
-  Array.from(midRing.children).forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
+  [...midRing.children].forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR;
     n.style.width=nodeD+'px'; n.style.height=nodeD+'px';
     n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;});
 
-  /* ghost outer ring */
+  /* ghost outer color ring */
   const outerInnerR=midR + nodeD/2 + margin;
-  const outerThick  = innerThick * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult'))||2.2);
+  const outerThick  = innerThick * (parseFloat(getCss('--outer-thick-mult'))||2.2);
   const outerOuterR = Math.max(outerInnerR + outerThick, W/2 + 8);
   const outD = Math.round(outerOuterR*2);
   outerWrap.style.width=outD+'px'; outerWrap.style.height=outD+'px';
-  drawGhostRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
+  drawGhostRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS, getCss('--gap-deg'));
+
+  /* emoji orbit rings (overlay) */
+  placeEmojiRing($('#emojiInner'), innerOuter - innerThick*1.1, ['✨','🍊','🟠','🌱','🍊','🟠','🌱','✨']);
+  placeEmojiRing($('#emojiOuter'), outerOuterR + 14,       ['🌹','🍊','🌱','🟠','🍊','🌱','🌹','🟠','🍊']);
 }
 
-/* ===== transition + quotes ===== */
+function getCss(v){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v))||0}
+function placeEmojiRing(container, radius, emojis){
+  container.style.width = (radius*2)+'px';
+  container.style.height= (radius*2)+'px';
+  const orbit = $('.orbit', container); orbit.innerHTML='';
+  const n = emojis.length, step=2*Math.PI/n;
+  for(let i=0;i<n;i++){
+    const a=i*step, x = radius + Math.cos(a)*radius, y = radius + Math.sin(a)*radius;
+    const d=document.createElement('div'); d.className='item'; d.style.left=x+'px'; d.style.top=y+'px';
+    const s=document.createElement('span'); s.textContent = emojis[i]; d.appendChild(s);
+    orbit.appendChild(d);
+  }
+}
+
+/* ===== transition ===== */
 let transitioning=false;
 function transitionTo(url){
   if(transitioning) return; transitioning=true;
-  const tr=$('transition'), qt=$('quoteText'); qt.innerHTML = pickQuoteHTML();
-  tr.classList.add('show'); setTimeout(()=>{ location.href=url; }, 2200);
+  $('#quoteText').innerHTML = pickQuoteHTML();
+  $('#transition').classList.add('show');
+  setTimeout(()=>location.href=url, 2200);
 }
-window.addEventListener('pageshow', ()=>{ $('transition').classList.remove('show'); transitioning=false; });
+addEventListener('pageshow', ()=>{ $('#transition').classList.remove('show'); transitioning=false; });
 
-/* ===== audio engine (hidden) ===== */
+/* ===== audio engine ===== */
 const A = {
-  sparkle: $('a_sparkle'),
-  orange : $('a_orange'),
-  autumn : $('a_autumn'),
-  storm  : $('a_storm'),
-  negin  : $('a_negin')
+  sparkle: $('#a_sparkle'),
+  orange : $('#a_orange'),
+  autumn : $('#a_autumn'),
+  storm  : $('#a_storm'),
+  negin  : $('#a_negin')
 };
-const boosts = { sparkle: 0.9, storm: 0.9, orange: 1.0, autumn: 1.0, negin: 1.0 };
-Object.entries(A).forEach(([k,a])=>{ if(a){ a.loop = true; a.preload = 'auto'; a.volume = Math.min(1, (boosts[k]||1)); }});
+Object.values(A).forEach(a=>{ if(a){ a.loop=true; a.preload='auto'; }});
 
-/* Unlock + start on the 🍊 tap */
-$('startOrange').addEventListener('click', async () => {
-  // fade intro
-  const intro=$('intro'); intro.classList.add('hidden');
+/* ===== dock logic ===== */
+const dock   = $('#audioDock');
+const toggle = $('#dockToggle');
 
-  // reveal/auto-play background video
-  const v=$('bgVideo'); if(v){ const show=()=>v.style.opacity=1; v.addEventListener('loadeddata',show,{once:true}); v.addEventListener('playing',show,{once:true}); v.play().catch(()=>{}); }
+function setVolFromTracks(){
+  for (const t of $$('.track', dock)) {
+    const k = t.dataset.k, a = A[k]; if (!a) continue;
+    const v = parseFloat($('.vol', t).value||'0.8');
+    a.volume = Math.max(0, Math.min(1, v));
+  }
+}
+function toggleTrack(t){
+  const k = t.dataset.k, a = A[k]; if (!a) return;
+  if (a.paused) { a.play().catch(()=>{}); t.classList.add('on'); }
+  else          { a.pause(); t.classList.remove('on'); }
+}
+dock.addEventListener('click', e=>{
+  const sprout = e.target.closest('.sprout'); const trackEl = e.target.closest('.track');
+  if (sprout && trackEl) { toggleTrack(trackEl); }
+});
+$$('.vol', dock).forEach(r => r.addEventListener('input', setVolFromTracks, {passive:true}));
 
-  // ring grow-out
-  ['innerWrap','midWrap','outerWrap'].forEach(id=>{
-    const el=$(id); el.classList.remove('grow'); el.classList.add('preGrow'); requestAnimationFrame(()=> el.classList.add('grow'));
-  });
+/* ===== intro tap ===== */
+$('#startOrange').addEventListener('click', async ()=>{
+  $('#intro').classList.add('hidden');
+  const v=$('#bgVideo'); if(v){ const show=()=>v.style.opacity=1; v.addEventListener('loadeddata',show,{once:true}); v.addEventListener('playing',show,{once:true}); v.play().catch(()=>{}); }
+  ['innerWrap','midWrap','outerWrap'].forEach(id=>{ const el=$('#'+id); el.classList.remove('grow'); el.classList.add('preGrow'); requestAnimationFrame(()=> el.classList.add('grow')); });
 
-  // iOS-safe audio unlock tied to this user gesture
+  /* iOS audio unlock */
   try{
     const list = Object.values(A).filter(Boolean);
-    for(const a of list){ a.muted = true; a.volume = 0; try{ await a.play(); }catch{} }
+    for(const a of list){ a.muted=true; a.volume=0; try{ await a.play(); }catch{} }
     await new Promise(r=>setTimeout(r,80));
-    for(const a of list){ try{ a.pause(); a.currentTime = 0; }catch{} a.muted = false; }
+    for(const a of list){ try{ a.pause(); a.currentTime=0; }catch{} a.muted=false; }
   }catch{}
 
-  // start the sparkle bed (you can add others here)
-  A.sparkle && A.sparkle.play().catch(()=>{ /* if missing, fail quietly */ });
+  /* start baseline + show dock */
+  A.sparkle && A.sparkle.play().catch(()=>{});
+  $('.track[data-k="sparkle"]', dock).classList.add('on');
+  setVolFromTracks();
+  dock.classList.remove('dock--hide');
+  toggle.classList.remove('play'); toggle.classList.add('stop');
+
+  /* start asteroid field */
+  startAsteroids();
 }, {passive:true});
 
-/* ===== initialize ===== */
+/* ===== emoji rings + asteroids sizing ===== */
 layoutRings();
+addEventListener('resize', layoutRings, {passive:true});
+
+/* ===== Asteroid system =====
+ * Five “types” repeating: 1) bare 🪨 2) 🌱 on rock 3) 🍊 on rock 4) 🌱 on rock 5) 🌹 on rock
+ * Paths: random straight lines across screen with gentle spin.
+ */
+const AST = { running:false, timer:0 };
+function rand(a,b){ return a + Math.random()*(b-a); }
+function pickBadge(i){
+  const mod = (i%5)+1;
+  if(mod===1) return "";     // bare
+  if(mod===2) return "🌱";
+  if(mod===3) return "🍊";
+  if(mod===4) return "🌱";
+  return "🌹";
+}
+function spawnAsteroid(i){
+  const sky = $('#asteroids');
+  const sz = rand(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--asteroid-min')), parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--asteroid-max')));
+  const el = document.createElement('div'); el.className='asteroid'; el.style.setProperty('--sz', sz+'px');
+
+  /* start outside one edge, end outside opposite edge */
+  const W = innerWidth, H = innerHeight;
+  const fromSide = Math.random()<0.5 ? 'L' : 'R';
+  const x0 = fromSide==='L' ? -W*0.12 : W*1.12;
+  const x1 = fromSide==='L' ? W*1.12  : -W*0.12;
+  const y0 = rand(-H*0.08, H*1.08);
+  const y1 = rand(-H*0.08, H*1.08);
+
+  const t = rand(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--asteroid-speed-min')),
+                 parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--asteroid-speed-max')));
+  const rT = rand(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--asteroid-rotate-min')),
+                  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--asteroid-rotate-max')));
+  const rot0 = rand(-40,40), rotDeg = rot0 + (fromSide==='L'?360:-360);
+
+  /* content */
+  const rock = document.createElement('div'); rock.className='rock'; rock.textContent='🪨';
+  const badge = pickBadge(i);
+  if (badge) { const b = document.createElement('div'); b.className='badge'; b.textContent=badge; el.appendChild(b); }
+  el.appendChild(rock);
+
+  /* motion */
+  el.animate([
+    { transform:`translate(${x0}px,${y0}px) rotate(${rot0}deg)`, opacity:0.0 },
+    { transform:`translate(${(x0+x1)/2}px,${(y0+y1)/2 + rand(-60,60)}px) rotate(${rot0+180}deg)`, opacity:0.98, offset:0.25 },
+    { transform:`translate(${x1}px,${y1}px) rotate(${rotDeg}deg)`, opacity:0.0 }
+  ], { duration: t*1000, easing:'linear' });
+
+  sky.appendChild(el);
+  /* cleanup when finished */
+  setTimeout(()=>{ el.remove(); }, t*1000 + 200);
+}
+function startAsteroids(){
+  if(AST.running) return;
+  AST.running = true;
+  let i = 0;
+  const burst = ()=>{
+    /* spawn 1–3 per burst */
+    const n = 1 + Math.floor(Math.random()*3);
+    for(let k=0;k<n;k++) spawnAsteroid(i++);
+    AST.timer = setTimeout(burst, 1200 + Math.random()*1600);
+  };
+  burst();
+}
+function stopAsteroids(){
+  AST.running=false; clearTimeout(AST.timer); $('#asteroids').innerHTML='';
+}
+
+/* ===== Dock master button (stop/resume all) ===== */
+toggle.addEventListener('click', ()=>{
+  const anyPlaying = Object.values(A).some(a => a && !a.paused);
+  if (anyPlaying) {
+    Object.values(A).forEach(a => { try{ a.pause(); }catch{} });
+    $$('.track', dock).forEach(t=>t.classList.remove('on'));
+    toggle.classList.remove('stop'); toggle.classList.add('play');
+    stopAsteroids();
+  } else {
+    A.sparkle && A.sparkle.play().catch(()=>{});
+    $('.track[data-k="sparkle"]', dock).classList.add('on');
+    setVolFromTracks();
+    toggle.classList.remove('play'); toggle.classList.add('stop');
+    startAsteroids();
+  }
+});
 </script>
 </body>
 </html>
