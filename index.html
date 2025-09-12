@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
-<title>neurOrange — Home (ghost flicker starts immediately + grow-out rings)</title>
+<title>neurOrange — Home (grow-out rings + instant ghost flicker + nav)</title>
 <style>
   :root{
     --bergamot:#FFA64D; --pantone021:#FE5000; --pure:#FFA500; --nick:#FF6600;
@@ -66,17 +65,17 @@
 
   #focus{position:absolute;inset:0;display:grid;place-items:center;z-index:2}
 
-  /* Centered wrappers + grow-out animation FROM BEHIND BLACK CIRCLE */
+  /* Centered wrappers + pronounced grow-out from center */
   .wrapCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1); will-change:transform,opacity;}
-  .grow{ animation:ringGrow 1200ms cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0; }
-  #innerWrap.grow { animation-delay: 0ms;    }
-  #midWrap.grow   { animation-delay: 120ms;  }
-  #outerWrap.grow { animation-delay: 220ms;  }
-  #emojiWrapA.grow{ animation-delay: 340ms;  }
-  #emojiWrapB.grow{ animation-delay: 440ms;  }
+  .grow{ animation:ringGrow 1400ms cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0; }
+  #innerWrap.grow { animation-delay:   0ms; }
+  #midWrap.grow   { animation-delay: 120ms; }
+  #outerWrap.grow { animation-delay: 240ms; }
+  #emojiWrapA.grow{ animation-delay: 360ms; }
+  #emojiWrapB.grow{ animation-delay: 480ms; }
   @keyframes ringGrow{
-    0%   { transform:translate(-50%,-50%) scale(.12); opacity:0 } /* start tiny at center */
-    55%  { transform:translate(-50%,-50%) scale(1.06); opacity:1 }/* overshoot */
+    0%   { transform:translate(-50%,-50%) scale(.05); opacity:0 }
+    55%  { transform:translate(-50%,-50%) scale(1.10); opacity:1 }
     100% { transform:translate(-50%,-50%) scale(1.00); opacity:1 }
   }
 
@@ -86,30 +85,21 @@
   /* Center bubble (subtle breathing) */
   #question{
     position:absolute;left:50%;top:50%;
-    transform:translate(-50%,-50%) scale(1);           /* hard center */
+    transform:translate(-50%,-50%) scale(1);
     display:grid;place-items:center;background:#000;color:#fff;border-radius:50%;border:none;
     z-index:5;filter:drop-shadow(var(--glow));padding:.4rem .6rem;user-select:none;
-    animation:breathe 7s ease-in-out infinite;          /* subtle breathing */
+    animation:breathe 7s ease-in-out infinite;
   }
-  @keyframes breathe{
-    0%,100%{transform:translate(-50%,-50%) scale(1.00)}
-    50%    {transform:translate(-50%,-50%) scale(1.02)}
-  }
+  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1.00)}50%{transform:translate(-50%,-50%) scale(1.02)}}
   #questionText{
     font-weight:900;font-style:italic;text-align:center;font-size:clamp(16px,3.6vw,22px);line-height:1.15;margin:0;
     display:inline-block; transform-origin:50% 50%;
     animation: colorPulse 5.5s ease-in-out infinite;     /* white → bergamot → pure → white */
   }
-  @keyframes colorPulse{
-    0%   { color:#FFFFFF; text-shadow:0 0 6px rgba(255,255,255,.35) }
-    33%  { color:var(--bergamot); text-shadow:0 0 8px rgba(255,166,77,.45) }
-    66%  { color:var(--pure);     text-shadow:0 0 8px rgba(255,165,0,.45) }
-    100% { color:#FFFFFF; text-shadow:0 0 6px rgba(255,255,255,.35) }
-  }
+  @keyframes colorPulse{0%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}33%{color:var(--bergamot);text-shadow:0 0 8px rgba(255,166,77,.45)}66%{color:var(--pure);text-shadow:0 0 8px rgba(255,165,0,.45)}100%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}}
 
   /* SVG rings rotate CW (rotation continues during grow-out) */
-  #innerSVG,#outerSVG{ transform-box: fill-box; transform-origin:50% 50%;
-                        animation:spinCW 60s linear infinite; }
+  #innerSVG,#outerSVG{ transform-box: fill-box; transform-origin:50% 50%; animation:spinCW 60s linear infinite; }
   #outerSVG{ animation-duration:70s; }
   @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
@@ -117,10 +107,9 @@
   .ghost-wedge{
     fill: var(--c0);
     animation: ghostFlick var(--dur, 12s) ease-in-out infinite;
-    animation-delay: var(--delay, 0s);
+    animation-delay: var(--delay, 0s);    /* negative delays set in JS => starts right away */
   }
   @keyframes ghostFlick{
-    /* Mostly base, brief opponent blip */
     0%, 88%, 100% { fill: var(--c0); }
     89%, 90%      { fill: var(--c1); }
   }
@@ -138,11 +127,21 @@
   .mnode img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;animation:upright 56s linear infinite;transform-origin:center;backface-visibility:hidden;will-change:transform}
   @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* Optional fade+quote overlay */
-  #outro{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;transition:opacity 1.2s ease}
-  #outro.show{opacity:1;pointer-events:auto}
-  #quote{text-align:center;white-space:pre-line;font-weight:900;font-style:italic;letter-spacing:.02em;font-size:clamp(18px,5.2vw,30px);line-height:1.25;color:#FFA64D;text-shadow:0 0 10px rgba(0,0,0,.8),0 0 30px rgba(255,166,77,.25);opacity:0;animation:quoteIn 1.2s ease forwards;animation-delay:1s}
-  @keyframes quoteIn{to{opacity:1}}
+  /* Bottom navigation */
+  .bottomNav{
+    position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 12px);
+    z-index:8; display:flex; gap:12px; justify-content:space-between;
+    padding:0 16px;
+  }
+  .navBtn{
+    flex:1; text-align:center; font-weight:900; padding:12px 10px; border-radius:14px;
+    border:1px solid rgba(0,0,0,.4); color:#140a00; user-select:none; -webkit-user-select:none; cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,.35);
+    text-decoration:none; display:inline-block;
+  }
+  .navLeft { background:linear-gradient(180deg,#F4C430,#E69B20); }   /* Color Library */
+  .navMid  { background:linear-gradient(180deg,#FF8E00,#FF6A13); }   /* Art Gallery */
+  .navRight{ background:linear-gradient(180deg,#FFA500,#FE5000); }   /* Illusion Lab */
 </style>
 </head>
 <body>
@@ -180,7 +179,7 @@
         <div class="halo" id="innerHalo"></div>
       </div>
 
-      <!-- Comet layer (for visual flourishes) -->
+      <!-- Comet layer -->
       <div id="cometField" class="wrapCenter"></div>
 
       <!-- Paintings -->
@@ -192,6 +191,13 @@
 
       <!-- Center prompt -->
       <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
+    </div>
+
+    <!-- Bottom navigation -->
+    <div class="bottomNav">
+      <a class="navBtn navLeft"  href="color-library.html">Color Library</a>
+      <a class="navBtn navMid"   href="art-gallery.html">Art Gallery</a>
+      <a class="navBtn navRight" href="illusion.html">Illusion Lab</a>
     </div>
 
     <div id="outro"><div id="quote">In a world full of yellows and reds
@@ -209,6 +215,18 @@ Dare to be orange</div></div>
 /* ===== Intro logic (tap → fade away) + layout kick ===== */
 (function introOnce(){
   const intro=document.getElementById('intro');
+
+  function addGrowClasses(){
+    const ids=['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'];
+    ids.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){
+        el.classList.remove('grow'); void el.offsetWidth; /* reflow = restart animation */
+        el.classList.add('grow');
+      }
+    });
+  }
+
   function layoutKick(){ try{
     sizeQuestion(); layoutRings(); buildMidNodes();
     const v=document.getElementById('bgVideo');
@@ -217,12 +235,10 @@ Dare to be orange</div></div>
       v.addEventListener('loadeddata',()=> v.style.opacity = 1, {once:true});
       const p=v.play(); if(p&&p.catch) p.catch(()=>{});  // best effort
     }
-    // grow-out from the center for all rings/sets
-    ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
-      const el=document.getElementById(id); if(el){ el.classList.add('grow'); }
-    });
-    setTimeout(()=>window.dispatchEvent(new Event('resize')),0);
+    // ensure grow-out starts AFTER layout has applied
+    requestAnimationFrame(addGrowClasses);
   }catch(e){}}
+
   function dismiss(){ intro.classList.add('hidden'); setTimeout(()=>{ intro.remove(); requestAnimationFrame(layoutKick); },950); }
   function onTap(e){ e.preventDefault(); e.stopPropagation(); dismiss(); }
   function onKey(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); dismiss(); } }
@@ -300,7 +316,7 @@ function drawRing(svgEl, sizePx, r0px, r1px, colors, gapDeg) {
   }
 }
 
-/* Draw ghost outer ring with opponent slow flicker (starts immediately) */
+/* Draw ghost outer ring with opponent slow flicker (starts immediately via negative delay) */
 function drawGhostRing(svgEl, sizePx, r0px, r1px, ghostHexes, gapDeg){
   svgEl.setAttribute('viewBox', '0 0 1000 1000');
   svgEl.style.width  = sizePx + 'px';
@@ -320,11 +336,11 @@ function drawGhostRing(svgEl, sizePx, r0px, r1px, ghostHexes, gapDeg){
     path.classList.add('ghost-wedge');
     path.style.setProperty('--c0', base);
     path.style.setProperty('--c1', opp);
-    // Slower cycle (10–16s) AND START MID-CYCLE using NEGATIVE delay so it begins immediately.
+    // Slower cycle (10–16s) and start NOW with a random negative delay (random phase)
     const durSec   = 10 + Math.random()*6;
-    const phaseSec = Math.random()*durSec; /* random phase so wedges aren’t synced */
+    const phaseSec = Math.random()*durSec;
     path.style.setProperty('--dur',   durSec.toFixed(2) + 's');
-    path.style.setProperty('--delay', (-phaseSec).toFixed(2) + 's');  // negative: start in-progress NOW
+    path.style.setProperty('--delay', (-phaseSec).toFixed(2) + 's');
     path.setAttribute('stroke','rgba(0,0,0,.18)');
     path.setAttribute('stroke-width','1');
     svgEl.appendChild(path);
@@ -353,22 +369,19 @@ function layoutRings() {
   document.documentElement.style.setProperty('--emoji-font', Math.round(W * 0.036) + 'px');
 
   // ----- Inner ring -----
-  const innerD     = Math.round(S * 0.58);               // wrapper size in px
+  const innerD     = Math.round(S * 0.58);
   const innerThick = Math.max(16, Math.round(innerD * 0.12));
   document.documentElement.style.setProperty('--inner-thick', innerThick + 'px');
 
   innerWrap.style.width  = innerD + 'px';
   innerWrap.style.height = innerD + 'px';
 
-  // Make ring 1 extend *twice* toward the center => double thickness inward
+  // Extend toward center (double thickness inward)
   const innerOuter = innerD / 2;
   const innerInner = Math.max(2, innerOuter - innerThick * 2);
 
   drawRing(
-    innerSVG,
-    innerD,
-    innerInner,
-    innerOuter,
+    innerSVG, innerD, innerInner, innerOuter,
     BRIGHT.map(o => o.hex),
     parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3
   );
@@ -387,19 +400,16 @@ function layoutRings() {
   });
 
   // ----- Outer ring (ghosts with slow opponent flicker that starts immediately) -----
-  const outerInnerR = midR + nodeD / 2 + margin;         // px
+  const outerInnerR = midR + nodeD / 2 + margin;
   const outerThick  = innerThick * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult')) || 2.2);
-  const outerOuterR = Math.max(outerInnerR + outerThick, W / 2 + 8);  // px
-  const outD        = Math.round(outerOuterR * 2);        // wrapper size in px
+  const outerOuterR = Math.max(outerInnerR + outerThick, W / 2 + 8);
+  const outD        = Math.round(outerOuterR * 2);
 
   outerWrap.style.width  = outD + 'px';
   outerWrap.style.height = outD + 'px';
 
   drawGhostRing(
-    outerSVG,
-    outD,
-    outerInnerR,
-    outerOuterR,
+    outerSVG, outD, outerInnerR, outerOuterR,
     GHOSTS,
     parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')) || 3
   );
@@ -423,61 +433,56 @@ function layoutRings() {
   place('emojiWrapB', rB, (Math.PI * 2) / (12 * 2));
 }
 
-/* ===== Bounded 1 rpm rotation for the center text (±45°) ===== */
+/* ===== Bounded 1 rpm rotation for the center text (±45°, random flips) ===== */
 let spinRAF, spinStarted=false;
 function startBoundedSpin(){
   if(spinStarted) return; spinStarted=true;
   const t = document.getElementById('questionText');
-  let angle = 0;                            // degrees
-  let dir   = Math.random()<0.5 ? 1 : -1;   // + or -
-  const speed = 360/60;                     // 1 rpm = 6 deg/s
-  let changeTimer = 3 + Math.random()*5;    // seconds until possible random flip
+  let angle = 0;
+  let dir   = Math.random()<0.5 ? 1 : -1;
+  const speed = 360/60; // 1 rpm = 6 deg/s
+  let changeTimer = 3 + Math.random()*5;
   let last = performance.now();
-
   function step(now){
     const dt = (now - last)/1000; last = now;
     angle += dir * speed * dt;
-
-    // Bounce at ±45°
     if(angle > 45){ angle = 45; dir = -1; }
     if(angle < -45){ angle = -45; dir =  1; }
-
-    // Random direction flip occasionally (keeps within ±45°)
     changeTimer -= dt;
-    if(changeTimer <= 0){
-      if(Math.random() < 0.35){ dir *= -1; }
-      changeTimer = 3 + Math.random()*5;
-    }
-
+    if(changeTimer <= 0){ if(Math.random() < 0.35){ dir *= -1; } changeTimer = 3 + Math.random()*5; }
     t.style.transform = `rotate(${angle.toFixed(3)}deg)`;
     spinRAF = requestAnimationFrame(step);
   }
   spinRAF = requestAnimationFrame(step);
 }
 
-/* ===== Comet flourish (every 4th = 🌱, every 5th = 🌹, others 🟠) ===== */
+/* ===== Comet flourish: cycle starts with plain comet, then 4th=🌱, 5th=🌹 ===== */
 (function comet(){
   const field=document.getElementById('cometField');
+  const cycleLen = 5; // define a "cycle" of 5 spawns
   let cometCount = 0;
   function spawn(){
     cometCount++;
+    const idxInCycle = ((cometCount-1) % cycleLen) + 1; // 1..5
     const W=innerWidth,H=innerHeight, run=Math.max(W,H)+400, theta=Math.random()*Math.PI*2;
     const kinds=['straight','offcenter','curved']; const kind=kinds[Math.floor(Math.random()*kinds.length)];
     const n={x:-Math.sin(theta),y:Math.cos(theta)}, dur=4.8+Math.random()*3.0; let P0,P1,C; const center={x:0,y:0};
     if(kind==='straight'){ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2}; P1={x:center.x+Math.cos(theta)*run/2,y:center.y+Math.sin(theta)*run/2}; }
     else if(kind==='offcenter'){ const d=(Math.random()*0.35+0.15)*(W/2); const sh={x:n.x*(Math.random()<0.5?-d:d),y:n.y*(Math.random()<0.5?-d:d)};
       P0={x:center.x-Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y};
-      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y-Math.sin(theta)*run/2+sh.y}; }
+      P1={x:center.x+Math.cos(theta)*run/2+sh.x,y:center.y+Math.sin(theta)*run/2+sh.y}; }
     else{ P0={x:center.x-Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       P1={x:center.x+Math.cos(theta)*run/2,y:center.y-Math.sin(theta)*run/2};
       const bend=(Math.random()*0.5+0.3)*(W/2); C={x:center.x+n.x*(Math.random()<0.5?-bend:bend), y:center.y+n.y*(Math.random()<0.5?-bend:bend)}; }
+
     const comet=document.createElement('div'); comet.className='comet';
     const stk=document.createElement('div'); stk.className='cometStack';
-
     const top=document.createElement('div'); top.className='top';
-    top.innerHTML = (cometCount % 5 === 0) ? '🌹' :
-                    (cometCount % 4 === 0) ? '🌱' : '🟠';
-
+    // Rule: first in cycle has nothing, 4th sprout, 5th rose, others orange
+    if(idxInCycle === 1){ top.innerHTML = ''; }
+    else if(idxInCycle === 5){ top.innerHTML = '🌹'; }
+    else if(idxInCycle === 4){ top.innerHTML = '🌱'; }
+    else { top.innerHTML = '🟠'; }
     const tail=document.createElement('div'); tail.innerHTML='☄️';
     stk.appendChild(top); stk.appendChild(tail); comet.appendChild(stk); field.appendChild(comet);
 
@@ -497,13 +502,14 @@ function startBoundedSpin(){
 (function boot(){
   const v=document.getElementById('bgVideo'); if(v){ v.src='assets/placeholder.mp4'; /* reveal opacity on 'playing'/'loadeddata' */ }
   buildMidNodes(); sizeQuestion(); layoutRings();
-  // trigger the grow-out on initial load (also happens after intro)
-  ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
-    const el=document.getElementById(id); if(el){ el.classList.add('grow'); }
+  // grow-out after initial layout (for first load without intro)
+  requestAnimationFrame(()=>{
+    ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
+      const el=document.getElementById(id); if(el){ el.classList.remove('grow'); void el.offsetWidth; el.classList.add('grow'); }
+    });
   });
   addEventListener('resize', ()=>{ sizeQuestion(); layoutRings(); }, {passive:true});
 })();
 </script>
 </body>
 </html>
-```
