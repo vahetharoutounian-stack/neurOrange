@@ -191,7 +191,7 @@
     left:20px;
     bottom:calc(env(safe-area-inset-bottom) + 80px);
     z-index:10050;
-    display:flex;
+    display:none;
     flex-direction:row;
     align-items:center;
     gap:14px;
@@ -201,60 +201,23 @@
     backdrop-filter:blur(14px);
     box-shadow:0 8px 24px rgba(0,0,0,0.55);
     border:1px solid rgba(255,165,0,0.4);
-    /* hide by default and fade in when .show is added */
-    opacity:0;
-    pointer-events:none;
-    transform:translateY(24px);
-    transition:opacity .35s ease, transform .35s ease;
+    /* hidden by default; revealed via the .show class */
   }
   .audio-ui.show{
-    opacity:1;
-    pointer-events:auto;
-    transform:translateY(0);
-  }
-  .audio-ui button{
-    all:unset;
-    width:36px;
-    height:36px;
     display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:20px;
-    border-radius:50%;
-    background:linear-gradient(180deg, #FF8E00, #FF6A13);
-    color:#140a00;
-    cursor:pointer;
-    transition:background 0.2s ease;
   }
-  .audio-ui button:hover{ background:rgba(255,255,255,0.22); }
-  .audio-ui button:hover{
-    background:linear-gradient(180deg, #FFA64D, #FF8E00);
+  /* Style the default audio control to fit our orange theme */
+  .audio-ui audio {
+    width:260px;
+    height:32px;
+    accent-color: var(--nick);
+    border-radius:8px;
+    background:transparent;
   }
-  .audio-ui input[type="range"]{
-    -webkit-appearance:none;
-    width:160px;
-    height:6px;
-    border-radius:3px;
-    background:rgba(255,255,255,0.25);
-    outline:none;
-    cursor:pointer;
-  }
-  .audio-ui input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance:none;
-    width:12px;
-    height:12px;
-    border-radius:50%;
-    background:var(--bergamot);
-    border:none;
-    box-shadow:0 0 6px var(--bergamot);
-  }
-  .audio-ui input[type="range"]::-moz-range-thumb{
-    width:12px;
-    height:12px;
-    border-radius:50%;
-    background:var(--bergamot);
-    border:none;
-    box-shadow:0 0 6px var(--bergamot);
+  /* On WebKit browsers, adjust the control panel colors */
+  .audio-ui audio::-webkit-media-controls-panel {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius:8px;
   }
 
   /* Restore the central question bubble */
@@ -410,13 +373,12 @@
 <!-- 🔈 Audio engine with custom mini-player.  The hidden audio elements provide the actual sound while
      the visible controls allow play/pause and volume adjustment. -->
 <div class="audio-ui" aria-hidden="true">
-  <button id="playPauseBtn" aria-label="Play or Pause">⏸</button>
-  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volume" />
-  <!-- Hidden audio tracks -->
-  <audio id="a_sparkle" loop preload="metadata" playsinline style="display:none !important;">
+  <!-- The main track provides the visible controls.  Other tracks are hidden but will play in sync. -->
+  <audio id="a_sparkle" controls loop preload="metadata" playsinline>
     <source src="tracks/sparkle.mp3" type="audio/mpeg" />
     <source src="tracks/sparkle.m4a" type="audio/mp4" />
   </audio>
+  <!-- Hidden additional ambient layers -->
   <audio id="a_orange" loop preload="metadata" playsinline style="display:none !important;">
     <source src="tracks/orange.mp3" type="audio/mpeg" />
     <source src="tracks/orange.m4a" type="audio/mp4" />
@@ -661,8 +623,8 @@ function startBoundedSpin(){
       // orange again on rock
       top.innerHTML = '<div>🍊</div><div>🪨</div>';
     } else if(idx === 6){
-      // sprout again on rock
-      top.innerHTML = '<div>🌱</div><div>🪨</div>';
+      // fire emoji on rock
+      top.innerHTML = '<div>🔥</div><div>🪨</div>';
     } else if(idx === 7){
       // rose on rock
       top.innerHTML = '<div>🌹</div><div>🪨</div>';
@@ -672,30 +634,41 @@ function startBoundedSpin(){
     stk.appendChild(tail);
     comet.appendChild(stk);
     field.appendChild(comet);
-    // assign a random rotation speed for the comet stack.  The spinRate defines the
-    // total degrees of rotation over the course of the comet's lifetime.  A value
-    // between -360 and 360 yields up to one full rotation in either direction.
-    const spinRate = (Math.random() - 0.5) * 720; // -360..360 degrees across the entire travel
+    // assign a random rotation speed (degrees per second) for the comet stack.  A slight
+    // spin gives life to the comets without overwhelming the visuals.  Values between
+    // ±20° and ±50° per second provide variation.
+    const spinRate = (10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1);
     let t0=null; function lerp(a,b,t){return a+(b-a)*t}
-    function draw(now){ if(!t0)t0=now; const u=Math.min(1,(now-t0)/(dur*1000)); let x,y;
-      if(C){const one=1-u; x=one*one*P0.x + 2*one*u*C.x + u*u*P1.x; y=one*one*P0.y + 2*one*u*C.y + u*u*P1.y;}
-      else {x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u);}
-      comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      // apply rotation to the entire comet stack based on the spin rate and progress
-      const rot = spinRate * u;
-      stk.style.transform = `rotate(${rot}deg)`;
-      // simple collision detection against emoji rings: if comet comes near the ring radii, end early
-      if(window.emojiRadii){
-        const dist = Math.hypot(x, y);
-        const margin = 40; // threshold for collision region around the ring
-        for(const r of window.emojiRadii){
-          if(Math.abs(dist - r) < margin){
-            // collision: stop movement and allow tail to fade
-            setTimeout(()=>{ comet.remove(); }, 6000);
-            return;
-          }
-        }
+    function draw(now){
+      if(!t0) t0 = now;
+      // compute normalized time progress (0..1)
+      const elapsed = (now - t0) / 1000;
+      const u = Math.min(1, elapsed / dur);
+      // warp the progress so comets slow near the center (u=0.5) and accelerate afterwards
+      let s;
+      if(u < 0.5){
+        const frac = u / 0.5;
+        // exponent >0 and <1 yields an ease-out curve: fast at start, slow near end
+        s = 0.5 * Math.pow(frac, 0.6);
+      } else {
+        const frac = (u - 0.5) / 0.5;
+        // exponent <1 yields an ease-in curve: slow at start, fast near end
+        s = 0.5 + 0.5 * Math.pow(frac, 0.4);
       }
+      // compute position along path using warped progress s
+      let x,y;
+      if(C){
+        const one = 1 - s;
+        x = one*one*P0.x + 2*one*s*C.x + s*s*P1.x;
+        y = one*one*P0.y + 2*one*s*C.y + s*s*P1.y;
+      } else {
+        x = lerp(P0.x, P1.x, s);
+        y = lerp(P0.y, P1.y, s);
+      }
+      comet.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      // apply rotation to the entire comet stack based on spinRate and elapsed time
+      const rot = spinRate * elapsed;
+      stk.style.transform = `rotate(${rot}deg)`;
       if(u<1){
         requestAnimationFrame(draw);
       } else {
@@ -730,54 +703,30 @@ Object.entries(A).forEach(([k,a]) => {
   }
 });
 
-/* === Custom audio controls ===
-   A simple play/pause button and volume slider live inside the `.audio-ui` container.  The
-   hidden audio elements defined above provide the actual soundtrack.  We expose functions to
-   toggle playback and adjust volume across all tracks. */
-const playPauseBtn = document.getElementById('playPauseBtn');
-const volumeSlider = document.getElementById('volumeSlider');
-
-// Pause all tracks
-function pauseAll(){
-  Object.values(A).forEach(a => { try{ a.pause(); }catch(e){} });
-}
-
-// Resume the main sparkle track (and others as desired)
-function playMain(){
-  if(A.sparkle){ try{ A.sparkle.play(); }catch(e){} }
-  // optionally fade in other layers slowly
-  ['orange','autumn','storm'].forEach(k => {
-    const a=A[k]; if(a){ try{ a.play(); }catch(e){} }
+/* === Audio control binding ===
+   The main audio element (a_sparkle) provides a visible control.  When it
+   plays, pauses, or changes volume, the hidden tracks synchronize accordingly. */
+const mainAudio = document.getElementById('a_sparkle');
+if(mainAudio){
+  mainAudio.addEventListener('play', () => {
+    // play all ambient layers when main audio plays
+    ['orange','autumn','storm'].forEach(k => {
+      const a=A[k]; if(a){ try{ a.play(); }catch(e){} }
+    });
   });
-}
-
-// Sync the volume of each track with the slider, applying its individual boost
-function updateVolume(val){
-  const v=parseFloat(val);
-  Object.entries(A).forEach(([k,a]) => {
-    if(a){
-      const base=boosts[k] || 1;
-      a.volume = Math.min(1, v * base);
-    }
+  mainAudio.addEventListener('pause', () => {
+    // pause all tracks when main audio pauses
+    Object.values(A).forEach(a => { try{ a.pause(); }catch(e){} });
   });
-}
-
-if(playPauseBtn){
-  playPauseBtn.addEventListener('click', () => {
-    // If the main track is paused, resume; else pause all
-    const playing = A.sparkle && !A.sparkle.paused;
-    if(playing){
-      pauseAll();
-      playPauseBtn.textContent = '►';
-    } else {
-      playMain();
-      playPauseBtn.textContent = '⏸';
-    }
+  mainAudio.addEventListener('volumechange', () => {
+    const v = mainAudio.volume;
+    Object.entries(A).forEach(([k,a]) => {
+      if(a){
+        const base = boosts[k] || 1;
+        a.volume = Math.min(1, v * base);
+      }
+    });
   });
-}
-
-if(volumeSlider){
-  volumeSlider.addEventListener('input', e => updateVolume(e.target.value));
 }
 
 /* press the orange to start animation + video */
@@ -806,10 +755,19 @@ if(volumeSlider){
       }
     }catch(e){}
 
-    // start the ambient tracks immediately using custom play function
-    playMain();
-    if(playPauseBtn) playPauseBtn.textContent = '⏸';
-    if(volumeSlider) updateVolume(volumeSlider.value);
+    // start the ambient tracks immediately using the main audio control.  Playing the
+    // main audio will trigger hidden layers via the event listeners defined above.
+    if(mainAudio){
+      try{ mainAudio.play(); }catch(e){}
+      // start other layers explicitly to ensure they begin layering immediately
+      ['orange','autumn','storm'].forEach(k => {
+        const a=A[k]; if(a){ try{ a.play(); }catch(e){} }
+      });
+      // sync volumes according to initial slider value
+      Object.entries(A).forEach(([k,a]) => {
+        if(a){ const base = boosts[k] || 1; a.volume = Math.min(1, mainAudio.volume * base); }
+      });
+    }
 
     // after fade duration, remove intro, reveal audio controls and start video/animations
     setTimeout(()=>{
@@ -818,9 +776,6 @@ if(volumeSlider){
       const audioUI = document.querySelector('.audio-ui');
       if(audioUI){
         audioUI.classList.add('show');
-        // explicitly set opacity and pointer-events for robustness
-        audioUI.style.opacity = '1';
-        audioUI.style.pointerEvents = 'auto';
       }
 
       const v=$('bgVideo');
