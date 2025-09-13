@@ -915,15 +915,22 @@ layoutAll();
         dockEl.classList.add('collapsed');
       }
 
-      // autoplay the sparkle track once audio is unlocked and the dock is visible
+      // autoplay the storm track once audio is unlocked and the dock is visible
       try{
         if(window.adToggleTrack){
-          // Start the sparkle track; it will become active and show its volume slider
-          window.adToggleTrack('sparkle');
-          // Mute the other tracks (orange, autumn, storm) and update their saved volumes and sliders
-          ['orange','autumn','storm'].forEach(name=>{
+          // Start the storm track; it will become active and show its volume slider
+          window.adToggleTrack('storm');
+          // Mute the melodic tracks (sparkle, orange, autumn) and update their saved volumes and sliders
+          ['sparkle','orange','autumn'].forEach(name=>{
+            // ensure the track is not selected/active
+            if(window.adEnsureInactive) window.adEnsureInactive(name);
+            // Set volume to 0 and reset current time to guarantee mute
             const aud=document.getElementById('aud_'+name);
-            if(aud) aud.volume=0;
+            if(aud){
+              aud.pause();
+              aud.currentTime = 0;
+              aud.volume = 0;
+            }
             // persist volume 0 for this track
             try{ localStorage.setItem('advol_'+name, '0'); }catch(_){/* storage may fail in some environments */}
             // update the corresponding slider to reflect muted state
@@ -1052,6 +1059,23 @@ layoutAll();
       }
     });
   }
+
+  // Expose a helper to ensure a specific track is not active.  If the track is active,
+  // it will be paused, removed from the active set, its button reset to sprout,
+  // and its volume slider hidden.  If the track is not active, nothing happens.
+  function ensureInactive(name){
+    if(!ACTIVE.has(name)) return;
+    const a = audSel(name);
+    if(a){ a.pause(); a.currentTime = 0; }
+    ACTIVE.delete(name);
+    const btn = btnSel(name);
+    if(btn){ btn.classList.remove('active'); setBtnGlyph(btn,name,false); }
+    const vol = volSel(name);
+    if(vol) vol.style.display = 'none';
+    setMainGlyph();
+  }
+  // Attach to window so outside code can deactivate tracks
+  window.adEnsureInactive = ensureInactive;
   function toggleTrack(name){
     const a=audSel(name);
     const btn=btnSel(name);
@@ -1109,8 +1133,8 @@ layoutAll();
         // If there are selected tracks but none playing, resume them
         resumeAll();
       } else {
-        // Default to playing the sparkle track instead of storm
-        toggleTrack('sparkle');
+        // Default to playing the storm track when nothing is active
+        toggleTrack('storm');
       }
     }
     setMainGlyph();
