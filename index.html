@@ -20,6 +20,11 @@
     --outer-thick-mult:2.2;
     --emoji-font:18px;
     --glow:0 0 10px #000, 0 0 18px #000;
+    /* audio dock theme tokens */
+    --dock:#FF6600;  /* Nickelodeon docking accent */
+    --heart:#FFA64D; /* Bergamot used for highlight circle */
+    --text:#ffffff; /* White text for buttons */
+    --ring:rgba(0,0,0,.35); /* subtle dark ring for outlines */
   }
   *{box-sizing:border-box}
   html,body{
@@ -185,40 +190,6 @@
      A custom mini-player appears after the intro fades.  It contains a play/pause button and a
      volume slider so users can control the ambient soundtrack.  The underlying audio tracks are
      hidden from view; this UI simply manipulates them via JavaScript. */
-  .audio-ui{
-    position:fixed;
-    /* anchor the player near the bottom-left above navigation */
-    left:20px;
-    bottom:calc(env(safe-area-inset-bottom) + 80px);
-    z-index:10050;
-    display:none;
-    flex-direction:row;
-    align-items:center;
-    gap:14px;
-    padding:10px 16px;
-    border-radius:20px;
-    background:rgba(30,20,5,0.75);
-    backdrop-filter:blur(14px);
-    box-shadow:0 8px 24px rgba(0,0,0,0.55);
-    border:1px solid rgba(255,165,0,0.4);
-    /* hidden by default; revealed via the .show class */
-  }
-  .audio-ui.show{
-    display:flex;
-  }
-  /* Style the default audio control to fit our orange theme */
-  .audio-ui audio {
-    width:260px;
-    height:32px;
-    accent-color: var(--nick);
-    border-radius:8px;
-    background:transparent;
-  }
-  /* On WebKit browsers, adjust the control panel colors */
-  .audio-ui audio::-webkit-media-controls-panel {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius:8px;
-  }
 
   /* Restore the central question bubble */
   /* The bubble prompts the user with "What are you feeling?" and remains centered */
@@ -300,6 +271,182 @@
     0%,100%{ text-shadow: 0 0 10px var(--saffron), 0 0 22px var(--saffron), 0 0 0 var(--nick); }
     50%    { text-shadow: 0 0 16px var(--saffron), 0 0 36px var(--saffron), 0 0 10px var(--nick); }
   }
+  /* === Audio Dock ===
+     A bottom-left pill dock houses an expand/collapse toggle, a main play/pause button and four
+     track sprouts.  Each track has a vertical volume slider that appears above its button when
+     active.  The dock respects safe-area insets and remains collapsed by default.  */
+  #audioDock{
+    position:fixed;
+    /* Position the dock above the bottom navigation.  We offset it by roughly the
+       nav height (about 60px) plus safe-area so it doesn't overlap the nav. */
+    bottom:calc(env(safe-area-inset-bottom) + 90px);
+    left:14px;
+    display:flex;
+    align-items:center;
+    padding:8px 10px;
+    /* subtle dark backdrop with blur and border to separate from nav */
+    background:rgba(0,0,0,.4);
+    backdrop-filter:blur(10px);
+    border-radius:30px;
+    border:1px solid var(--ring);
+    box-shadow:0 6px 14px rgba(0,0,0,.45);
+    z-index:10050;
+  }
+  #audioDock.collapsed .ad-wrap{
+    display:none;
+  }
+  .ad-toggle{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:var(--heart);
+    border:2px solid var(--dock);
+    color:var(--dock);
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    position:relative;
+    box-shadow:0 0 0 0 rgba(255,102,0,.4);
+    transition:transform .15s ease;
+  }
+  .ad-toggle:active{
+    transform:scale(0.96);
+  }
+  .ad-toggle.pulse{
+    animation:adPulse 2.4s infinite;
+  }
+  @keyframes adPulse{
+    0%   { box-shadow:0 0 0 0 rgba(255,102,0,.4); }
+    70%  { box-shadow:0 0 0 8px rgba(255,102,0,0); }
+    100% { box-shadow:0 0 0 0 rgba(255,102,0,0); }
+  }
+  .ad-main{
+    margin-left:8px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#fff;
+    color:var(--dock);
+    font-size:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    border:none;
+    box-shadow:0 4px 8px rgba(0,0,0,.3);
+    transition:transform .15s ease;
+  }
+  .ad-main:active{
+    transform:scale(0.95);
+  }
+  .ad-wrap{
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    margin-left:10px;
+  }
+  .ad-btn{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#fff;
+    color:var(--dock);
+    font-size:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    border:none;
+    box-shadow:0 4px 8px rgba(0,0,0,.3);
+    transition:transform .15s ease;
+  }
+  .ad-btn:active{
+    transform:scale(0.95);
+  }
+  .ad-btn.active{
+    background:var(--dock);
+    color:#fff;
+  }
+  .ad-vol{
+    position:absolute;
+    bottom:54px;
+    left:50%;
+    transform:translateX(-50%);
+    display:none;
+    width:40px;
+    padding:6px 4px;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(8px);
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.5);
+    color:#fff;
+    text-align:center;
+    z-index:2;
+  }
+  .ad-vol label{
+    display:block;
+    font-size:18px;
+    margin-bottom:4px;
+  }
+  .ad-vol input[type='range']{
+    width:30px;
+    height:130px;
+    -webkit-appearance:slider-vertical;
+    writing-mode:bt-lr;
+    background:transparent;
+    margin:0;
+    padding:0;
+    cursor:pointer;
+  }
+  .ad-vol input[type='range']::-webkit-slider-runnable-track{
+    width:6px;
+    height:130px;
+    background:var(--dock);
+    border-radius:3px;
+  }
+  .ad-vol input[type='range']::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    border:none;
+    box-shadow:0 1px 3px rgba(0,0,0,.4);
+    margin-top:-6px;
+  }
+  .ad-vol input[type='range']::-moz-range-track{
+    width:6px;
+    height:130px;
+    background:var(--dock);
+    border-radius:3px;
+  }
+  .ad-vol input[type='range']::-moz-range-thumb{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    border:none;
+    box-shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ad-toggle.pulse{ animation:none; }
+  }
+  .ad-toast{
+    position:fixed;
+    left:14px;
+    bottom:calc(env(safe-area-inset-bottom) + 80px);
+    background:rgba(0,0,0,.7);
+    color:#fff;
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:13px;
+    z-index:10051;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease;
+  }
 </style>
 </head>
 <body>
@@ -370,27 +517,49 @@
   <div id="interstitialText"></div>
 </div>
 
-<!-- 🔈 Audio engine with custom mini-player.  The hidden audio elements provide the actual sound while
-     the visible controls allow play/pause and volume adjustment. -->
-<div class="audio-ui" aria-hidden="true">
-  <!-- The main track provides the visible controls.  Other tracks are hidden but will play in sync. -->
-  <audio id="a_sparkle" controls loop preload="metadata" playsinline>
-    <source src="tracks/sparkle.mp3" type="audio/mpeg" />
-    <source src="tracks/sparkle.m4a" type="audio/mp4" />
-  </audio>
-  <!-- Hidden additional ambient layers -->
-  <audio id="a_orange" loop preload="metadata" playsinline style="display:none !important;">
-    <source src="tracks/orange.mp3" type="audio/mpeg" />
-    <source src="tracks/orange.m4a" type="audio/mp4" />
-  </audio>
-  <audio id="a_autumn" loop preload="metadata" playsinline style="display:none !important;">
-    <source src="tracks/autumn.mp3" type="audio/mpeg" />
-    <source src="tracks/autumn.m4a" type="audio/mp4" />
-  </audio>
-  <audio id="a_storm" loop preload="metadata" playsinline style="display:none !important;">
-    <source src="tracks/storm.mp3" type="audio/mpeg" />
-    <source src="tracks/storm.m4a" type="audio/mp4" />
-  </audio>
+<!-- 🎵 Self-contained audio dock.  A bottom-left pill houses an expand toggle, a main play/pause button,
+     four track buttons (sparkle, orange, autumn, storm) with volume sliders, and separate audio tags.  -->
+<!--
+  The audio dock is initially hidden via an inline display:none.  It will be revealed once the orange
+  splash screen is dismissed.  The `collapsed` class keeps the dock minimized so only the toggle and
+  main control are visible until the user explicitly expands it.  -->
+<div id="audioDock" class="collapsed" role="group" aria-label="Audio Player" style="display:none;">
+  <button id="adToggle" class="ad-toggle" aria-label="Expand or Collapse" role="button" tabindex="0">🟠</button>
+  <button id="adMain" class="ad-main" aria-label="Play/Pause" role="button" tabindex="0">🟠▶</button>
+
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="sparkle" aria-label="Sparkle" role="button" tabindex="0">🌱</button>
+    <div class="ad-vol" data-for="sparkle">
+      <label>✨</label>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Sparkle volume">
+    </div>
+  </div>
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="orange" aria-label="Orange" role="button" tabindex="0">🌱</button>
+    <div class="ad-vol" data-for="orange">
+      <label>🍊</label>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Orange volume">
+    </div>
+  </div>
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="autumn" aria-label="Autumn" role="button" tabindex="0">🌱</button>
+    <div class="ad-vol" data-for="autumn">
+      <label>🍂</label>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Autumn volume">
+    </div>
+  </div>
+  <div class="ad-wrap">
+    <button class="ad-btn" data-track="storm" aria-label="Storm" role="button" tabindex="0">🌱</button>
+    <div class="ad-vol" data-for="storm">
+      <label>⛈️</label>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Storm volume">
+    </div>
+  </div>
+
+  <audio id="aud_sparkle" preload="metadata" playsinline src="tracks/sparkle.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_orange"  preload="metadata" playsinline src="tracks/orange.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_autumn"  preload="metadata" playsinline src="tracks/autumn.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_storm"   preload="metadata" playsinline src="tracks/storm.mp3" type="audio/mpeg"></audio>
 </div>
 
 <script>
@@ -553,7 +722,7 @@ function startBoundedSpin(){
 /* comets: first in cycle plain, 4th 🌱, 5th 🌹 */
 (function comet(){
     const field=$('cometField');
-    // update cycle to 7 so that the rose emoji appears every 7th comet
+    // update cycle to 7 so that the rose emoji appears every 7th comet and the 6th is a fire emoji
     const cycle=7;
     let count=0;
   function spawn(){
@@ -606,7 +775,7 @@ function startBoundedSpin(){
     const top=document.createElement('div'); top.className='top';
     /* Set comet icon sequence based on a 7-item cycle.  The base rock (🪨) sits below the
        object on top.  The pattern is: 1 bare (rock only), 2 sprout, 3 orange, 4 sprout,
-       5 orange, 6 sprout, 7 rose. */
+       5 orange, 6 fire, 7 rose. */
     if(idx === 1){
       // bare comet (only the rock)
       top.innerHTML = '<div>🪨</div>';
@@ -634,29 +803,31 @@ function startBoundedSpin(){
     stk.appendChild(tail);
     comet.appendChild(stk);
     field.appendChild(comet);
-    // assign a random rotation speed (degrees per second) for the comet stack.  A slight
-    // spin gives life to the comets without overwhelming the visuals.  Values between
-    // ±20° and ±50° per second provide variation.
+    // assign a random rotation speed (degrees per second) and track rotation state
     const spinRate = (10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1);
-    let t0=null; function lerp(a,b,t){return a+(b-a)*t}
+    let t0 = null;
+    let lastTime = null;
+    let rotSum = 0;
+    function lerp(a,b,t){ return a + (b - a) * t; }
     function draw(now){
-      if(!t0) t0 = now;
-      // compute normalized time progress (0..1)
+      if(t0 === null){ t0 = now; lastTime = now; }
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+      // total elapsed time since start
       const elapsed = (now - t0) / 1000;
+      // normalized progress (0..1)
       const u = Math.min(1, elapsed / dur);
       // warp the progress so comets slow near the center (u=0.5) and accelerate afterwards
       let s;
       if(u < 0.5){
         const frac = u / 0.5;
-        // exponent >0 and <1 yields an ease-out curve: fast at start, slow near end
         s = 0.5 * Math.pow(frac, 0.6);
       } else {
         const frac = (u - 0.5) / 0.5;
-        // exponent <1 yields an ease-in curve: slow at start, fast near end
         s = 0.5 + 0.5 * Math.pow(frac, 0.4);
       }
       // compute position along path using warped progress s
-      let x,y;
+      let x, y;
       if(C){
         const one = 1 - s;
         x = one*one*P0.x + 2*one*s*C.x + s*s*P1.x;
@@ -666,14 +837,21 @@ function startBoundedSpin(){
         y = lerp(P0.y, P1.y, s);
       }
       comet.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      // apply rotation to the entire comet stack based on spinRate and elapsed time
-      const rot = spinRate * elapsed;
-      stk.style.transform = `rotate(${rot}deg)`;
-      if(u<1){
+      // compute spin easing: slow rotation near the center, faster after crossing
+      let spinFactor;
+      if(u < 0.5){
+        const frac = u / 0.5;
+        spinFactor = 1 - 0.4 * frac;
+      } else {
+        const frac = (u - 0.5) / 0.5;
+        spinFactor = 0.6 + 0.7 * frac;
+      }
+      rotSum += spinRate * dt * spinFactor;
+      stk.style.transform = `rotate(${rotSum}deg)`;
+      if(u < 1){
         requestAnimationFrame(draw);
       } else {
-        /* After the asteroid completes its path, allow the smoke trail to linger and fade.
-           Remove the element after 6 seconds to match the smoke fade duration. */
+        // After the comet completes its path, allow the smoke trail to linger and fade.
         setTimeout(()=>{ comet.remove(); }, 6000);
       }
     }
@@ -687,47 +865,6 @@ function startBoundedSpin(){
 function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
 layoutAll();
 
-/* === audio engine (hidden) === */
-const A = {
-  sparkle: $("a_sparkle"),
-  orange:  $("a_orange"),
-  autumn:  $("a_autumn"),
-  storm:   $("a_storm")
-};
-const boosts = { sparkle: 0.9, storm: 0.9, orange: 1.0, autumn: 1.0 };
-Object.entries(A).forEach(([k,a]) => {
-  if(a){
-    a.loop = true;
-    a.preload = 'auto';
-    a.volume = Math.min(1, (boosts[k] || 1));
-  }
-});
-
-/* === Audio control binding ===
-   The main audio element (a_sparkle) provides a visible control.  When it
-   plays, pauses, or changes volume, the hidden tracks synchronize accordingly. */
-const mainAudio = document.getElementById('a_sparkle');
-if(mainAudio){
-  mainAudio.addEventListener('play', () => {
-    // play all ambient layers when main audio plays
-    ['orange','autumn','storm'].forEach(k => {
-      const a=A[k]; if(a){ try{ a.play(); }catch(e){} }
-    });
-  });
-  mainAudio.addEventListener('pause', () => {
-    // pause all tracks when main audio pauses
-    Object.values(A).forEach(a => { try{ a.pause(); }catch(e){} });
-  });
-  mainAudio.addEventListener('volumechange', () => {
-    const v = mainAudio.volume;
-    Object.entries(A).forEach(([k,a]) => {
-      if(a){
-        const base = boosts[k] || 1;
-        a.volume = Math.min(1, v * base);
-      }
-    });
-  });
-}
 
 /* press the orange to start animation + video */
 (function(){
@@ -737,45 +874,17 @@ if(mainAudio){
     // start fading out the intro overlay
     intro.classList.add('hidden');
 
-    // iOS-safe audio unlock tied to this user gesture
-    try{
-      const list = Object.values(A).filter(Boolean);
-      // play all tracks muted to satisfy iOS autoplay policy
-      for(const a of list){
-        a.muted = true;
-        a.volume = 0;
-        try{ await a.play(); }catch(e){}
-      }
-      // allow a brief moment for playback to register
-      await new Promise(r => setTimeout(r, 80));
-      // pause & reset each track, then unmute for later use
-      for(const a of list){
-        try{ a.pause(); a.currentTime = 0; }catch(e){}
-        a.muted = false;
-      }
-    }catch(e){}
-
-    // start the ambient tracks immediately using the main audio control.  Playing the
-    // main audio will trigger hidden layers via the event listeners defined above.
-    if(mainAudio){
-      try{ mainAudio.play(); }catch(e){}
-      // start other layers explicitly to ensure they begin layering immediately
-      ['orange','autumn','storm'].forEach(k => {
-        const a=A[k]; if(a){ try{ a.play(); }catch(e){} }
-      });
-      // sync volumes according to initial slider value
-      Object.entries(A).forEach(([k,a]) => {
-        if(a){ const base = boosts[k] || 1; a.volume = Math.min(1, mainAudio.volume * base); }
-      });
-    }
 
     // after fade duration, remove intro, reveal audio controls and start video/animations
     setTimeout(()=>{
       intro.remove();
-      // reveal the custom audio controls after the intro fades
-      const audioUI = document.querySelector('.audio-ui');
-      if(audioUI){
-        audioUI.classList.add('show');
+      // reveal the audio dock after the intro fades
+      const dockEl = document.getElementById('audioDock');
+      if(dockEl){
+        // reveal the audio dock once the splash has faded.  Always keep it collapsed at first
+        // so only the toggle and main control are shown.
+        dockEl.style.display = 'flex';
+        dockEl.classList.add('collapsed');
       }
 
       const v=$('bgVideo');
@@ -798,6 +907,196 @@ if(mainAudio){
 
     }, 2200); // match the intro fade duration (2.2s)
   }, {passive:true});
+})();
+
+/* === Audio Dock Logic ===
+   Implements a self-contained audio player dock with expand/collapse, track toggling,
+   volume sliders with persistence, concurrency rules (melodic tracks are mutually exclusive,
+   storm layers independently), and iOS unlock handling. */
+(function(){
+  const dock = document.getElementById('audioDock');
+  if(!dock) return;
+  const ACTIVE = new Set();
+  const TRACKS = { sparkle:{group:'melodic'}, orange:{group:'melodic'}, autumn:{group:'melodic'}, storm:{group:'ambient'} };
+  const names = Object.keys(TRACKS);
+  function audSel(name){ return document.getElementById('aud_'+name); }
+  function btnSel(name){ return dock.querySelector(`.ad-btn[data-track="${name}"]`); }
+  function volSel(name){ return dock.querySelector(`.ad-vol[data-for="${name}"]`); }
+  function anyPlaying(){ for(const name of ACTIVE){ const a=audSel(name); if(a && !a.paused) return true; } return false; }
+  function setBtnGlyph(btn,name,active){
+    if(active){
+      if(name==='sparkle') btn.textContent='✨';
+      else if(name==='orange') btn.textContent='🍊';
+      else if(name==='autumn') btn.textContent='🍂';
+      else if(name==='storm') btn.textContent='⛈️';
+    } else {
+      btn.textContent='🌱';
+    }
+  }
+  function setMainGlyph(){ const main=document.getElementById('adMain'); if(anyPlaying()) main.textContent='🟠⏸'; else main.textContent='🟠▶'; }
+  // restore stored volumes
+  names.forEach(name=>{
+    const a=audSel(name);
+    const vol=volSel(name);
+    if(!a||!vol) return;
+    const stored=parseFloat(localStorage.getItem('advol_'+name));
+    if(!isNaN(stored)){
+      a.volume=stored;
+      const inp=vol.querySelector('input'); if(inp) inp.value=stored;
+    }
+  });
+  // volume slider events
+  names.forEach(name=>{
+    const vol=volSel(name);
+    if(!vol) return;
+    const input=vol.querySelector('input');
+    input.addEventListener('input', ()=>{
+      const a=audSel(name);
+      const val=parseFloat(input.value);
+      a.volume=val;
+      localStorage.setItem('advol_'+name, val);
+    });
+    input.addEventListener('change', ()=>{
+      const a=audSel(name);
+      const val=parseFloat(input.value);
+      a.volume=val;
+      localStorage.setItem('advol_'+name, val);
+    });
+  });
+  function showToast(msg){
+    const toast=document.createElement('div');
+    toast.className='ad-toast';
+    toast.textContent=msg;
+    document.body.appendChild(toast);
+    requestAnimationFrame(()=>{ toast.style.opacity=1; });
+    setTimeout(()=>{ toast.style.opacity=0; setTimeout(()=>toast.remove(),400); }, 2400);
+  }
+  let unlocked=false;
+  function unlockAudio(){
+    if(unlocked) return;
+    unlocked=true;
+    names.forEach(name=>{
+      const a=audSel(name);
+      if(!a) return;
+      const p=a.play();
+      if(p && p.then) p.then(()=>{ a.pause(); a.currentTime=0; }).catch(()=>{});
+    });
+  }
+  window.addEventListener('pointerdown', unlockAudio, {once:true, passive:true});
+  function stopOtherMelodic(){
+    ['sparkle','orange','autumn'].forEach(name=>{
+      if(ACTIVE.has(name)){
+        const a=audSel(name);
+        a.pause();
+        a.currentTime=0;
+        ACTIVE.delete(name);
+        const btn=btnSel(name);
+        btn.classList.remove('active');
+        setBtnGlyph(btn,name,false);
+        const vol=volSel(name);
+        if(vol) vol.style.display='none';
+      }
+    });
+  }
+  function toggleTrack(name){
+    const a=audSel(name);
+    const btn=btnSel(name);
+    const vol=volSel(name);
+    if(ACTIVE.has(name)){
+      a.pause();
+      ACTIVE.delete(name);
+      btn.classList.remove('active');
+      setBtnGlyph(btn,name,false);
+      if(vol) vol.style.display='none';
+    } else {
+      if(TRACKS[name].group==='melodic') stopOtherMelodic();
+      a.loop=true;
+      a.play().catch(()=>{ showToast(`Couldn't load ${name}.mp3. Check /tracks/.`); });
+      ACTIVE.add(name);
+      btn.classList.add('active');
+      setBtnGlyph(btn,name,true);
+      if(vol) vol.style.display='block';
+    }
+    setMainGlyph();
+  }
+  function resumeAll(){
+    ACTIVE.forEach(name=>{
+      const a=audSel(name);
+      a.play().catch(()=>{});
+    });
+  }
+  function pauseAll(){
+    ACTIVE.forEach(name=>{
+      const a=audSel(name);
+      a.pause();
+    });
+  }
+  document.getElementById('adMain').addEventListener('click', e=>{
+    e.stopPropagation();
+    if(anyPlaying()){
+      pauseAll();
+    } else {
+      if(ACTIVE.size>0){
+        resumeAll();
+      } else {
+        toggleTrack('storm');
+      }
+    }
+    setMainGlyph();
+  });
+  document.getElementById('adToggle').addEventListener('click', e=>{
+    e.stopPropagation();
+    dock.classList.toggle('collapsed');
+    const expanded=!dock.classList.contains('collapsed');
+    const toggleBtn=document.getElementById('adToggle');
+    if(expanded) toggleBtn.classList.add('pulse');
+    else toggleBtn.classList.remove('pulse');
+    names.forEach(name=>{
+      const vol=volSel(name);
+      if(!vol) return;
+      if(expanded){
+        // show storm volume as an affordance on expand; show active track volumes
+        if(name === 'storm' || ACTIVE.has(name)){
+          vol.style.display = 'block';
+        } else {
+          vol.style.display = 'none';
+        }
+      } else {
+        // collapsed: hide all volume popovers
+        vol.style.display = 'none';
+      }
+    });
+  });
+  names.forEach(name=>{
+    const btn=btnSel(name);
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      toggleTrack(name);
+    });
+    btn.addEventListener('keypress', e=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        toggleTrack(name);
+      }
+    });
+  });
+  document.getElementById('adMain').addEventListener('keypress', e=>{
+    if(e.key==='Enter' || e.key===' '){
+      e.preventDefault();
+      document.getElementById('adMain').click();
+    }
+  });
+  document.getElementById('adToggle').addEventListener('keypress', e=>{
+    if(e.key==='Enter' || e.key===' '){
+      e.preventDefault();
+      document.getElementById('adToggle').click();
+    }
+  });
+  // Do not force collapsed here; the dock starts collapsed via markup.  Leaving this call
+  // could inadvertently remove the collapsed state if toggled during init.  The markup
+  // already applies the `.collapsed` class, so the dock will remain minimized until
+  // expanded by the user.
+  // dock.classList.add('collapsed');
 })();
 </script>
 </body>
