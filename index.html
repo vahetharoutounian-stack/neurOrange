@@ -25,6 +25,9 @@
     --heart:#FFA64D; /* Bergamot used for highlight circle */
     --text:#ffffff; /* White text for buttons */
     --ring:rgba(0,0,0,.35); /* subtle dark ring for outlines */
+    /* define spectral and firefox oranges for track buttons */
+    --spectral:var(--afterimage);  /* use afterimage orange as spectral orange */
+    --firefox:var(--pantone021);   /* use Pantone 021 C as firefox orange */
   }
   *{box-sizing:border-box}
   html,body{
@@ -321,6 +324,10 @@
   }
   .ad-toggle.pulse{
     animation:adPulse 2.4s infinite;
+    /* enlarge the toggle and apply a stronger glow when the dock is expanded */
+    transform:scale(1.35);
+    /* glowing halo using dock and heart colors */
+    box-shadow:0 0 6px 2px var(--heart), 0 0 12px 6px var(--dock);
   }
   @keyframes adPulse{
     0%   { box-shadow:0 0 0 0 rgba(255,102,0,.4); }
@@ -333,6 +340,7 @@
     height:42px;
     border-radius:50%;
     background:#fff;
+    /* Use dock color for the glyph (white arrow/pause will appear tinted) */
     color:var(--dock);
     font-size:22px;
     display:flex;
@@ -356,9 +364,9 @@
     width:40px;
     height:40px;
     border-radius:50%;
-    /* Give track buttons a warm bergamot fill by default */
-    background:var(--heart);
-    color:var(--dock);
+    /* Use spectral orange as the base fill for track buttons */
+    background:var(--spectral);
+    /* Do not set text color here so that emoji retain their natural colors */
     font-size:24px;
     display:flex;
     align-items:center;
@@ -372,8 +380,9 @@
     transform:scale(0.95);
   }
   .ad-btn.active{
-    background:var(--dock);
-    color:#fff;
+    /* When a track is active/playing, fill with firefox orange */
+    background:var(--firefox);
+    /* Do not override text color here so that emoji retain their natural colors */
   }
   .ad-vol{
     position:absolute;
@@ -531,7 +540,8 @@
   main control are visible until the user explicitly expands it.  -->
 <div id="audioDock" class="collapsed" role="group" aria-label="Audio Player" style="display:none;">
   <button id="adToggle" class="ad-toggle" aria-label="Expand or Collapse" role="button" tabindex="0">🟠</button>
-  <button id="adMain" class="ad-main" aria-label="Play/Pause" role="button" tabindex="0">🟠▶</button>
+<!-- Main play/pause control.  The glyph will be set via JS.  Default to play symbol with no orange emoji. -->
+<button id="adMain" class="ad-main" aria-label="Play/Pause" role="button" tabindex="0">▶</button>
 
   <div class="ad-wrap">
     <button class="ad-btn" data-track="sparkle" aria-label="Sparkle" role="button" tabindex="0">🌱</button>
@@ -905,6 +915,24 @@ layoutAll();
         dockEl.classList.add('collapsed');
       }
 
+      // autoplay the sparkle track once audio is unlocked and the dock is visible
+      try{
+        if(window.adToggleTrack){
+          // Start the sparkle track; it will become active and show its volume slider
+          window.adToggleTrack('sparkle');
+          // Mute the other tracks (orange, autumn, storm) and update their saved volumes and sliders
+          ['orange','autumn','storm'].forEach(name=>{
+            const aud=document.getElementById('aud_'+name);
+            if(aud) aud.volume=0;
+            // persist volume 0 for this track
+            try{ localStorage.setItem('advol_'+name, '0'); }catch(_){/* storage may fail in some environments */}
+            // update the corresponding slider to reflect muted state
+            const volEl=document.querySelector(`#audioDock .ad-vol[data-for="${name}"] input`);
+            if(volEl) volEl.value=0;
+          });
+        }
+      }catch(e){/* ignore */}
+
       const v=$('bgVideo');
       if(v){
         const show=()=>{ v.style.opacity=1; };
@@ -1140,6 +1168,10 @@ layoutAll();
   // already applies the `.collapsed` class, so the dock will remain minimized until
   // expanded by the user.
   // dock.classList.add('collapsed');
+
+  // Expose the track toggle function globally so it can be invoked outside this IIFE,
+  // e.g. to autoplay the sparkle track after the splash screen.
+  window.adToggleTrack = toggleTrack;
 })();
 </script>
 </body>
