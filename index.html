@@ -41,7 +41,7 @@
     position:fixed; inset:0; background:#000; display:grid; place-items:center;
     z-index:9999; opacity:1; pointer-events:auto;
     /* extend the fade duration slightly longer to create a smoother transition */
-    transition:opacity 2200ms ease;
+    transition:opacity 2250ms ease;
   }
   #intro.hidden{opacity:0; pointer-events:none}
   .intro-stack{display:grid; justify-items:center; gap:1rem}
@@ -195,14 +195,15 @@
   /* The bubble prompts the user with "What are you feeling?" and remains centered */
 
   /* Asteroid (comet) styling with orange rainbow smoke trail */
-  .comet{ position:absolute; pointer-events:none; z-index:10; }
+  .comet{ position:absolute; pointer-events:none; z-index:5; }
   /* Stack the comet head (emoji + comet base) vertically and place the smoke tail to the right. */
   .cometStack{
     display:flex;
     align-items:center;
   }
   .cometStack .top{
-    font-size:clamp(26px,5vw,44px);
+    /* Reduce the comet head size so asteroids feel smaller */
+    font-size:clamp(22px,4.2vw,38px);
     margin-right:6px; /* horizontal gap between head and tail */
     display:flex;
     flex-direction:column;
@@ -213,23 +214,23 @@
     text-shadow:0 0 6px rgba(255,255,255,0.85);
   }
   .cometStack .tail{
-    /* create a wide, tapered smoke trail positioned behind the comet head */
-    width:240px;
-    height:70px;
-    margin-left:12px;
-    border-radius:35px;
+    /* create a narrower, tapered smoke trail positioned behind the comet head */
+    width:180px;
+    height:50px;
+    margin-left:10px;
+    border-radius:25px;
     /* vivid orange smoke that tapers to transparency */
     background:linear-gradient(to right,
       rgba(255,165,0,0.95) 0%,
-      rgba(255,140,0,0.70) 25%,
-      rgba(255,102,0,0.45) 55%,
+      rgba(255,140,0,0.72) 25%,
+      rgba(255,102,0,0.5) 55%,
       rgba(255,80,0,0) 100%);
-    filter:blur(22px);
-    opacity:0.94;
+    filter:blur(18px);
+    opacity:0.9;
     /* strong glow to make the smoke visible on dark background */
-    box-shadow:0 0 18px var(--pure), 0 0 36px var(--nick);
+    box-shadow:0 0 16px var(--pure), 0 0 30px var(--nick);
     /* subtle skew for directionality */
-    transform:skewX(-20deg);
+    transform:skewX(-18deg);
     animation:smokeFade 6s linear forwards;
   }
   @keyframes smokeFade{
@@ -237,7 +238,9 @@
     to  { opacity:0;   transform:scale(2); }
   }
 
-  /* Comet field spans the entire viewport (not using wrapCenter) */
+  /* Comet field spans the entire viewport (not using wrapCenter).
+     We set its z-index between the emoji rings and the painting ring so that
+     comets can overlap the color/ghost rings but remain behind the artwork. */
   #cometField{
     position:absolute;
     top:0;
@@ -246,8 +249,7 @@
     height:100%;
     pointer-events:none;
     overflow:visible;
-    /* place comets above rings and mid nodes so they are visible */
-    z-index:9;
+    z-index:5;
   }
   #interstitial.show{ opacity:1; pointer-events:auto; }
   #interstitialText{
@@ -817,14 +819,17 @@ function startBoundedSpin(){
       const elapsed = (now - t0) / 1000;
       // normalized progress (0..1)
       const u = Math.min(1, elapsed / dur);
-      // warp the progress so comets slow near the center (u=0.5) and accelerate afterwards
+      // warp the progress so comets quickly fly in, ease through the center, then gently fling out
+      // Using lower exponents accelerates the early portion and smooths the departure.
       let s;
       if(u < 0.5){
         const frac = u / 0.5;
-        s = 0.5 * Math.pow(frac, 0.6);
+        // accelerate early (power < 1) to fly in faster
+        s = 0.5 * Math.pow(frac, 0.4);
       } else {
         const frac = (u - 0.5) / 0.5;
-        s = 0.5 + 0.5 * Math.pow(frac, 0.4);
+        // ease out smoothly with a moderate exponent
+        s = 0.5 + 0.5 * Math.pow(frac, 0.5);
       }
       // compute position along path using warped progress s
       let x, y;
@@ -905,7 +910,7 @@ layoutAll();
         requestAnimationFrame(()=> el.classList.add('grow'));
       });
 
-    }, 2200); // match the intro fade duration (2.2s)
+    }, 2250); // match the intro fade duration (2.25s)
   }, {passive:true});
 })();
 
