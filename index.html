@@ -63,7 +63,7 @@
   }
   @keyframes titlePulse{
     0%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
-    50%{color:var(--pure);    text-shadow:0 0 14px rgba(255,165,0,.65), 0  0 34px rgba(255,165,0,.45)}
+    50%{color:var(--pure);    text-shadow:0 0 14px rgba(255,165,0,.65), 0 0 34px rgba(255,165,0,.45)}
     100%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
   }
 
@@ -81,11 +81,11 @@
     -webkit-mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);
             mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)}
   .fog{position:absolute; inset:0; mix-blend-mode:screen; filter:blur(60px) saturate(120%);
-        background:
-          radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
-          radial-gradient(28% 24% at 80% 40%, var(--nick) 0 55%, transparent 60%),
-          radial-gradient(30% 22% at 40% 70%, var(--nick) 0 55%, transparent 60%);
-        animation:fog1 26s linear infinite alternate; opacity:.62}
+       background:
+         radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
+         radial-gradient(28% 24% at 80% 40%, var(--nick) 0 55%, transparent 60%),
+         radial-gradient(30% 22% at 40% 70%, var(--nick) 0 55%, transparent 60%);
+       animation:fog1 26s linear infinite alternate; opacity:.62}
   @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
 
   #focus{position:absolute; inset:0; display:grid; place-items:center; z-index:2}
@@ -148,8 +148,8 @@
   .emojiSpin{position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite}
   @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
   .emoji{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:var(--emoji-font);
-          border:none; border-radius:10px; background:rgba(0,0,0,.08); padding:1px 3px;
-          filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
+         border:none; border-radius:10px; background:rgba(0,0,0,.08); padding:1px 3px;
+         filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
 
   /* paintings ring */
   #midWrap{z-index:8}
@@ -190,9 +190,9 @@
   }
 
   /* === Audio Player UI ===
-      A custom mini-player appears after the intro fades.  It contains a play/pause button and a
-      volume slider so users can control the ambient soundtrack.  The underlying audio tracks are
-      hidden from view; this UI simply manipulates them via JavaScript. */
+     A custom mini-player appears after the intro fades.  It contains a play/pause button and a
+     volume slider so users can control the ambient soundtrack.  The underlying audio tracks are
+     hidden from view; this UI simply manipulates them via JavaScript. */
 
   /* Restore the central question bubble */
   /* The bubble prompts the user with "What are you feeling?" and remains centered */
@@ -279,9 +279,9 @@
     50%    { text-shadow: 0 0 16px var(--saffron), 0 0 36px var(--saffron), 0 0 10px var(--nick); }
   }
   /* === Audio Dock ===
-      A bottom-left pill dock houses an expand/collapse toggle, a main play/pause button and four
-      track sprouts.  Each track has a vertical volume slider that appears above its button when
-      active.  The dock respects safe-area insets and remains collapsed by default. */
+     A bottom-left pill dock houses an expand/collapse toggle, a main play/pause button and four
+     track sprouts.  Each track has a vertical volume slider that appears above its button when
+     active.  The dock respects safe-area insets and remains collapsed by default.  */
   #audioDock{
     position:fixed;
     /* Position the dock above the bottom navigation.  We offset it by roughly the
@@ -341,9 +341,9 @@
     width:42px;
     height:42px;
     border-radius:50%;
-    background:var(--dock);
-    /* Use white for glyph for contrast */
-    color:var(--text);
+    background:#fff;
+    /* Use dock color for the glyph (white arrow/pause will appear tinted) */
+    color:var(--dock);
     font-size:22px;
     display:flex;
     align-items:center;
@@ -355,10 +355,6 @@
   }
   .ad-main:active{
     transform:scale(0.95);
-  }
-  .ad-main.active{
-    /* When playing, darken background slightly */
-    background: var(--firefox);
   }
   .ad-wrap{
     position:relative;
@@ -488,7 +484,7 @@
 
     <div id="bgLayer">
       <!-- background video -->
-      <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" autoplay loop>
+      <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
         <!-- Use the remote placeholder video so the background animation plays correctly -->
         <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
       </video>
@@ -527,8 +523,8 @@
 
     <!-- bottom nav (links to other HTMLs) -->
     <div class="bottomNav">
-      <a class="navBtn navLeft" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/" aria-label="Color Library">Color Library</a>
-      <a class="navBtn navMid" href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" aria-label="Art Gallery">Art Gallery</a>
+      <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/" aria-label="Color Library">Color Library</a>
+      <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" aria-label="Art Gallery">Art Gallery</a>
       <a class="navBtn navRight" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3" aria-label="Illusion Lab">Illusion Lab</a>
     </div>
   </div>
@@ -547,8 +543,8 @@
   main control are visible until the user explicitly expands it.  -->
 <div id="audioDock" class="collapsed" role="group" aria-label="Audio Player" style="display:none;">
   <button id="adToggle" class="ad-toggle" aria-label="Expand or Collapse" role="button" tabindex="0">🟠</button>
-  <!-- Main play/pause control.  The glyph will be set via JS.  Default to play symbol with no orange emoji. -->
-  <button id="adMain" class="ad-main" aria-label="Play/Pause" role="button" tabindex="0">▶</button>
+<!-- Main play/pause control.  The glyph will be set via JS.  Default to play symbol with no orange emoji. -->
+<button id="adMain" class="ad-main" aria-label="Play/Pause" role="button" tabindex="0">▶</button>
 
   <div class="ad-wrap">
     <button class="ad-btn" data-track="sparkle" aria-label="Sparkle" role="button" tabindex="0">🌱</button>
@@ -581,9 +577,9 @@
 
   <!-- Pull audio tracks from the live site; local /tracks folder is unavailable -->
   <audio id="aud_sparkle" preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/sparkle.mp3" type="audio/mpeg"></audio>
-  <audio id="aud_orange" preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/orange.mp3" type="audio/mpeg"></audio>
-  <audio id="aud_autumn" preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/autumn.mp3" type="audio/mpeg"></audio>
-  <audio id="aud_storm" preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/storm.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_orange"  preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/orange.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_autumn"  preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/autumn.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_storm"   preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/storm.mp3" type="audio/mpeg"></audio>
 </div>
 
 <script>
@@ -648,7 +644,6 @@ function opponentHex(hex){const {r,g,b}=hexToRgb(hex); const {h,s,l}=rgbToHsl(r,
 function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
   const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}); const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);
   const large=(a1Deg-a0Deg)>180?1:0; return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
-}
 
 function drawRing(svgEl,sizePx,r0px,r1px,colorObjs,gapDeg){
   svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
@@ -727,8 +722,7 @@ function layoutRings(){
   window.emojiRadii = [rA, rB];
 }
 function placeEmojis(wrapId,R,phase=0){
-  const container=$(wrapId).querySelector('.emojiRing'); container.innerHTML='';
-  const n=12;
+  const container=$(wrapId).querySelector('.emojiRing'); container.innerHTML=''; const n=12;
   for(let i=0;i<n;i++){const d=document.createElement('div'); d.className='emoji'; d.innerHTML=EMOJIS[i%EMOJIS.length];
     const a=i*(2*Math.PI/n)+phase, x=Math.cos(a)*R, y=Math.sin(a)*R;
     d.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; container.appendChild(d);}
@@ -905,6 +899,7 @@ function startBoundedSpin(){
 function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
 layoutAll();
 
+
 /* press the orange to start animation + video */
 (function(){
   const orange=$('startOrange');
@@ -912,6 +907,7 @@ layoutAll();
     const intro=$('intro');
     // start fading out the intro overlay
     intro.classList.add('hidden');
+
 
     // after fade duration, remove intro, reveal audio controls and start video/animations
     setTimeout(()=>{
@@ -1000,10 +996,8 @@ layoutAll();
     // Only show play/pause glyphs without the orange emoji
     if(anyPlaying()){
       main.textContent = '⏸';
-      main.classList.add('active');
     } else {
       main.textContent = '▶';
-      main.classList.remove('active');
     }
   }
   // restore stored volumes
@@ -1144,7 +1138,8 @@ layoutAll();
         // If there are selected tracks but none playing, resume them
         resumeAll();
       } else {
-        // No tracks active; nothing to play
+        // Default to playing the storm track when nothing is active
+        toggleTrack('storm');
       }
     }
     setMainGlyph();
