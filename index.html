@@ -490,7 +490,9 @@
 <div id="intro">
   <!-- Ambient video that plays in the splash screen.  It loops and is muted to comply with browser policies. -->
   <video id="introVideo" autoplay loop muted playsinline>
-    <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
+    <!-- Play the local front screen placeholder video located in the project root.  This
+         video loops silently during the splash screen. -->
+    <source src="front_screen_placeholer.mp4" type="video/mp4" />
   </video>
   <div class="intro-stack">
     <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
@@ -939,6 +941,21 @@ layoutAll();
     const intro=$('intro');
     // start fading out the intro overlay
     intro.classList.add('hidden');
+
+    // Immediately start the background video on tap.  Play the bgVideo and reveal it
+    // behind the fading overlay so the scene transitions smoothly.  By starting
+    // playback here rather than after the fade completes, the video is ready and
+    // visible as soon as the user taps the orange.
+    {
+      const bg = $('bgVideo');
+      if(bg){
+        try{
+          const p = bg.play();
+          if(p && p.catch) p.catch(()=>{});
+        }catch(e){}
+        bg.style.opacity = 1;
+      }
+    }
     // Show the audio dock and start the sparkle track immediately (before the fade completes)
     const dockEl = document.getElementById('audioDock');
     if(dockEl){
@@ -982,13 +999,16 @@ layoutAll();
       // toggling other tracks a second time.  The audio dock is already shown and
       // sparkle has been started in the click handler above.
 
+      // The background video is started immediately upon tapping the orange, so we
+      // no longer need to invoke play() here.  If it is still paused for some reason,
+      // ensure its opacity is set and attempt to play.
       const v=$('bgVideo');
       if(v){
-        const show=()=>{ v.style.opacity=1; };
-        v.addEventListener('loadeddata', show, {once:true});
-        v.addEventListener('playing',    show, {once:true});
-        const p=v.play();
-        if(p && p.catch) p.catch(()=>{});
+        v.style.opacity = 1;
+        try{
+          const p=v.play();
+          if(p && p.catch) p.catch(()=>{});
+        }catch(e){}
       }
 
       // run grow-out from center
