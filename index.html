@@ -256,6 +256,20 @@
     overflow:visible;
     z-index:5;
   }
+
+  /* A separate field for rose comets.  This sits behind the color ring so the rose emoji
+     comet is unobtrusive.  Its lower z-index positions it between the rings and the
+     background. */
+  #roseField{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    overflow:visible;
+    z-index:2;
+  }
   #interstitial.show{ opacity:1; pointer-events:auto; }
   #interstitialText{
     text-align:center; font-weight:900; font-style:italic;
@@ -288,7 +302,9 @@
        nav height (about 60px) plus safe-area so it doesn't overlap the nav. */
     /* Increase the bottom offset so the dock sits comfortably above the color library button */
     /* Move the dock further up so there is generous space above the bottom navigation */
-    bottom:calc(env(safe-area-inset-bottom) + 130px);
+    /* Lower the dock closer to the bottom navigation.  Offset it by about 100px plus
+       safe-area so there is some space above the color library button. */
+    bottom:calc(env(safe-area-inset-bottom) + 100px);
     left:14px;
     display:flex;
     align-items:center;
@@ -472,11 +488,19 @@
 
 <!-- intro -->
 <div id="intro">
+  <!-- Ambient video that plays in the splash screen.  It loops and is muted to comply with browser policies. -->
+  <video id="introVideo" autoplay loop muted playsinline>
+    <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
+  </video>
   <div class="intro-stack">
     <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
     <div class="intro-title">neurOrange</div>
   </div>
 </div>
+<!-- Add a looping ambient video behind the intro orange.  This video fills the intro overlay and disappears when the overlay is removed. -->
+<style>
+  #introVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1}
+</style>
 
 <div id="phone">
   <div id="canvas">
@@ -507,6 +531,9 @@
       <!-- comets / asteroids -->
       <!-- The cometField now fills the viewport and anchors comets at the screen center -->
       <div id="cometField"></div>
+      <!-- Separate field for rose comets.  This container sits behind the color ring so
+           the rose comet glides underneath the ring. -->
+      <div id="roseField"></div>
 
       <!-- painting ring -->
       <div id="midWrap" class="wrapCenter preGrow">
@@ -744,6 +771,10 @@ function startBoundedSpin(){
 /* comets: first in cycle plain, 4th 🌱, 5th 🌹 */
 (function comet(){
     const field=$('cometField');
+    // Use a separate field for rose comets so they can appear behind ring 1.  The rose field
+    // is layered behind the color ring via a lower z-index.  If it doesn't exist,
+    // fall back to the main comet field.
+    const roseField=$('roseField');
     // update cycle to 7 so that the rose emoji appears every 7th comet and the 6th is a fire emoji
     const cycle=7;
     let count=0;
@@ -824,10 +855,11 @@ function startBoundedSpin(){
     stk.appendChild(top);
     stk.appendChild(tail);
     comet.appendChild(stk);
-    field.appendChild(comet);
-    // Place the rose comet under all content for an unobtrusive path
-    if(idx === 7){
-      comet.style.zIndex = '1';
+    // Append to the rose field when idx === 7; otherwise append to the main comet field.
+    if(idx === 7 && roseField){
+      roseField.appendChild(comet);
+    } else {
+      field.appendChild(comet);
     }
     // assign a random rotation speed (degrees per second).  The rose comet (7th) should not rotate.
     const spinRate = (idx === 7) ? 0 : ((10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1));
@@ -907,6 +939,30 @@ layoutAll();
     const intro=$('intro');
     // start fading out the intro overlay
     intro.classList.add('hidden');
+    // Show the audio dock and start the sparkle track immediately (before the fade completes)
+    const dockEl = document.getElementById('audioDock');
+    if(dockEl){
+      dockEl.style.display = 'flex';
+      dockEl.classList.add('collapsed');
+    }
+    // Autoplay the sparkle track right away and mute the other tracks
+    try{
+      if(window.adToggleTrack){
+        window.adToggleTrack('sparkle');
+        ['orange','autumn','storm'].forEach(name=>{
+          if(window.adEnsureInactive) window.adEnsureInactive(name);
+          const aud=document.getElementById('aud_'+name);
+          if(aud){
+            aud.pause();
+            aud.currentTime = 0;
+            aud.volume = 0;
+          }
+          try{ localStorage.setItem('advol_'+name, '0'); }catch(_){ /* ignore storage errors */ }
+          const volEl=document.querySelector(`#audioDock .ad-vol[data-for="${name}"] input`);
+          if(volEl) volEl.value = 0;
+        });
+      }
+    }catch(e){}
 
 
     // after fade duration, remove intro, reveal audio controls and start video/animations
@@ -921,29 +977,10 @@ layoutAll();
         dockEl.classList.add('collapsed');
       }
 
-      // Autoplay only the sparkle track once audio is unlocked and the dock is visible.
-      try{
-        if(window.adToggleTrack){
-          // Start the sparkle track; it will become active and show its volume slider
-          window.adToggleTrack('sparkle');
-          // Mute and deselect the other tracks (orange, autumn, storm) so they do not play
-          ['orange','autumn','storm'].forEach(name=>{
-            // ensure the track is not selected/active
-            if(window.adEnsureInactive) window.adEnsureInactive(name);
-            const aud=document.getElementById('aud_'+name);
-            if(aud){
-              aud.pause();
-              aud.currentTime = 0;
-              aud.volume = 0;
-            }
-            // persist volume 0 for this track
-            try{ localStorage.setItem('advol_'+name, '0'); }catch(_){/* storage may fail in some environments */}
-            // update the corresponding slider to reflect muted state
-            const volEl=document.querySelector(`#audioDock .ad-vol[data-for="${name}"] input`);
-            if(volEl) volEl.value = 0;
-          });
-        }
-      }catch(e){/* ignore */}
+      // Note: autoplay and track initialization are handled immediately when the orange is tapped.
+      // We intentionally do not repeat autoplay logic here to avoid re-triggering tracks or
+      // toggling other tracks a second time.  The audio dock is already shown and
+      // sparkle has been started in the click handler above.
 
       const v=$('bgVideo');
       if(v){
