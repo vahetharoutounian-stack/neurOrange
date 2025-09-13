@@ -103,7 +103,8 @@
   /* center prompt */
   #question{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1);
-    display:grid; place-items:center; background:#000; color:#fff; border-radius:50%; border:none;
+    display:grid; place-items:center; /* transparent background so no black circle */
+    background:transparent; color:#fff; border-radius:50%; border:none;
     z-index:5; filter:drop-shadow(var(--glow)); padding:.4rem .6rem; user-select:none;
     animation:breathe 7s ease-in-out infinite;
   }
@@ -201,14 +202,30 @@
 
   /* Asteroid (comet) styling with orange rainbow smoke trail */
   .comet{ position:absolute; pointer-events:none; z-index:10; }
-  .cometStack{ display:flex; align-items:center; }
-  .cometStack .top{ font-size:clamp(20px,4vw,36px); margin-right:2px; }
+  /* Stack the comet head (emoji + comet base) vertically and place the smoke tail to the right. */
+  .cometStack{
+    display:flex;
+    align-items:center;
+  }
+  .cometStack .top{
+    font-size:clamp(20px,4vw,36px);
+    margin-right:4px; /* horizontal gap between head and tail */
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    line-height:1;
+  }
   .cometStack .tail{
-    width:24px; height:24px; border-radius:50%;
-    /* orange rainbow smoke gradient from color library */
-    background:radial-gradient(circle, var(--nick) 0%, var(--pure) 35%, var(--bergamot) 65%, var(--saffron) 100%);
-    filter:blur(6px);
-    opacity:0.8;
+    width:80px;
+    height:40px;
+    margin-left:16px;
+    border-radius:50%;
+    /* orange rainbow smoke gradient: choose vivid tones that contrast the dark background */
+    background:radial-gradient(circle at 50% 50%, #ffb84d 0%, #ff9800 30%, #f57c00 60%, transparent 100%);
+    filter:blur(8px);
+    opacity:1;
+    /* stronger glow so the trail is unmistakable */
+    box-shadow: 0 0 18px var(--pure), 0 0 36px var(--nick);
     animation:smokeFade 6s linear forwards;
   }
   @keyframes smokeFade{
@@ -496,33 +513,68 @@ function startBoundedSpin(){
   const field=$('cometField'); const cycle=5; let count=0;
   function spawn(){
     count++; const idx=((count-1)%cycle)+1;
-    const W=innerWidth,H=innerHeight, run=Math.max(W,H)+400, th=Math.random()*Math.PI*2;
-    const kinds=['straight','offcenter','curved']; const kind=kinds[Math.floor(Math.random()*kinds.length)];
-    const n={x:-Math.sin(th),y:Math.cos(th)}, dur=4.8+Math.random()*3;
-    let P0,P1,C; const ctr={x:0,y:0};
-    if(kind==='straight'){P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2}}
-    else if(kind==='offcenter'){const d=(Math.random()*0.35+0.15)*(W/2), sh={x:n.x*(Math.random()<0.5?-d:d), y:n.y*(Math.random()<0.5?-d:d)};
-      P0={x:ctr.x-Math.cos(th)*run/2+sh.x,y:ctr.y-Math.sin(th)*run/2+sh.y}; P1={x:ctr.x+Math.cos(th)*run/2+sh.x,y:ctr.y-Math.sin(th)*run/2+sh.y}}
-    else{P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2}; P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};
-      const bend=(Math.random()*0.5+0.3)*(W/2); C={x:ctr.x+n.x*(Math.random()<0.5?-bend:bend), y:ctr.y+n.y*(Math.random()<0.5?-bend:bend)}}
+    const W=innerWidth, H=innerHeight;
+    const run=Math.max(W,H) + 400;
+    // Determine a random start and end angle so comets appear from any direction and exit at another
+    const th0 = Math.random() * Math.PI * 2;
+    // choose a travel span between roughly 0.8π and 1.4π so the comet crosses the screen
+    const span = Math.random()* (Math.PI * 0.6) + Math.PI * 0.8;
+    let th1 = th0 + span;
+    // normalize the end angle to 0..2π
+    th1 = th1 % (Math.PI * 2);
+    // Preselect the path type
+    const kinds=['straight','offcenter','curved'];
+    const kind=kinds[Math.floor(Math.random()*kinds.length)];
+    // base start and end positions on extended radius outside viewport
+    let P0 = { x: Math.cos(th0) * run/2, y: Math.sin(th0) * run/2 };
+    let P1 = { x: Math.cos(th1) * run/2, y: Math.sin(th1) * run/2 };
+    let C;
+    const dur = 4.8 + Math.random() * 3;
+    if(kind === 'offcenter' || kind === 'curved'){
+      // compute direction and normal vector between P0 and P1
+      const dirDX = P1.x - P0.x;
+      const dirDY = P1.y - P0.y;
+      const len = Math.hypot(dirDX, dirDY) || 1;
+      const dir = { x: dirDX / len, y: dirDY / len };
+      const normal = { x: -dir.y, y: dir.x };
+      if(kind === 'offcenter'){
+        // add random shift along normal for both start and end points to shift the entire line
+        const d = (Math.random()*0.35 + 0.15) * (Math.min(W,H)/2);
+        const sign = Math.random() < 0.5 ? -1 : 1;
+        P0 = { x: P0.x + normal.x * d * sign, y: P0.y + normal.y * d * sign };
+        P1 = { x: P1.x + normal.x * d * sign, y: P1.y + normal.y * d * sign };
+      } else {
+        // curved: control point offset along normal at the mid point
+        const mid = { x: (P0.x + P1.x) / 2, y: (P0.y + P1.y) / 2 };
+        const bend = (Math.random()*0.5 + 0.3) * (Math.min(W,H)/2);
+        const sign = Math.random() < 0.5 ? -1 : 1;
+        C = { x: mid.x + normal.x * bend * sign, y: mid.y + normal.y * bend * sign };
+      }
+    }
     const comet=document.createElement('div'); comet.className='comet';
     // Anchor each comet at the center of the viewport; we set left/top 50% and then translate via transform
     comet.style.left = '50%';
     comet.style.top  = '50%';
     const stk=document.createElement('div'); stk.className='cometStack';
     const top=document.createElement('div'); top.className='top';
-    /* Set asteroid icon sequence: show the rock itself (🪨) and optionally a sprout/orange/rose on top.
-       The first in the cycle is just the rock; second and fourth add a sprout; third adds an orange; fifth adds a rose. */
-    if(idx===1){
-      top.innerHTML='🪨';
-    } else if(idx===2){
-      top.innerHTML='🪨🌱';
-    } else if(idx===3){
-      top.innerHTML='🪨🍊';
-    } else if(idx===4){
-      top.innerHTML='🪨🌱';
-    } else if(idx===5){
-      top.innerHTML='🪨🌹';
+    /* Set comet icon sequence: the base rock (🪨) sits below the object on top.
+       Use a line break to vertically stack the top emoji above the rock. */
+    // build the comet head: stack the requested emoji above a base rock (🪨)
+    if(idx === 1){
+      // bare comet (only the rock)
+      top.innerHTML = '<div>🪨</div>';
+    } else if(idx === 2){
+      // sprout on rock
+      top.innerHTML = '<div>🌱</div><div>🪨</div>';
+    } else if(idx === 3){
+      // orange on rock
+      top.innerHTML = '<div>🍊</div><div>🪨</div>';
+    } else if(idx === 4){
+      // sprout again on rock
+      top.innerHTML = '<div>🌱</div><div>🪨</div>';
+    } else if(idx === 5){
+      // rose on rock
+      top.innerHTML = '<div>🌹</div><div>🪨</div>';
     }
     const tail=document.createElement('div'); tail.className='tail';
     stk.appendChild(top);
@@ -544,7 +596,8 @@ function startBoundedSpin(){
     }
     requestAnimationFrame(draw);
   }
-  (function loop(){ spawn(); setTimeout(loop, 7000 + Math.random()*5000); })();
+  // Launch each comet every 3–5 seconds to ensure frequent sightings
+  (function loop(){ spawn(); setTimeout(loop, 3000 + Math.random()*2000); })();
 })();
 
 /* build + layout once (no animation yet) */
