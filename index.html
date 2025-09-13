@@ -180,6 +180,38 @@
 
   /* 🔇 Audio player UI is intentionally INVISIBLE */
   .audio-ui{ display:none !important; }
+
+  /* Hide the central question bubble */
+  #question{ display:none !important; }
+
+  /* Asteroid (comet) styling with orange rainbow smoke trail */
+  .comet{ position:absolute; pointer-events:none; z-index:10; }
+  .cometStack{ display:flex; align-items:center; }
+  .cometStack .top{ font-size:clamp(20px,4vw,36px); margin-right:2px; }
+  .cometStack .tail{
+    width:24px; height:24px; border-radius:50%;
+    /* orange rainbow smoke gradient from color library */
+    background:radial-gradient(circle, var(--nick) 0%, var(--pure) 35%, var(--bergamot) 65%, var(--saffron) 100%);
+    filter:blur(6px);
+    opacity:0.8;
+    animation:smokeFade 6s linear forwards;
+  }
+  @keyframes smokeFade{
+    from{ opacity:0.8; transform:scale(1); }
+    to  { opacity:0;   transform:scale(2); }
+  }
+
+  /* Comet field spans the entire viewport (not using wrapCenter) */
+  #cometField{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    overflow:visible;
+    z-index:5; /* place behind nav and rings but above fog */
+  }
   #interstitial.show{ opacity:1; pointer-events:auto; }
   #interstitialText{
     text-align:center; font-weight:900; font-style:italic;
@@ -241,8 +273,9 @@
         <div class="halo" id="innerHalo"></div>
       </div>
 
-      <!-- comets -->
-      <div id="cometField" class="wrapCenter preGrow"></div>
+      <!-- comets / asteroids -->
+      <!-- The cometField now fills the viewport and anchors comets at the screen center -->
+      <div id="cometField"></div>
 
       <!-- painting ring -->
       <div id="midWrap" class="wrapCenter preGrow">
@@ -458,17 +491,40 @@ function startBoundedSpin(){
     else{P0={x:ctr.x-Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2}; P1={x:ctr.x+Math.cos(th)*run/2,y:ctr.y-Math.sin(th)*run/2};
       const bend=(Math.random()*0.5+0.3)*(W/2); C={x:ctr.x+n.x*(Math.random()<0.5?-bend:bend), y:ctr.y+n.y*(Math.random()<0.5?-bend:bend)}}
     const comet=document.createElement('div'); comet.className='comet';
+    // Anchor each comet at the center of the viewport; we set left/top 50% and then translate via transform
+    comet.style.left = '50%';
+    comet.style.top  = '50%';
     const stk=document.createElement('div'); stk.className='cometStack';
     const top=document.createElement('div'); top.className='top';
-    if(idx===1){top.innerHTML=''} else if(idx===5){top.innerHTML='🌹'} else if(idx===4){top.innerHTML='🌱'} else {top.innerHTML='🟠'}
-    const tail=document.createElement('div'); tail.innerHTML='☄️';
-    stk.appendChild(top); stk.appendChild(tail); comet.appendChild(stk); field.appendChild(comet);
+    /* Set asteroid icon sequence: 1st bare, 2nd sprout, 3rd orange, 4th sprout, 5th rose */
+    if(idx===1){
+      top.innerHTML='';
+    } else if(idx===2){
+      top.innerHTML='🌱';
+    } else if(idx===3){
+      top.innerHTML='🟠';
+    } else if(idx===4){
+      top.innerHTML='🌱';
+    } else if(idx===5){
+      top.innerHTML='🌹';
+    }
+    const tail=document.createElement('div'); tail.className='tail';
+    stk.appendChild(top);
+    stk.appendChild(tail);
+    comet.appendChild(stk);
+    field.appendChild(comet);
     let t0=null; function lerp(a,b,t){return a+(b-a)*t}
     function draw(now){ if(!t0)t0=now; const u=Math.min(1,(now-t0)/(dur*1000)); let x,y;
       if(C){const one=1-u; x=one*one*P0.x + 2*one*u*C.x + u*u*P1.x; y=one*one*P0.y + 2*one*u*C.y + u*u*P1.y;}
       else {x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u);}
       comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      if(u<1) requestAnimationFrame(draw); else comet.remove();
+      if(u<1){
+        requestAnimationFrame(draw);
+      } else {
+        /* After the asteroid completes its path, allow the smoke trail to linger and fade.
+           Remove the element after 6 seconds to match the smoke fade duration. */
+        setTimeout(()=>{ comet.remove(); }, 6000);
+      }
     }
     requestAnimationFrame(draw);
   }
