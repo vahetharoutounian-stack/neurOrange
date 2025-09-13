@@ -590,9 +590,13 @@ function startBoundedSpin(){
 
 /* comets: first in cycle plain, 4th 🌱, 5th 🌹 */
 (function comet(){
-  const field=$('cometField'); const cycle=5; let count=0;
+    const field=$('cometField');
+    // update cycle to 7 so that the rose emoji appears every 7th comet
+    const cycle=7;
+    let count=0;
   function spawn(){
-    count++; const idx=((count-1)%cycle)+1;
+    count++;
+    const idx=((count-1)%cycle)+1;
     const W = innerWidth, H = innerHeight;
     // Determine a random direction vector so comets traverse the viewport from one side to the opposite
     const angle = Math.random() * Math.PI * 2;
@@ -611,7 +615,10 @@ function startBoundedSpin(){
       else              kind = 'straight';
     }
     let C;
-    const dur = 4.8 + Math.random() * 3;
+    // compute a base duration (slowest speed) then divide by a speed factor between 1 and 3 so fastest is triple the speed
+    const baseDur = 4.8 + Math.random() * 3; // same range as before
+    const speedFactor = 1 + Math.random() * 2; // 1 (slow) to 3 (fast)
+    const dur = baseDur / speedFactor;
     if(kind === 'offcenter' || kind === 'curved'){
       // compute normal vector to direction
       const normal = { x: -dir.y, y: dir.x };
@@ -635,9 +642,9 @@ function startBoundedSpin(){
     comet.style.top  = '50%';
     const stk=document.createElement('div'); stk.className='cometStack';
     const top=document.createElement('div'); top.className='top';
-    /* Set comet icon sequence: the base rock (🪨) sits below the object on top.
-       Use a line break to vertically stack the top emoji above the rock. */
-    // build the comet head: stack the requested emoji above a base rock (🪨)
+    /* Set comet icon sequence based on a 7-item cycle.  The base rock (🪨) sits below the
+       object on top.  The pattern is: 1 bare (rock only), 2 sprout, 3 orange, 4 sprout,
+       5 orange, 6 sprout, 7 rose. */
     if(idx === 1){
       // bare comet (only the rock)
       top.innerHTML = '<div>🪨</div>';
@@ -651,24 +658,32 @@ function startBoundedSpin(){
       // sprout again on rock
       top.innerHTML = '<div>🌱</div><div>🪨</div>';
     } else if(idx === 5){
+      // orange again on rock
+      top.innerHTML = '<div>🍊</div><div>🪨</div>';
+    } else if(idx === 6){
+      // sprout again on rock
+      top.innerHTML = '<div>🌱</div><div>🪨</div>';
+    } else if(idx === 7){
       // rose on rock
       top.innerHTML = '<div>🌹</div><div>🪨</div>';
     }
     const tail=document.createElement('div'); tail.className='tail';
     stk.appendChild(top);
     stk.appendChild(tail);
-    // align the smoke trail with the direction of travel.  Rotate it so it points
-    // opposite to the comet's movement vector.  Append an additional skew as defined
-    // in CSS to maintain the tapered look.
-    const angleDeg = Math.atan2(dir.y, dir.x) * 180 / Math.PI;
-    tail.style.transform = `rotate(${angleDeg}deg) skewX(-20deg)`;
     comet.appendChild(stk);
     field.appendChild(comet);
+    // assign a random rotation speed for the comet stack.  The spinRate defines the
+    // total degrees of rotation over the course of the comet's lifetime.  A value
+    // between -360 and 360 yields up to one full rotation in either direction.
+    const spinRate = (Math.random() - 0.5) * 720; // -360..360 degrees across the entire travel
     let t0=null; function lerp(a,b,t){return a+(b-a)*t}
     function draw(now){ if(!t0)t0=now; const u=Math.min(1,(now-t0)/(dur*1000)); let x,y;
       if(C){const one=1-u; x=one*one*P0.x + 2*one*u*C.x + u*u*P1.x; y=one*one*P0.y + 2*one*u*C.y + u*u*P1.y;}
       else {x=lerp(P0.x,P1.x,u); y=lerp(P0.y,P1.y,u);}
       comet.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      // apply rotation to the entire comet stack based on the spin rate and progress
+      const rot = spinRate * u;
+      stk.style.transform = `rotate(${rot}deg)`;
       // simple collision detection against emoji rings: if comet comes near the ring radii, end early
       if(window.emojiRadii){
         const dist = Math.hypot(x, y);
