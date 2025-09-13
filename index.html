@@ -492,7 +492,12 @@
   <video id="introVideo" autoplay loop muted playsinline>
     <!-- Play the local front screen placeholder video located in the project root.  This
          video loops silently during the splash screen. -->
-    <source src="front_screen_placeholer.mp4" type="video/mp4" />
+    <!-- Use the project root's front screen placeholder video.  Ensure the file exists
+         at the root as 'front_screen_placeholder.mp4'.  If it is missing, please add
+         the video to the root directory. -->
+    <!-- Try to load the root video first; if it does not exist, fall back to the hosted placeholder video -->
+    <source src="front_screen_placeholder.mp4" type="video/mp4" />
+    <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
   </video>
   <div class="intro-stack">
     <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
