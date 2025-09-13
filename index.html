@@ -286,7 +286,9 @@
     position:fixed;
     /* Position the dock above the bottom navigation.  We offset it by roughly the
        nav height (about 60px) plus safe-area so it doesn't overlap the nav. */
-    bottom:calc(env(safe-area-inset-bottom) + 90px);
+    /* Increase the bottom offset so the dock sits comfortably above the color library button */
+    /* Move the dock further up so there is generous space above the bottom navigation */
+    bottom:calc(env(safe-area-inset-bottom) + 130px);
     left:14px;
     display:flex;
     align-items:center;
@@ -483,7 +485,8 @@
     <div id="bgLayer">
       <!-- background video -->
       <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
-        <source src="assets/placeholder.mp4" type="video/mp4" />
+        <!-- Use the remote placeholder video so the background animation plays correctly -->
+        <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
       </video>
       <div class="fogWrap"><div class="fog"></div></div>
     </div>
@@ -572,10 +575,11 @@
     </div>
   </div>
 
-  <audio id="aud_sparkle" preload="metadata" playsinline src="tracks/sparkle.mp3" type="audio/mpeg"></audio>
-  <audio id="aud_orange"  preload="metadata" playsinline src="tracks/orange.mp3" type="audio/mpeg"></audio>
-  <audio id="aud_autumn"  preload="metadata" playsinline src="tracks/autumn.mp3" type="audio/mpeg"></audio>
-  <audio id="aud_storm"   preload="metadata" playsinline src="tracks/storm.mp3" type="audio/mpeg"></audio>
+  <!-- Pull audio tracks from the live site; local /tracks folder is unavailable -->
+  <audio id="aud_sparkle" preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/sparkle.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_orange"  preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/orange.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_autumn"  preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/autumn.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_storm"   preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/storm.mp3" type="audio/mpeg"></audio>
 </div>
 
 <script>
@@ -680,7 +684,9 @@ function buildMidNodes(){
   const mid=$('midRing'); mid.innerHTML='';
   for(let i=1;i<=6;i++){
     const n=document.createElement('div'); n.className='mnode withCloud';
-    const img=new Image(); img.alt='Painting '+i; img.src=`assets/paintings/${i}.jpg`;
+    const img=new Image(); img.alt='Painting '+i;
+    // Use hosted images for the mid-ring paintings to ensure artwork displays correctly.
+    img.src=`https://vahetharoutounian-stack.github.io/neurOrange/assets/paintings/${i}.jpg`;
     img.onerror=()=>{ n.style.background='#222'; };
     n.addEventListener('click', ()=> showQuoteThenGo(toGallery(i)), {passive:true});
     n.appendChild(img); mid.appendChild(n);
@@ -915,16 +921,15 @@ layoutAll();
         dockEl.classList.add('collapsed');
       }
 
-      // autoplay the storm track once audio is unlocked and the dock is visible
+      // Autoplay only the sparkle track once audio is unlocked and the dock is visible.
       try{
         if(window.adToggleTrack){
-          // Start the storm track; it will become active and show its volume slider
-          window.adToggleTrack('storm');
-          // Mute the melodic tracks (sparkle, orange, autumn) and update their saved volumes and sliders
-          ['sparkle','orange','autumn'].forEach(name=>{
+          // Start the sparkle track; it will become active and show its volume slider
+          window.adToggleTrack('sparkle');
+          // Mute and deselect the other tracks (orange, autumn, storm) so they do not play
+          ['orange','autumn','storm'].forEach(name=>{
             // ensure the track is not selected/active
             if(window.adEnsureInactive) window.adEnsureInactive(name);
-            // Set volume to 0 and reset current time to guarantee mute
             const aud=document.getElementById('aud_'+name);
             if(aud){
               aud.pause();
@@ -935,7 +940,7 @@ layoutAll();
             try{ localStorage.setItem('advol_'+name, '0'); }catch(_){/* storage may fail in some environments */}
             // update the corresponding slider to reflect muted state
             const volEl=document.querySelector(`#audioDock .ad-vol[data-for="${name}"] input`);
-            if(volEl) volEl.value=0;
+            if(volEl) volEl.value = 0;
           });
         }
       }catch(e){/* ignore */}
