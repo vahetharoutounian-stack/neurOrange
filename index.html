@@ -203,7 +203,8 @@
   }
   .cometStack .top{
     /* Reduce the comet head size so asteroids feel smaller */
-    font-size:clamp(22px,4.2vw,38px);
+    /* Shrink comet heads by ~25% */
+    font-size:clamp(16px,3.2vw,28px);
     margin-right:6px; /* horizontal gap between head and tail */
     display:flex;
     flex-direction:column;
@@ -215,8 +216,9 @@
   }
   .cometStack .tail{
     /* create a narrower, tapered smoke trail positioned behind the comet head */
-    width:180px;
-    height:50px;
+    /* Shrink the smoke trail dimensions accordingly (25% smaller) */
+    width:135px;
+    height:38px;
     margin-left:10px;
     border-radius:25px;
     /* vivid orange smoke that tapers to transparency */
@@ -286,11 +288,12 @@
     display:flex;
     align-items:center;
     padding:8px 10px;
-    /* subtle dark backdrop with blur and border to separate from nav */
-    background:rgba(0,0,0,.4);
-    backdrop-filter:blur(10px);
+    /* Solid orange backdrop for the dock; remove blur so the color is fully visible */
+    background:var(--dock);
+    backdrop-filter:none;
     border-radius:30px;
-    border:1px solid var(--ring);
+    /* Use the dock color for the border to reinforce the pill */
+    border:1px solid var(--dock);
     box-shadow:0 6px 14px rgba(0,0,0,.45);
     z-index:10050;
   }
@@ -353,7 +356,8 @@
     width:40px;
     height:40px;
     border-radius:50%;
-    background:#fff;
+    /* Give track buttons a warm bergamot fill by default */
+    background:var(--heart);
     color:var(--dock);
     font-size:24px;
     display:flex;
@@ -805,8 +809,12 @@ function startBoundedSpin(){
     stk.appendChild(tail);
     comet.appendChild(stk);
     field.appendChild(comet);
-    // assign a random rotation speed (degrees per second) and track rotation state
-    const spinRate = (10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1);
+    // Place the rose comet under all content for an unobtrusive path
+    if(idx === 7){
+      comet.style.zIndex = '1';
+    }
+    // assign a random rotation speed (degrees per second).  The rose comet (7th) should not rotate.
+    const spinRate = (idx === 7) ? 0 : ((10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1));
     let t0 = null;
     let lastTime = null;
     let rotSum = 0;
@@ -819,17 +827,22 @@ function startBoundedSpin(){
       const elapsed = (now - t0) / 1000;
       // normalized progress (0..1)
       const u = Math.min(1, elapsed / dur);
-      // warp the progress so comets quickly fly in, ease through the center, then gently fling out
-      // Using lower exponents accelerates the early portion and smooths the departure.
+      // warp the progress so comets quickly fly in, ease through the center, then gently fling out.
+      // The rose comet travels at a constant pace for a graceful motion.
       let s;
-      if(u < 0.5){
-        const frac = u / 0.5;
-        // accelerate early (power < 1) to fly in faster
-        s = 0.5 * Math.pow(frac, 0.4);
+      if(idx === 7){
+        // constant linear progress for the rose comet
+        s = u;
       } else {
-        const frac = (u - 0.5) / 0.5;
-        // ease out smoothly with a moderate exponent
-        s = 0.5 + 0.5 * Math.pow(frac, 0.5);
+        if(u < 0.5){
+          const frac = u / 0.5;
+          // accelerate early (power < 1) to fly in faster
+          s = 0.5 * Math.pow(frac, 0.4);
+        } else {
+          const frac = (u - 0.5) / 0.5;
+          // ease out smoothly with a moderate exponent
+          s = 0.5 + 0.5 * Math.pow(frac, 0.5);
+        }
       }
       // compute position along path using warped progress s
       let x, y;
@@ -938,7 +951,15 @@ layoutAll();
       btn.textContent='🌱';
     }
   }
-  function setMainGlyph(){ const main=document.getElementById('adMain'); if(anyPlaying()) main.textContent='🟠⏸'; else main.textContent='🟠▶'; }
+  function setMainGlyph(){
+    const main=document.getElementById('adMain');
+    // Only show play/pause glyphs without the orange emoji
+    if(anyPlaying()){
+      main.textContent = '⏸';
+    } else {
+      main.textContent = '▶';
+    }
+  }
   // restore stored volumes
   names.forEach(name=>{
     const a=audSel(name);
@@ -1015,12 +1036,27 @@ layoutAll();
       if(vol) vol.style.display='none';
     } else {
       if(TRACKS[name].group==='melodic') stopOtherMelodic();
-      a.loop=true;
+      a.loop = true;
+      // Ensure the audio volume reflects the slider value before playing
+      if(vol){
+        const inp = vol.querySelector('input');
+        if(inp){
+          const val = parseFloat(inp.value);
+          if(!isNaN(val)) a.volume = val;
+        }
+      }
       a.play().catch(()=>{ showToast(`Couldn't load ${name}.mp3. Check /tracks/.`); });
       ACTIVE.add(name);
       btn.classList.add('active');
       setBtnGlyph(btn,name,true);
-      if(vol) vol.style.display='block';
+      if(vol){
+        // Show and initialize the slider with current volume
+        vol.style.display='block';
+        const inp = vol.querySelector('input');
+        if(inp){
+          inp.value = a.volume;
+        }
+      }
     }
     setMainGlyph();
   }
@@ -1042,9 +1078,11 @@ layoutAll();
       pauseAll();
     } else {
       if(ACTIVE.size>0){
+        // If there are selected tracks but none playing, resume them
         resumeAll();
       } else {
-        toggleTrack('storm');
+        // Default to playing the sparkle track instead of storm
+        toggleTrack('sparkle');
       }
     }
     setMainGlyph();
