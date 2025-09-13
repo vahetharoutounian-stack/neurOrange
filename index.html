@@ -178,11 +178,26 @@
     display:grid; place-items:center;
   }
 
-  /* 🔇 Audio player UI is intentionally INVISIBLE */
-  .audio-ui{ display:none !important; }
+  /* Audio player controls container — visible so users can adjust volume or stop */
+  .audio-ui{
+    /* Position the controls just above the bottom nav */
+    position:fixed;
+    bottom:calc(env(safe-area-inset-bottom) + 60px);
+    left:12px;
+    z-index:9;
+    display:flex;
+    gap:8px;
+    background:rgba(0,0,0,0.25);
+    padding:6px;
+    border-radius:8px;
+    backdrop-filter:blur(4px);
+  }
+  .audio-ui audio{
+    width:130px;
+  }
 
-  /* Hide the central question bubble */
-  #question{ display:none !important; }
+  /* Restore the central question bubble */
+  /* The bubble prompts the user with "What are you feeling?" and remains centered */
 
   /* Asteroid (comet) styling with orange rainbow smoke trail */
   .comet{ position:absolute; pointer-events:none; z-index:10; }
@@ -306,19 +321,19 @@
 
 <!-- 🔈 Hidden audio engine (no visible controls) -->
 <div class="audio-ui" aria-hidden="true">
-  <audio id="a_sparkle" loop preload="metadata" playsinline>
+<audio id="a_sparkle" loop preload="metadata" playsinline controls>
     <source src="tracks/sparkle.mp3" type="audio/mpeg" />
     <source src="tracks/sparkle.m4a" type="audio/mp4" />
   </audio>
-  <audio id="a_orange" loop preload="metadata" playsinline>
+  <audio id="a_orange" loop preload="metadata" playsinline controls>
     <source src="tracks/orange.mp3" type="audio/mpeg" />
     <source src="tracks/orange.m4a" type="audio/mp4" />
   </audio>
-  <audio id="a_autumn" loop preload="metadata" playsinline>
+  <audio id="a_autumn" loop preload="metadata" playsinline controls>
     <source src="tracks/autumn.mp3" type="audio/mpeg" />
     <source src="tracks/autumn.m4a" type="audio/mp4" />
   </audio>
-  <audio id="a_storm" loop preload="metadata" playsinline>
+  <audio id="a_storm" loop preload="metadata" playsinline controls>
     <source src="tracks/storm.mp3" type="audio/mpeg" />
     <source src="tracks/storm.m4a" type="audio/mp4" />
   </audio>
@@ -496,17 +511,18 @@ function startBoundedSpin(){
     comet.style.top  = '50%';
     const stk=document.createElement('div'); stk.className='cometStack';
     const top=document.createElement('div'); top.className='top';
-    /* Set asteroid icon sequence: 1st bare, 2nd sprout, 3rd orange, 4th sprout, 5th rose */
+    /* Set asteroid icon sequence: show the rock itself (🪨) and optionally a sprout/orange/rose on top.
+       The first in the cycle is just the rock; second and fourth add a sprout; third adds an orange; fifth adds a rose. */
     if(idx===1){
-      top.innerHTML='';
+      top.innerHTML='🪨';
     } else if(idx===2){
-      top.innerHTML='🌱';
+      top.innerHTML='🪨🌱';
     } else if(idx===3){
-      top.innerHTML='🟠';
+      top.innerHTML='🪨🍊';
     } else if(idx===4){
-      top.innerHTML='🌱';
+      top.innerHTML='🪨🌱';
     } else if(idx===5){
-      top.innerHTML='🌹';
+      top.innerHTML='🪨🌹';
     }
     const tail=document.createElement('div'); tail.className='tail';
     stk.appendChild(top);
