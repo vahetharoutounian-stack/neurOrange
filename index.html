@@ -65,6 +65,26 @@
   }
   #startOrange:active{transform:scale(.98)}
 
+  /* A large black circle overlay that shrinks upon tapping the orange.  It
+     starts at full size and scales down to zero over the fade duration. */
+  #introCircle{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%) scale(1);
+    width:200vmax;
+    height:200vmax;
+    border-radius:50%;
+    background:#000;
+    /* Start hidden; show on tap then shrink away.  Opacity transitions along with scale. */
+    display:none;
+    opacity:1;
+    /* animate the scale and fade down on tap using a transition matching the intro fade */
+    transition:transform 2250ms ease, opacity 2250ms ease;
+    pointer-events:none;
+    z-index:0;
+  }
+
   /* Add a pulsing glowing circle behind the neurOrange emoji.  The ::before pseudo-element
      sits behind the emoji and animates in size and opacity to create a gentle pulse.
      Use Hermes orange hues for the glow. */
@@ -107,8 +127,9 @@
 
   #brandBar{position:absolute; left:0; right:0; top:10px; display:flex; justify-content:center; z-index:6; filter:drop-shadow(var(--glow))}
   #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500;
-    /* add a thin black stroke around the text to improve contrast */
-    -webkit-text-stroke:0.8px #000;
+    /* add a thin black stroke around the text to improve contrast.  Increase stroke width
+       slightly to create a clear border on the letters. */
+    -webkit-text-stroke:1.2px #000;
     text-shadow:0 0 2px rgba(0,0,0,.85);
   }
 
@@ -307,7 +328,9 @@
     height:100%;
     pointer-events:none;
     overflow:visible;
-    z-index:2;
+    /* Position the rose field beneath all color rings.  A lower z-index ensures
+       rose comets glide underneath the first ring but above the background. */
+    z-index:1;
   }
   #interstitial.show{ opacity:1; pointer-events:auto; }
   #interstitialText{
@@ -343,7 +366,9 @@
     /* Move the dock further up so there is generous space above the bottom navigation */
     /* Lower the dock closer to the bottom navigation.  Offset it by about 100px plus
        safe-area so there is some space above the color library button. */
-    bottom:calc(env(safe-area-inset-bottom) + 100px);
+    /* Lower the audio dock to sit just above the bottom navigation.  The offset is
+       reduced so the dock hovers closely above the color library button. */
+    bottom:calc(env(safe-area-inset-bottom) + 68px);
     left:14px;
     display:flex;
     align-items:center;
@@ -538,6 +563,11 @@
     <source src="front_screen_placeholder.mp4" type="video/mp4" />
     <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
   </video>
+  <!-- Black circle overlay that shrinks away when the orange is tapped.  This circle
+       begins large and covers the splash screen.  On tap of the orange, it
+       animates its scale down to zero over the same duration as the fade to
+       provide a focused transition effect. -->
+  <div id="introCircle"></div>
   <div class="intro-stack">
     <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
     <div class="intro-title">neurOrange</div>
@@ -978,6 +1008,23 @@ layoutAll();
 (function(){
   const orange=$('startOrange');
   orange.addEventListener('click', async ()=>{
+    // Display the black circle overlay and animate it shrinking away.  The circle
+    // starts hidden; on tap we show it, then on the next frame we scale it to zero
+    // and fade it out to coincide with the intro fade.
+    {
+      const circle = document.getElementById('introCircle');
+      if(circle){
+        circle.style.display = 'block';
+        // ensure the circle is at full scale and fully opaque to start
+        circle.style.transform = 'translate(-50%,-50%) scale(1)';
+        circle.style.opacity = '1';
+        // Use requestAnimationFrame to allow the browser to process the display change
+        requestAnimationFrame(() => {
+          circle.style.transform = 'translate(-50%,-50%) scale(0)';
+          circle.style.opacity = '0';
+        });
+      }
+    }
     const intro=$('intro');
     // start fading out the intro overlay
     intro.classList.add('hidden');
