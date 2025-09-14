@@ -41,17 +41,8 @@
 
   /* === splash: press the orange to start === */
   #intro{
-    position:fixed;
-    inset:0;
-    /* Remove the opaque black background so the splash video is visible immediately.
-       Instead of a solid black fill, allow the underlying video to show through.
-       This eliminates the brief black pause on load. */
-    background:transparent;
-    display:grid;
-    place-items:center;
-    z-index:9999;
-    opacity:1;
-    pointer-events:auto;
+    position:fixed; inset:0; background:#000; display:grid; place-items:center;
+    z-index:9999; opacity:1; pointer-events:auto;
     /* extend the fade duration slightly longer to create a smoother transition */
     transition:opacity 2250ms ease;
   }
@@ -61,53 +52,8 @@
     font-size:clamp(110px,30vw,240px); line-height:1; user-select:none; cursor:pointer;
     filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25));
     transition:transform .12s ease;
-    position:relative;
   }
   #startOrange:active{transform:scale(.98)}
-
-  /* A large black circle overlay that shrinks upon tapping the orange.  It
-     starts at full size and scales down to zero over the fade duration. */
-  #introCircle{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%) scale(1);
-    width:200vmax;
-    height:200vmax;
-    border-radius:50%;
-    background:#000;
-    /* Start hidden; show on tap then shrink away.  Opacity transitions along with scale. */
-    display:none;
-    opacity:1;
-    /* animate the scale and fade down on tap using a transition matching the intro fade */
-    transition:transform 2250ms ease, opacity 2250ms ease;
-    pointer-events:none;
-    z-index:0;
-  }
-
-  /* Add a pulsing glowing circle behind the neurOrange emoji.  The ::before pseudo-element
-     sits behind the emoji and animates in size and opacity to create a gentle pulse.
-     Use Hermes orange hues for the glow. */
-  #startOrange::before{
-    content:"";
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    width:160%;
-    height:160%;
-    border-radius:50%;
-    /* radial gradient for soft orange glow */
-    background:radial-gradient(circle, rgba(255,102,0,0.55) 0%, rgba(255,102,0,0.25) 40%, rgba(255,102,0,0) 80%);
-    filter:blur(22px);
-    animation:orangePulse 3s ease-in-out infinite;
-    pointer-events:none;
-    z-index:-1;
-  }
-  @keyframes orangePulse{
-    0%,100%{transform:translate(-50%,-50%) scale(0.85); opacity:0.8;}
-    50%{transform:translate(-50%,-50%) scale(1.15); opacity:1;}
-  }
   .intro-title{
     font-weight:900; letter-spacing:.14em; user-select:none;
     font-size:clamp(18px,6.2vw,44px);
@@ -126,12 +72,7 @@
   #canvas{position:relative; width:100%; height:100%; overflow:hidden; background:#000}
 
   #brandBar{position:absolute; left:0; right:0; top:10px; display:flex; justify-content:center; z-index:6; filter:drop-shadow(var(--glow))}
-  #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500;
-    /* add a thin black stroke around the text to improve contrast.  Increase stroke width
-       slightly to create a clear border on the letters. */
-    -webkit-text-stroke:1.2px #000;
-    text-shadow:0 0 2px rgba(0,0,0,.85);
-  }
+  #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500}
 
   #bgLayer{position:absolute; inset:0; z-index:1}
   /* keep hidden until ready */
@@ -283,17 +224,16 @@
     height:38px;
     margin-left:10px;
     border-radius:25px;
-    /* orange fog trail using a radial gradient that fades out gradually.  This
-       gives the comets a lingering orange mist rather than a simple linear trail. */
-    background:radial-gradient(ellipse at 15% 50%,
-      rgba(255,165,0,0.75) 0%,
-      rgba(255,150,0,0.45) 35%,
-      rgba(255,130,0,0.25) 65%,
-      rgba(255,110,0,0) 100%);
-    filter:blur(22px) saturate(140%);
+    /* vivid orange smoke that tapers to transparency */
+    background:linear-gradient(to right,
+      rgba(255,165,0,0.95) 0%,
+      rgba(255,140,0,0.72) 25%,
+      rgba(255,102,0,0.5) 55%,
+      rgba(255,80,0,0) 100%);
+    filter:blur(18px);
     opacity:0.9;
-    /* stronger glow to make the smoke visible on dark background */
-    box-shadow:0 0 20px rgba(255,140,0,.5), 0 0 36px rgba(255,102,0,.35);
+    /* strong glow to make the smoke visible on dark background */
+    box-shadow:0 0 16px var(--pure), 0 0 30px var(--nick);
     /* subtle skew for directionality */
     transform:skewX(-18deg);
     animation:smokeFade 6s linear forwards;
@@ -328,9 +268,7 @@
     height:100%;
     pointer-events:none;
     overflow:visible;
-    /* Position the rose field beneath all color rings.  A lower z-index ensures
-       rose comets glide underneath the first ring but above the background. */
-    z-index:1;
+    z-index:2;
   }
   #interstitial.show{ opacity:1; pointer-events:auto; }
   #interstitialText{
@@ -366,9 +304,7 @@
     /* Move the dock further up so there is generous space above the bottom navigation */
     /* Lower the dock closer to the bottom navigation.  Offset it by about 100px plus
        safe-area so there is some space above the color library button. */
-    /* Lower the audio dock to sit just above the bottom navigation.  The offset is
-       reduced so the dock hovers closely above the color library button. */
-    bottom:calc(env(safe-area-inset-bottom) + 68px);
+    bottom:calc(env(safe-area-inset-bottom) + 100px);
     left:14px;
     display:flex;
     align-items:center;
@@ -553,7 +489,7 @@
 <!-- intro -->
 <div id="intro">
   <!-- Ambient video that plays in the splash screen.  It loops and is muted to comply with browser policies. -->
-  <video id="introVideo" autoplay loop muted playsinline preload="auto">
+  <video id="introVideo" autoplay loop muted playsinline>
     <!-- Play the local front screen placeholder video located in the project root.  This
          video loops silently during the splash screen. -->
     <!-- Use the project root's front screen placeholder video.  Ensure the file exists
@@ -563,11 +499,6 @@
     <source src="front_screen_placeholder.mp4" type="video/mp4" />
     <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
   </video>
-  <!-- Black circle overlay that shrinks away when the orange is tapped.  This circle
-       begins large and covers the splash screen.  On tap of the orange, it
-       animates its scale down to zero over the same duration as the fade to
-       provide a focused transition effect. -->
-  <div id="introCircle"></div>
   <div class="intro-stack">
     <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
     <div class="intro-title">neurOrange</div>
@@ -851,10 +782,8 @@ function startBoundedSpin(){
     // is layered behind the color ring via a lower z-index.  If it doesn't exist,
     // fall back to the main comet field.
     const roseField=$('roseField');
-    // update cycle to 10 so that the rose emoji appears every 10th comet.  The pattern is:
-    // 1 bare rock, 2 sprout, 3 orange, 4 sprout, 5 orange, 6 sprout, 7 orange, 8 sprout,
-    // 9 fire, and 10 rose.  This spreads out the special emojis and makes the rose less frequent.
-    const cycle=10;
+    // update cycle to 7 so that the rose emoji appears every 7th comet and the 6th is a fire emoji
+    const cycle=7;
     let count=0;
   function spawn(){
     count++;
@@ -904,37 +833,43 @@ function startBoundedSpin(){
     comet.style.top  = '50%';
     const stk=document.createElement('div'); stk.className='cometStack';
     const top=document.createElement('div'); top.className='top';
-    /* Set comet icon sequence based on a 10-item cycle.  The base rock (🪨) sits below the
-       object on top.  The pattern is: 1 bare rock, 2 sprout, 3 orange, 4 sprout,
-       5 orange, 6 sprout, 7 orange, 8 sprout, 9 fire, and 10 rose. */
+    /* Set comet icon sequence based on a 7-item cycle.  The base rock (🪨) sits below the
+       object on top.  The pattern is: 1 bare (rock only), 2 sprout, 3 orange, 4 sprout,
+       5 orange, 6 fire, 7 rose. */
     if(idx === 1){
       // bare comet (only the rock)
       top.innerHTML = '<div>🪨</div>';
-    } else if(idx === 2 || idx === 4 || idx === 6 || idx === 8){
-      // sprout on rock (occurs on 2, 4, 6, 8)
+    } else if(idx === 2){
+      // sprout on rock
       top.innerHTML = '<div>🌱</div><div>🪨</div>';
-    } else if(idx === 3 || idx === 5 || idx === 7){
-      // orange on rock (occurs on 3, 5, 7)
+    } else if(idx === 3){
+      // orange on rock
       top.innerHTML = '<div>🍊</div><div>🪨</div>';
-    } else if(idx === 9){
-      // fire emoji on rock (9th comet)
+    } else if(idx === 4){
+      // sprout again on rock
+      top.innerHTML = '<div>🌱</div><div>🪨</div>';
+    } else if(idx === 5){
+      // orange again on rock
+      top.innerHTML = '<div>🍊</div><div>🪨</div>';
+    } else if(idx === 6){
+      // fire emoji on rock
       top.innerHTML = '<div>🔥</div><div>🪨</div>';
-    } else if(idx === 10){
-      // rose on rock (every 10th comet)
+    } else if(idx === 7){
+      // rose on rock
       top.innerHTML = '<div>🌹</div><div>🪨</div>';
     }
     const tail=document.createElement('div'); tail.className='tail';
     stk.appendChild(top);
     stk.appendChild(tail);
     comet.appendChild(stk);
-    // Append to the rose field when idx === 10; otherwise append to the main comet field.
-    if(idx === 10 && roseField){
+    // Append to the rose field when idx === 7; otherwise append to the main comet field.
+    if(idx === 7 && roseField){
       roseField.appendChild(comet);
     } else {
       field.appendChild(comet);
     }
-    // assign a random rotation speed (degrees per second).  The rose comet (10th) should not rotate.
-    const spinRate = (idx === 10) ? 0 : ((10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1));
+    // assign a random rotation speed (degrees per second).  The rose comet (7th) should not rotate.
+    const spinRate = (idx === 7) ? 0 : ((10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1));
     let t0 = null;
     let lastTime = null;
     let rotSum = 0;
@@ -950,7 +885,7 @@ function startBoundedSpin(){
       // warp the progress so comets quickly fly in, ease through the center, then gently fling out.
       // The rose comet travels at a constant pace for a graceful motion.
       let s;
-      if(idx === 10){
+      if(idx === 7){
         // constant linear progress for the rose comet
         s = u;
       } else {
@@ -1008,23 +943,6 @@ layoutAll();
 (function(){
   const orange=$('startOrange');
   orange.addEventListener('click', async ()=>{
-    // Display the black circle overlay and animate it shrinking away.  The circle
-    // starts hidden; on tap we show it, then on the next frame we scale it to zero
-    // and fade it out to coincide with the intro fade.
-    {
-      const circle = document.getElementById('introCircle');
-      if(circle){
-        circle.style.display = 'block';
-        // ensure the circle is at full scale and fully opaque to start
-        circle.style.transform = 'translate(-50%,-50%) scale(1)';
-        circle.style.opacity = '1';
-        // Use requestAnimationFrame to allow the browser to process the display change
-        requestAnimationFrame(() => {
-          circle.style.transform = 'translate(-50%,-50%) scale(0)';
-          circle.style.opacity = '0';
-        });
-      }
-    }
     const intro=$('intro');
     // start fading out the intro overlay
     intro.classList.add('hidden');
@@ -1053,30 +971,17 @@ layoutAll();
     try{
       if(window.adToggleTrack){
         window.adToggleTrack('sparkle');
-        // When toggling sparkle on load, immediately hide its volume popover since the dock
-        // starts collapsed.  The popover will appear when the user expands the dock.
-        {
-          const sVol = document.querySelector('#audioDock .ad-vol[data-for="sparkle"]');
-          if(sVol) sVol.style.display = 'none';
-        }
         ['orange','autumn','storm'].forEach(name=>{
-          // Deactivate and mute each non-sparkle track.  Use the exported ensureInactive helper
-          // to clear the ACTIVE set and hide the track's volume slider.
           if(window.adEnsureInactive) window.adEnsureInactive(name);
-          const aud = document.getElementById('aud_' + name);
+          const aud=document.getElementById('aud_'+name);
           if(aud){
             aud.pause();
             aud.currentTime = 0;
             aud.volume = 0;
           }
-          try{ localStorage.setItem('advol_' + name, '0'); }catch(_){ /* ignore storage errors */ }
-          // Also update the slider UI and ensure it is hidden
-          const volWrap = document.querySelector(`#audioDock .ad-vol[data-for="${name}"]`);
-          if(volWrap){
-            const inp = volWrap.querySelector('input');
-            if(inp) inp.value = 0;
-            volWrap.style.display = 'none';
-          }
+          try{ localStorage.setItem('advol_'+name, '0'); }catch(_){ /* ignore storage errors */ }
+          const volEl=document.querySelector(`#audioDock .ad-vol[data-for="${name}"] input`);
+          if(volEl) volEl.value = 0;
         });
       }
     }catch(e){}
@@ -1196,37 +1101,13 @@ layoutAll();
   }
   let unlocked=false;
   function unlockAudio(){
-    // Unlock audio playback on iOS by briefly playing each track while muted.  Without muting,
-    // the browser may leak a short burst of sound from all tracks before we can pause them.
-    // To avoid that audible blip, set the audio element to muted before playing and unmute
-    // after pausing.  Unlocking runs once on the first pointer interaction.
     if(unlocked) return;
-    unlocked = true;
-    names.forEach(name => {
-      const a = audSel(name);
+    unlocked=true;
+    names.forEach(name=>{
+      const a=audSel(name);
       if(!a) return;
-      // Temporarily mute the audio during unlock to suppress sound
-      const wasMuted = a.muted;
-      a.muted = true;
-      const p = a.play();
-      if(p && p.then){
-        p.then(() => {
-          a.pause();
-          a.currentTime = 0;
-          // Restore previous mute state after unlocking
-          a.muted = wasMuted;
-        }).catch(() => {
-          // In case of failure, still restore mute state
-          a.muted = wasMuted;
-        });
-      } else {
-        // If play() doesn't return a promise, pause immediately and restore mute state
-        try{
-          a.pause();
-          a.currentTime = 0;
-        }catch(_){}
-        a.muted = wasMuted;
-      }
+      const p=a.play();
+      if(p && p.then) p.then(()=>{ a.pause(); a.currentTime=0; }).catch(()=>{});
     });
   }
   window.addEventListener('pointerdown', unlockAudio, {once:true, passive:true});
@@ -1333,11 +1214,11 @@ layoutAll();
     if(expanded) toggleBtn.classList.add('pulse');
     else toggleBtn.classList.remove('pulse');
     names.forEach(name=>{
-      const vol = volSel(name);
+      const vol=volSel(name);
       if(!vol) return;
       if(expanded){
-        // Only show volume popovers for currently active tracks when expanded.
-        if(ACTIVE.has(name)){
+        // show storm volume as an affordance on expand; show active track volumes
+        if(name === 'storm' || ACTIVE.has(name)){
           vol.style.display = 'block';
         } else {
           vol.style.display = 'none';
