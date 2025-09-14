@@ -84,12 +84,13 @@
     background:#000;
     /* Start hidden; show on tap then shrink away.  Keep fully opaque during shrink. */
     display:none;
-    /* Do not set opacity here so the circle remains solid black throughout the animation */
-    /* Animate only the scale on tap using a transition matching the intro fade */
-    transition:transform 2250ms ease;
+    /* Animate both scale and opacity so the circle shrinks and fades away during the transition. */
+    opacity:1;
+    transition:transform 2250ms ease, opacity 2250ms ease;
     pointer-events:none;
-    /* Elevate the circle above the splash overlay but below interstitials. */
-    z-index:10002;
+    /* Position the circle behind the question prompt.  A lower z-index than the
+       question (which uses z-index:5) ensures the circle sits underneath the text. */
+    z-index:3;
   }
 
   /* Add a pulsing glowing circle behind the neurOrange emoji.  The ::before pseudo-element
@@ -714,28 +715,28 @@
     <button class="ad-btn" data-track="sparkle" aria-label="Sparkle" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="sparkle">
       <label>✨</label>
-      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Sparkle volume">
+      <input type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Sparkle volume">
     </div>
   </div>
   <div class="ad-wrap">
     <button class="ad-btn" data-track="orange" aria-label="Orange" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="orange">
       <label>🍊</label>
-      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Orange volume">
+      <input type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Orange volume">
     </div>
   </div>
   <div class="ad-wrap">
     <button class="ad-btn" data-track="autumn" aria-label="Autumn" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="autumn">
       <label>🍂</label>
-      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Autumn volume">
+      <input type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Autumn volume">
     </div>
   </div>
   <div class="ad-wrap">
     <button class="ad-btn" data-track="storm" aria-label="Storm" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="storm">
       <label>⛈️</label>
-      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Storm volume">
+      <input type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Storm volume">
     </div>
   </div>
 
@@ -1080,11 +1081,15 @@ layoutAll();
       const circle = document.getElementById('introCircle');
       if(circle){
         circle.style.display = 'block';
-        // ensure the circle is at full scale to start
+        // Ensure the circle starts fully opaque and at full scale
+        circle.style.opacity = '1';
         circle.style.transform = 'translate(-50%,-50%) scale(1)';
-        // Use requestAnimationFrame to allow the browser to process the display change
+        // Use requestAnimationFrame to allow the browser to process the display change,
+        // then shrink and fade the circle away.  Both transform and opacity
+        // transitions are defined in CSS.
         requestAnimationFrame(() => {
           circle.style.transform = 'translate(-50%,-50%) scale(0)';
+          circle.style.opacity = '0';
         });
       }
     }
@@ -1238,10 +1243,11 @@ layoutAll();
     const vol=volSel(name);
     if(!a||!vol) return;
     const stored=parseFloat(localStorage.getItem('advol_'+name));
-    if(!isNaN(stored)){
-      a.volume=stored;
-      const inp=vol.querySelector('input'); if(inp) inp.value=stored;
-    }
+    // Use 0.5 as the default volume when no previous value is stored.  This
+    // ensures that all tracks start at 50% volume by default.
+    const initVol = isNaN(stored) ? 0.5 : stored;
+    a.volume = initVol;
+    const inp=vol.querySelector('input'); if(inp) inp.value = initVol;
   });
   // volume slider events
   names.forEach(name=>{
