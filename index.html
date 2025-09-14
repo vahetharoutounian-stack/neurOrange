@@ -122,7 +122,13 @@
     font-weight:900; letter-spacing:.14em; user-select:none;
     font-size:clamp(18px,6.2vw,44px);
     color:var(--bergamot);
-    text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);
+    /* Provide a dark fog behind the introductory text in addition to the orange glow.
+       Layering a soft black shadow under the orange glow ensures legibility on
+       the splash video and creates a sense of depth. */
+    text-shadow:
+      0 0 4px rgba(0,0,0,0.7),
+      0 0 10px rgba(255,166,77,0.55),
+      0 0 22px rgba(255,165,0,0.35);
     animation:titlePulse 2.2s ease-in-out infinite;
     /* add a subtle black stroke to match the main neurOrange logo.  Use a thinner stroke for a refined look */
   }
@@ -138,9 +144,12 @@
 
   #brandBar{position:absolute; left:0; right:0; top:10px; display:flex; justify-content:center; z-index:6; filter:drop-shadow(var(--glow))}
   #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500;
-    /* add a thin black stroke around the text to improve contrast.  Use a thinner width
-       so the border remains subtle and refined. */
-    text-shadow:0 0 2px rgba(0,0,0,.85);
+    /* Surround the brand text with a dark fog.  Using multiple shadows creates a
+       gentle black halo that makes the orange letters stand out on any
+       background.  The halo stays subtle while providing necessary contrast. */
+    text-shadow:
+      0 0 4px rgba(0,0,0,0.65),
+      0 0 12px rgba(0,0,0,0.45);
   }
 
   #bgLayer{position:absolute; inset:0; z-index:1}
@@ -234,7 +243,11 @@
   #midSpin{animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--glow))}
   #midRing{position:absolute; inset:0}
   .mnode{position:absolute; top:50%; left:50%; border-radius:50%; transform:translate(-50%,-50%);
-         background:#111; overflow:hidden; border:1.5px solid #000; filter:drop-shadow(var(--glow));
+         background:#111; overflow:hidden; border:1.5px solid #000;
+         /* Apply both the existing dark glow and a subtle white fog around each
+            painting node.  The dual shadows enhance contrast and create a dreamy
+            aura behind the paintings. */
+         filter:drop-shadow(var(--glow)) drop-shadow(0 0 10px rgba(255,255,255,0.35));
          cursor:pointer}
   .mnode.withCloud::before{content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
@@ -262,7 +275,11 @@
     /* Darken and soften the ghost wedges further by increasing the blur radius
        of the drop-shadow.  This adds a stronger black fog behind each
        segment to enhance contrast. */
-    filter:drop-shadow(0 0 14px rgba(0,0,0,0.65));
+    /* Combine a dark fog with a subtle white fog to ensure the ghost wedges are
+       distinct from the background while retaining a spectral aura.  The
+       outer dark shadow deepens contrast, while the inner white shadow adds
+       luminosity. */
+    filter:drop-shadow(0 0 14px rgba(0,0,0,0.65)) drop-shadow(0 0 8px rgba(255,255,255,0.25));
   }
 
   /* bottom nav — tighter; Color Library stays one line */
@@ -1377,14 +1394,15 @@ layoutAll();
   document.getElementById('adMain').addEventListener('click', e=>{
     e.stopPropagation();
     if(anyPlaying()){
+      // Pause all currently playing tracks with one tap
       pauseAll();
     } else {
       if(ACTIVE.size>0){
         // If there are selected tracks but none playing, resume them
         resumeAll();
       } else {
-        // Default to playing the storm track when nothing is active
-        toggleTrack('storm');
+        // When no tracks are active, default to starting the sparkle track rather than storm
+        toggleTrack('sparkle');
       }
     }
     setMainGlyph();
