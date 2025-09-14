@@ -558,7 +558,8 @@
     left:50%;
     transform:translateX(-50%);
     display:none;
-    width:40px;
+    /* Expand the volume popover width so the horizontal slider fits comfortably. */
+    width:150px;
     padding:6px 4px;
     background:rgba(0,0,0,.55);
     backdrop-filter:blur(8px);
@@ -574,18 +575,21 @@
     margin-bottom:4px;
   }
   .ad-vol input[type='range']{
-    width:30px;
-    height:130px;
-    -webkit-appearance:slider-vertical;
-    writing-mode:bt-lr;
+    /* Use a horizontal range slider for broader browser support.  Removing
+       vertical-specific properties ensures the slider can be dragged in
+       Safari and other browsers. */
+    width:130px;
+    height:30px;
+    -webkit-appearance:none;
+    appearance:none;
     background:transparent;
     margin:0;
     padding:0;
     cursor:pointer;
   }
   .ad-vol input[type='range']::-webkit-slider-runnable-track{
-    width:6px;
-    height:130px;
+    width:130px;
+    height:6px;
     background:var(--dock);
     border-radius:3px;
   }
@@ -597,11 +601,13 @@
     background:#fff;
     border:none;
     box-shadow:0 1px 3px rgba(0,0,0,.4);
+    /* Position the thumb vertically centered on a 6px track.  Negative top
+       margin pulls the thumb upwards so it sits halfway over the track. */
     margin-top:-6px;
   }
   .ad-vol input[type='range']::-moz-range-track{
-    width:6px;
-    height:130px;
+    width:130px;
+    height:6px;
     background:var(--dock);
     border-radius:3px;
   }
@@ -1278,21 +1284,46 @@ layoutAll();
     const vol=volSel(name);
     if(!vol) return;
     const input=vol.querySelector('input');
-    input.addEventListener('input', ()=>{
-      const a=audSel(name);
-      const val=parseFloat(input.value);
-      // Update the audio volume and ensure the track is unmuted when adjusting the slider
-      a.volume = val;
-      a.muted = false;
-      localStorage.setItem('advol_'+name, val);
+    // When interacting with a volume slider, stop propagation so the click does not
+    // inadvertently toggle the audio dock.  Without this, dragging a slider can
+    // collapse the dock or trigger other controls because the event bubbles up.
+    // Prevent clicks and drags within the volume popover from bubbling up and
+    // toggling the dock or other controls.  Apply to both the slider input and
+    // its container to catch events on the thumb, track, or label.
+    ['pointerdown','mousedown','touchstart'].forEach(evt => {
+      input.addEventListener(evt, e => {
+        e.stopPropagation();
+      });
+      vol.addEventListener(evt, e => {
+        e.stopPropagation();
+      });
     });
-    input.addEventListener('change', ()=>{
-      const a=audSel(name);
-      const val=parseFloat(input.value);
-      // Update the audio volume and ensure the track is unmuted on change as well
-      a.volume = val;
-      a.muted = false;
-      localStorage.setItem('advol_'+name, val);
+    // Update the associated audio element's volume as the slider is dragged.  Also
+    // unmute the track whenever its volume changes and persist the new value to
+    // localStorage.  Use both `input` (fires continuously) and `change` (fires on
+    // release) to cover all browsers, including Safari.
+    input.addEventListener('input', () => {
+      const a = audSel(name);
+      const val = parseFloat(input.value);
+      if (a) {
+        a.volume = val;
+        // If the slider is at zero, mute the track entirely; otherwise unmute it.
+        a.muted = (val === 0);
+      }
+      try {
+        localStorage.setItem('advol_' + name, val);
+      } catch (_) {}
+    });
+    input.addEventListener('change', () => {
+      const a = audSel(name);
+      const val = parseFloat(input.value);
+      if (a) {
+        a.volume = val;
+        a.muted = (val === 0);
+      }
+      try {
+        localStorage.setItem('advol_' + name, val);
+      } catch (_) {}
     });
   });
   function showToast(msg){
