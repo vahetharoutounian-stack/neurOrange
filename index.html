@@ -267,10 +267,11 @@
   #midRing{position:absolute; inset:0}
   .mnode{position:absolute; top:50%; left:50%; border-radius:50%; transform:translate(-50%,-50%);
          background:#111; overflow:hidden; border:1.5px solid #000;
-         /* Apply both the existing dark glow and a subtle white fog around each
-            painting node.  The dual shadows enhance contrast and create a dreamy
-            aura behind the paintings. */
-         filter:drop-shadow(var(--glow)) drop-shadow(0 0 10px rgba(255,255,255,0.35));
+         /* Apply both the existing dark glow, a subtle white fog, and a deeper black fog
+            around each painting node.  The triple shadows enhance contrast and create
+            a dreamy aura behind the paintings while adding a dark halo to anchor
+            them against the swirling background. */
+         filter:drop-shadow(var(--glow)) drop-shadow(0 0 10px rgba(255,255,255,0.35)) drop-shadow(0 0 18px rgba(0,0,0,0.6));
          cursor:pointer}
   .mnode.withCloud::before{content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
@@ -554,12 +555,16 @@
   }
   .ad-vol{
     position:absolute;
-    bottom:54px;
+    /* Position the volume popover so it sits just above its associated track button.
+       Setting bottom to roughly the button height plus a small gap centers the
+       slider above the emoji without placing it too high. */
+    bottom:50px;
     left:50%;
     transform:translateX(-50%);
     display:none;
-    /* Expand the volume popover width so the horizontal slider fits comfortably. */
-    width:150px;
+    /* Narrower popover for vertical slider.  Keep enough width to display the emoji label
+       and 30px wide slider while maintaining comfortable padding. */
+    width:42px;
     padding:6px 4px;
     background:rgba(0,0,0,.55);
     backdrop-filter:blur(8px);
@@ -575,23 +580,25 @@
     margin-bottom:4px;
   }
   .ad-vol input[type='range']{
-    /* Use a horizontal range slider for broader browser support.  Removing
-       vertical-specific properties ensures the slider can be dragged in
-       Safari and other browsers. */
-    width:130px;
-    height:30px;
-    -webkit-appearance:none;
-    appearance:none;
+    /* Vertical range slider for per-track volume control.  Using slider-vertical
+       and writing-mode ensures Safari and other browsers display a vertical
+       slider with proper thumb movement. */
+    width:30px;
+    height:130px;
+    -webkit-appearance: slider-vertical;
+    appearance: none;
+    writing-mode: bt-lr;
     background:transparent;
     margin:0;
     padding:0;
     cursor:pointer;
   }
   .ad-vol input[type='range']::-webkit-slider-runnable-track{
-    width:130px;
-    height:6px;
+    width:6px;
+    height:130px;
     background:var(--dock);
     border-radius:3px;
+    margin-left:12px;
   }
   .ad-vol input[type='range']::-webkit-slider-thumb{
     -webkit-appearance:none;
@@ -601,13 +608,10 @@
     background:#fff;
     border:none;
     box-shadow:0 1px 3px rgba(0,0,0,.4);
-    /* Position the thumb vertically centered on a 6px track.  Negative top
-       margin pulls the thumb upwards so it sits halfway over the track. */
-    margin-top:-6px;
   }
   .ad-vol input[type='range']::-moz-range-track{
-    width:130px;
-    height:6px;
+    width:6px;
+    height:130px;
     background:var(--dock);
     border-radius:3px;
   }
