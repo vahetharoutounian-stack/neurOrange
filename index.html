@@ -206,6 +206,16 @@
     user-select:none;
     animation:breathe 7s ease-in-out infinite;
   }
+  /* When the orange is pressed and the scene transitions, fade and shrink the
+     central question bubble.  The `.vanish` class triggers an animation
+     that scales the bubble down and fades it out. */
+  #question.vanish{
+    animation:questionVanish 2200ms ease forwards;
+  }
+  @keyframes questionVanish{
+    from{ transform:translate(-50%,-50%) scale(1); opacity:1; }
+    to  { transform:translate(-50%,-50%) scale(0); opacity:0; }
+  }
   @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1.00)}50%{transform:translate(-50%,-50%) scale(1.02)}}
   #questionText{
     font-weight:900; font-style:italic; text-align:center;
@@ -1199,6 +1209,12 @@ layoutAll();
         el.classList.add('preGrow');
         requestAnimationFrame(()=> el.classList.add('grow'));
       });
+
+      // After the rings have started growing, fade and shrink the central question bubble.
+      const qEl = document.getElementById('question');
+      if(qEl){
+        qEl.classList.add('vanish');
+      }
 
     }, 2250); // match the intro fade duration (2.25s)
   }, {passive:true});
