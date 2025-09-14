@@ -1,2341 +1,1441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>neurOrange — Afterimage Orange Study</title>
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <style>
-    :root{
-      --bg:#0c0b0a;
-      --panel:#171615;
-      --ring:rgba(255,255,255,.14);
-      --ring2:rgba(255,255,255,.20);
-      --text:#fff;
-      --muted:rgba(255,255,255,.86);
-      --note:#f2d2b3;
-      --blue:#0A4BFF;
-      --cta:#ED6A00; /* Quinacridone Orange */
-      --cta2:#FFA500; /* Pure Orange */
-      --heart:#FFA64D; /* Bergamot heart */
-      --highlight:#FFA64D; /* Bergamot highlight */
-      --paper:#1e1c1a;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-    .wrap{max-width:620px;margin:0 auto;padding:18px}
-    section{display:none}
-    section.active{display:block}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#000000" />
+<title>neurOrange — Home (press-orange to start + quote fade)</title>
 
-    /* Shared UI */
-    .shell{background:var(--panel);border:1px solid var(--ring);border-radius:32px;padding:22px 22px 18px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
-    .eyebrow{letter-spacing:.22em;text-transform:uppercase;color:#d3d3d3;font-weight:900;text-align:center}
-    h1.title{font-size:48px;line-height:1.02;margin:6px 0 12px;text-align:center}
-    p.lede{margin:0 8px 16px;text-align:center;color:var(--muted);font-size:18px;line-height:1.5}
-    .panel{background:rgba(255,255,255,.04);border:1px solid var(--ring2);border-radius:20px;padding:14px;margin:12px 0}
-    .note{color:var(--note);font-size:13px;text-align:center}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 26px;border-radius:999px;border:1px solid rgba(0,0,0,.24);cursor:pointer;font-weight:800;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .06s ease, box-shadow .2s ease}
-    .btn:active{transform:translateY(1px)}
-    .btn.cta{background:
-      radial-gradient(120% 120% at 50% 0%,rgba(255,255,255,.14),transparent 50%),
-      linear-gradient(180deg,var(--cta2),var(--cta));
-      color:#fff; filter:drop-shadow(0 6px 16px rgba(237,106,0,.35)); border:1px solid rgba(0,0,0,.35)}
-    .btn.cta:hover{box-shadow:0 10px 22px rgba(237,106,0,.26)}
-    /* Neutral styling for the Start button on the test page */
-    #btnStartTest{
-      background:#4a4a4a!important;
-      color:#fff!important;
-      border:1px solid rgba(0,0,0,.5)!important;
-      filter:none!important;
-    }
-    #btnStartTest:hover{
-      box-shadow:0 4px 10px rgba(0,0,0,.3);
-    }
-    .footerNote{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
-    /* Blue phrase styling: matches the demo blue color but not clickable */
-    .bluephrase{color:var(--blue); text-decoration:none; cursor:default}
+<style>
+  :root{
+    --bergamot:#FFA64D;    /* Bergamot */
+    --pantone021:#FE5000;  /* Pantone 021 C */
+    --pure:#FFA500;        /* Pure orange */
+    --nick:#FF6600;        /* Nickelodeon */
+    --afterimage:#F9751F;  /* Afterimage Orange */
+    --saffron:#F4C430;     /* Saffron glow */
+    --gap-deg:3;
+    --inner-thick:34px;
+    --outer-thick-mult:2.2;
+    --emoji-font:18px;
+    --glow:0 0 10px #000, 0 0 18px #000;
+    /* audio dock theme tokens */
+    --dock:#FF6600;  /* Nickelodeon docking accent */
+    --heart:#FFA64D; /* Bergamot used for highlight circle */
+    --text:#ffffff; /* White text for buttons */
+    --ring:rgba(0,0,0,.35); /* subtle dark ring for outlines */
+    /* define spectral and firefox oranges for track buttons */
+    --spectral:var(--afterimage);  /* use afterimage orange as spectral orange */
+    --firefox:var(--pantone021);   /* use Pantone 021 C as firefox orange */
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0; min-height:100%; background:#000; color:#fff;
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
 
-    /* Glowing headline animation between primary and secondary oranges */
-    @keyframes pulseGlow{
-      0%{color:var(--cta);text-shadow:0 0 8px var(--cta)}
-      50%{color:var(--cta2);text-shadow:0 0 8px var(--cta2)}
-      100%{color:var(--cta);text-shadow:0 0 8px var(--cta)}
-    }
-    #headline.glow{animation:pulseGlow 2s infinite}
-    /* Brand eyebrow styling: keep original spacing but avoid uppercase transformation */
-    #brand{letter-spacing:.22em;font-weight:900;text-align:center;color:#d3d3d3;text-transform:none}
+  /* === black failsafe (in case video paints late) === */
+  #failsafe{position:fixed; inset:0; background:#000; z-index:100000; opacity:1; transition:opacity .25s ease}
 
-    /* Page 1 specifics */
-    .safetyt{font-weight:900;letter-spacing:.18em;color:#E8E0D8;text-align:center;margin-bottom:8px}
-    .bullet li{margin:6px 0}
-    #demoStage{position:relative;aspect-ratio:16/9;width:100%;border-radius:18px;margin:10px auto;background:var(--blue);border:1px solid var(--ring);overflow:hidden}
-    #demoStage .cross{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-    #demoStage .cross::before,#demoStage .cross::after{content:"";position:absolute;background:#111}
-    #demoStage .cross::before{width:1px;height:60%}
-    #demoStage .cross::after{height:1px;width:60%}
-    .above{color:#FFB36B;text-align:center;font-weight:900;margin-top:10px}
-    .how{margin-top:8px;text-align:center;font-size:14px;line-height:1.5;color:#f0e7dd}
-    .how a{color:var(--blue);text-decoration:underline}
-    .startWrap{display:flex;justify-content:center;margin-top:8px}
+  /* === splash: press the orange to start === */
+  #intro{
+    position:fixed;
+    inset:0;
+    /* Remove the opaque black background so the splash video is visible immediately.
+       Instead of a solid black fill, allow the underlying video to show through.
+       This eliminates the brief black pause on load. */
+    background:transparent;
+    display:grid;
+    place-items:center;
+    z-index:9999;
+    opacity:1;
+    pointer-events:auto;
+    /* extend the fade duration slightly longer to create a smoother transition */
+    transition:opacity 2250ms ease;
+  }
+  #intro.hidden{opacity:0; pointer-events:none}
+  .intro-stack{display:grid; justify-items:center; gap:1rem}
+  #startOrange{
+    font-size:clamp(110px,30vw,240px); line-height:1; user-select:none; cursor:pointer;
+    filter:drop-shadow(0 0 26px rgba(0,0,0,.65)) drop-shadow(0 0 50px rgba(255,165,0,.25));
+    transition:transform .12s ease;
+    position:relative;
+  }
+  #startOrange:active{transform:scale(.98)}
 
-    /* Page 2/3 (trimmed styles kept) */
-    .row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-    .pill{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;border:1px solid var(--ring);cursor:pointer;user-select:none}
-    /* Highlight active pills with Bergamot */
-    .pill.active{outline:2px solid var(--highlight);outline-offset:0}
-    .topbar,.bottomBar{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
-    .bottomBar{margin-top:14px}
-    .topbar .btn,.bottomBar .btn{min-width:88px}
-    #btnBack,#btnBackBottom{background:#0A4BFF;color:#fff}
-    #btnNext,#btnNextBottom{background:#333;color:#fff}
+  /* A large black circle overlay that shrinks upon tapping the orange.  It
+     starts at full size and scales down to zero over the fade duration. */
+  #introCircle{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%) scale(1);
+    /* Reduce the circle size so it sits just behind the "What are you feeling?" prompt.
+       Using vmin ties the dimension to the smaller viewport side; this keeps the circle
+       relatively small while still encompassing the center text. */
+    width:50vmin;
+    height:50vmin;
+    border-radius:50%;
+    background:#000;
+    /* Start hidden; show on tap then shrink away.  Keep fully opaque during shrink. */
+    display:none;
+    /* Do not set opacity here so the circle remains solid black throughout the animation */
+    /* Animate only the scale on tap using a transition matching the intro fade */
+    transition:transform 2250ms ease;
+    pointer-events:none;
+    /* Elevate the circle above the splash overlay but below interstitials. */
+    z-index:10002;
+  }
 
-    /* Custom title for Step 2.  This two‑line title fits neatly between the Back and
-       Next buttons.  It uses a small font size, uppercase spacing and centres
-       the text on each line.  The spans stack vertically via flexbox. */
-    .topTitle{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      flex:1;
-      text-align:center;
-      font-size:14px;
-      font-weight:900;
-      line-height:1.1;
-      letter-spacing:.18em;
-      text-transform:uppercase;
-      color:var(--muted);
-      pointer-events:none;
-    }
+  /* Add a pulsing glowing circle behind the neurOrange emoji.  The ::before pseudo-element
+     sits behind the emoji and animates in size and opacity to create a gentle pulse.
+     Use Hermes orange hues for the glow. */
+  #startOrange::before{
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:160%;
+    height:160%;
+    border-radius:50%;
+    /* radial gradient for soft orange glow */
+    background:radial-gradient(circle, rgba(255,102,0,0.55) 0%, rgba(255,102,0,0.25) 40%, rgba(255,102,0,0) 80%);
+    filter:blur(22px);
+    /* Add a faint black fog behind the orange glow by using a box-shadow.  This creates
+       a dark halo that accentuates the orange fog. */
+    box-shadow:0 0 18px 6px rgba(0,0,0,0.45);
+    animation:orangePulse 3s ease-in-out infinite;
+    pointer-events:none;
+    z-index:-1;
+  }
+  @keyframes orangePulse{
+    0%,100%{transform:translate(-50%,-50%) scale(0.85); opacity:0.8;}
+    50%{transform:translate(-50%,-50%) scale(1.15); opacity:1;}
+  }
+  .intro-title{
+    font-weight:900; letter-spacing:.14em; user-select:none;
+    font-size:clamp(18px,6.2vw,44px);
+    color:var(--bergamot);
+    text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);
+    animation:titlePulse 2.2s ease-in-out infinite;
+    /* add a subtle black stroke to match the main neurOrange logo.  Use a thinner stroke for a refined look */
+  }
+  @keyframes titlePulse{
+    0%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
+    50%{color:var(--pure);    text-shadow:0 0 14px rgba(255,165,0,.65), 0 0 34px rgba(255,165,0,.45)}
+    100%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
+  }
 
-    /* Style test page navigation buttons to match page 2: Back is blue and Finish is dark */
-    #btnBackLast,#btnBackBottomLast{background:#0A4BFF;color:#fff}
-    #btnFinish,#btnFinishBottom{background:#333;color:#fff}
-    .stack{display:grid;grid-template-columns:1fr 1fr;gap:12px;justify-items:center}
-    @media (max-width:520px){.stack{grid-template-columns:1fr}}
-    /* When only one panel is visible (square or rectangle), center it */
-    .stack.single{grid-template-columns:1fr;justify-items:center}
-    /* Center chips horizontally */
-    .chip{position:relative;height:112px;border-radius:16px;border:1px solid var(--ring);background:#fff;transition:background-color .18s ease;margin-left:auto;margin-right:auto}
-    .chipLabel{position:absolute;left:12px;top:8px;font-size:12px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.25)}
-    .swBox{position:absolute;inset:8px;border-radius:12px;overflow:hidden}
-    .swBox::before,.swBox::after{content:"";position:absolute;background:#222}
-    .swBox::before{width:1px;height:60%;left:50%;top:20%;transform:translateX(-.5px)}
-    .swBox::after{height:1px;width:60%;top:50%;left:20%;transform:translateY(-.5px)}
-    /* Use Bergamot highlight for selected panels */
-    .selectedPanel{box-shadow:0 0 0 2px var(--highlight);border:2px solid var(--highlight)}
+  /* === stage === */
+  #phone{position:fixed; inset:0; display:grid; place-items:center}
+  #canvas{position:relative; width:100%; height:100%; overflow:hidden; background:#000}
 
-    /* When a panel is selected, also highlight its internal swatch area */
-    .selectedPanel .swBox{
-      box-shadow:0 0 0 2px var(--highlight);
-    }
-    label{font-size:12px;color:var(--muted)}
-    input[type="range"]{width:100%}
-    .hexRow input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--ring);background:#0f0f0f;color:#fff;font-family:ui-monospace,Menlo,monospace}
-    #previewWrap{position:relative;border:1px solid var(--ring);border-radius:18px;overflow:hidden;background:#eee;margin:8px auto;max-width:520px}
-    canvas#preview{width:100%;aspect-ratio:1;display:block;object-fit:contain}
-    #summaryPanel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-    @media (max-width:520px){#summaryPanel{grid-template-columns:1fr}}
-    .summaryBox{background:rgba(255,255,255,.05);border:1px solid var(--ring);border-radius:16px;padding:10px 12px;color:var(--muted)}
-    .summaryTitle{font-weight:800;margin-bottom:4px;font-size:14px}
-    .summaryDesc{font-size:12px;line-height:1.35}
-    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .card{border:1px solid var(--ring);border-radius:12px;overflow:hidden;background:#fff;color:#111;position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .card .sw{height:62px}
-    .card .meta{padding:8px 10px;font-size:12px}
-    .card .meta .name{font-weight:800}
-    .card .meta .hex{opacity:.85}
-    .heart{
-      position:absolute;
-      top:4px;
-      right:4px;
-      font-size:16px;
-      /* Use the configured heart colour for favourited hearts */
-      color:var(--heart);
-      display:none;
-      pointer-events:none;
-    }
-    /* Highlight selected library cards with a distinctive border and glow */
-    .card.selectedLib{box-shadow:0 0 0 2px var(--highlight),0 0 0 4px rgba(255,166,77,.5);border:2px solid var(--highlight);}
+  #brandBar{position:absolute; left:0; right:0; top:10px; display:flex; justify-content:center; z-index:6; filter:drop-shadow(var(--glow))}
+  #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500;
+    /* add a thin black stroke around the text to improve contrast.  Use a thinner width
+       so the border remains subtle and refined. */
+    text-shadow:0 0 2px rgba(0,0,0,.85);
+  }
 
-    /* Also highlight the swatch box within a selected library card */
-    .card.selectedLib .sw{
-      box-shadow:0 0 0 2px var(--highlight);
-    }
-    select, .select{width:100%;padding:10px 12px;font-size:14px;border-radius:12px;border:1px solid var(--ring);background:#2b2a29;color:#fff}
-    #testStage{position:relative;aspect-ratio:16/9;width:100%;border-radius:16px;margin:10px auto;border:1px solid var(--ring);overflow:hidden}
-    #testStage .cross{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-    #testStage .cross::before,#testStage .cross::after{content:"";position:absolute;background:#FFFFFF}
-    #testStage .cross::before{width:1px;height:60%}
-    #testStage .cross::after{height:1px;width:60%}
-    #count{font-size:48px;font-weight:800;text-align:center;margin-top:8px}
-    .hidden{display:none!important}
+  #bgLayer{position:absolute; inset:0; z-index:1}
+  /* keep hidden until ready */
+  #bgVideo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; opacity:0; transition:opacity .4s ease}
+  .fogWrap{position:absolute; inset:-30%; z-index:0; pointer-events:none;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%);
+            mask-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)}
+  .fog{position:absolute; inset:0; mix-blend-mode:screen; filter:blur(60px) saturate(120%);
+       background:
+         radial-gradient(28% 22% at 20% 30%, var(--nick) 0 55%, transparent 60%),
+         radial-gradient(28% 24% at 80% 40%, var(--nick) 0 55%, transparent 60%),
+         radial-gradient(30% 22% at 40% 70%, var(--nick) 0 55%, transparent 60%);
+       animation:fog1 26s linear infinite alternate; opacity:.62}
+  @keyframes fog1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-3%,-4%) scale(1.08)}}
 
-    /* Crosshair overlay inside the inducer shape itself on the test page */
-    #testShape .innerCross{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    #testShape .innerCross::before,
-    #testShape .innerCross::after{
-      content:"";
-      position:absolute;
-      background:#FFFFFF;
-    }
-    #testShape .innerCross::before{width:2px;height:60%;}
-    #testShape .innerCross::after{height:2px;width:60%;}
+  #focus{position:absolute; inset:0; display:grid; place-items:center; z-index:2}
 
-    /* Scaling behaviour for the afterimage test panel */
-    #testPanel{
-      transition:transform .3s ease;
-      transform-origin:center center;
-    }
-    #testPanel.grow{
-      transform:scale(1.25);
-    }
-  
-/* === Compact Audio Dock (visible, top z-index) === */
-#audioDock{
-  position:fixed;
-  left:calc(8px + env(safe-area-inset-left));
-  bottom:calc(8px + env(safe-area-inset-bottom));
-  z-index:2147483647;
-  display:flex; align-items:center; gap:6px;
-  padding:6px 8px; border-radius:999px;
-  background:#FF6600; color:#fff;
-  box-shadow:0 8px 18px rgba(255,102,0,.30);
-  border:1px solid rgba(0,0,0,.35);
-  -webkit-user-select:none; user-select:none;
-}
-;#audioDock button{
-  background:transparent; border:0; color:#fff;
-  font-weight:900; font-size:14px; line-height:1;
-  padding:4px 6px; cursor:pointer;
-}
-#audioDock input[type="range"]{ width:90px; accent-color:#fff; }
+  /* start everything shrunk & centered until orange is pressed */
+  .wrapCenter{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1); will-change:transform,opacity}
+  .preGrow{transform:translate(-50%,-50%) scale(.05); opacity:0}
+  .grow{animation:ringGrow var(--growDur,3600ms) cubic-bezier(.17,.9,.24,1.08) forwards; opacity:0}
+  #innerWrap.grow {--growDur:3600ms; animation-delay:0ms}
+  #midWrap.grow   {--growDur:4200ms; animation-delay:200ms}
+  #outerWrap.grow {--growDur:4600ms; animation-delay:350ms}
+  #emojiWrapA.grow{--growDur:4000ms; animation-delay:500ms}
+  #emojiWrapB.grow{--growDur:4400ms; animation-delay:650ms}
+  @keyframes ringGrow{
+    0%   {transform:translate(-50%,-50%) scale(.05) rotate(0deg);   opacity:0}
+    60%  {transform:translate(-50%,-50%) scale(1.10) rotate(45deg); opacity:1}
+    100% {transform:translate(-50%,-50%) scale(1.00) rotate(0deg);  opacity:1}
+  }
 
+  .spin{position:absolute; inset:0}
+  .halo{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border-radius:50%;
+        background:radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); filter:blur(10px);
+        pointer-events:none; z-index:-1}
 
-    /* === Capture Favorites Overlay (iPhone-fit) === */
-    .export-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;overflow:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-    .export-overlay.hidden{display:none!important;pointer-events:none!important}
-    .export-modal{background:#000;box-shadow:0 0 40px rgba(0,0,0,.55);transform-origin:center center;position:relative}
-    .export-grid{display:grid;grid-template-columns:repeat(3,360px);grid-auto-rows:300px}
-    .export-tile{position:relative;width:360px;height:300px;background:#000;overflow:hidden}
-    .export-name,.export-hex,.export-desc{position:absolute;left:16px;color:#FFF;text-shadow:0 2px 6px rgba(0,0,0,.45);font-family:Inter,Arial,sans-serif}
-    .export-name{top:16px;font-size:20px;font-weight:800;line-height:1.2}
-    .export-hex{top:42px;font-size:16px;font-weight:800;line-height:1.2}
-    .export-desc{top:68px;width:calc(100% - 32px);font-size:14px;font-weight:400;line-height:18px}
-    .export-overlay.fullscreen{background:#000}
-    .export-toolbar{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:8px;justify-content:space-between;z-index:5}
-    .export-overlay.fullscreen .export-toolbar{display:none}
-    .export-btn{background:#111;border:1px solid #444;color:#fff;padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:700}
-    
+  /* center prompt */
+  #question{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1);
+    display:grid;
+    place-items:center;
+    /* Provide a dark circular backdrop behind the question prompt.  The circle is just
+       large enough to encapsulate the text and gently frames the message. */
+    background:rgba(0,0,0,0.75);
+    color:#fff;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.9);
+    z-index:5;
+    filter:drop-shadow(var(--glow));
+    padding:.4rem .6rem;
+    user-select:none;
+    animation:breathe 7s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1.00)}50%{transform:translate(-50%,-50%) scale(1.02)}}
+  #questionText{
+    font-weight:900; font-style:italic; text-align:center;
+    font-size:clamp(16px,3.6vw,22px); line-height:1.15; margin:0;
+    display:inline-block; transform-origin:50% 50%;
+    animation:colorPulse 5.5s ease-in-out infinite;
+  }
+  @keyframes colorPulse{
+    0%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
+    33%{color:var(--bergamot);text-shadow:0 0 8px rgba(255,166,77,.45)}
+    66%{color:var(--pure);text-shadow:0 0 8px rgba(255,165,0,.45)}
+    100%{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
+  }
 
-    /* Inline Clear Favorites (small card under Capture) */
-    .mini-box{margin-top:8px;display:flex;justify-content:center}
-    .mini-box .btn.mini{padding:8px 12px;font-size:12px;border-radius:10px;background:#151515;border:1px solid #333;color:#eee}
-    .mini-box .btn.mini:active{transform:translateY(1px)}
-    
-</style>
+  /* ring rotations (running by default; grow effect still from center) */
+  #innerSVG,#outerSVG{transform-box:fill-box; transform-origin:50% 50%; animation:spinCW 60s linear infinite}
+  #outerSVG{animation-duration:70s}
+  @keyframes spinCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-<style id="injected-swatches-poem">
-/* === Page 2: swatch visual updates to match reference === */
-.chip .swBox{
-  border:2px solid #FFFFFF;           /* crisp white inner border */
-  border-radius:12px;                 /* slightly rounded like the mock */
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
-}
-/* Library card swatches: white border + crosshair + rounded */
-.card .sw{
-  position:relative;
-  border-radius:12px;
-  border:2px solid #FFFFFF;
-  overflow:hidden;
-}
-.card .sw::before,
-.card .sw::after{
-  content:"";
-  position:absolute;
-  background:#222;
-  opacity:.85;
-}
-.card .sw::before{ width:1px; height:60%; left:50%; top:20%; transform:translateX(-.5px); }
-.card .sw::after{ height:1px; width:60%; top:50%; left:20%; transform:translateY(-.5px); }
+  .ghost-wedge{
+    fill:var(--c0);
+    animation:ghostFlick var(--dur,12s) ease-in-out infinite;
+    animation-delay:var(--delay,0s)
+  }
+  @keyframes ghostFlick{0%,88%,100%{fill:var(--c0)}89%,90%{fill:var(--c1)}}
 
-/* Move the color name overlay into the swatch area */
-.card{ position:relative; }
-.card .meta{
-  position:absolute;
-  top:0; left:0; right:0;
-  height:62px;                       /* same as .sw height */
-  background:transparent;
-  padding:6px 8px;
-  pointer-events:none;               /* clicks pass through to card */
-  display:flex; align-items:flex-start;
-}
-.card .meta .name{
-  font-weight:800;
-  text-shadow:0 1px 2px rgba(0,0,0,.35);
-  /* default to white; JS will flip to dark if needed for contrast */
-  color:#FFF;
-}
-/* Hide the small hex line in overlay to keep it clean */
-.card .meta .hex{ display:none; }
+  #emojiWrapA,#emojiWrapB{z-index:4} .emojiRing{position:absolute; inset:0}
+  .emojiSpin{position:absolute; inset:0; animation:spinCCW var(--dur,60s) linear infinite}
+  @keyframes spinCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+  .emoji{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:var(--emoji-font);
+         border:none; border-radius:10px; background:rgba(0,0,0,.08); padding:1px 3px;
+         filter:drop-shadow(0 0 8px #000) drop-shadow(0 0 14px #000)}
 
-/* === Secret poem popup (long-press Bergamot) === */
-#secretPoem{
-  position:fixed; inset:0;
-  display:none;
-  align-items:center; justify-content:center;
-  z-index:2147483647;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  animation: pulseNarangi 2.2s infinite ease-in-out;
-}
-#secretPoem.active{ display:flex; }
-@keyframes pulseNarangi{
-  0%,100% { background:#E87D0D; }   /* Nārangī (Bitter Orange) */
-  50%     { background:#D87000; }
-}
-#secretPoem .poemBox{
-  max-width:min(720px, 92vw);
-  margin:0 auto;
-  background: rgba(0,0,0,.18);
-  border:1px solid rgba(255,255,255,.22);
-  border-radius:20px;
-  padding:20px 18px;
-  box-shadow: 0 14px 44px rgba(0,0,0,.45);
-}
-#secretPoem .poem{
-  direction: rtl;
-  unicode-bidi: isolate;
-  white-space: pre-line;
-  line-height: 1.8;
-  font-size: 18px;
-  -webkit-font-smoothing: antialiased;
-  text-align: right;
-  color: var(--heart);               /* Bergamot orange text */
-  font-family: -apple-system, BlinkMacSystemFont,
-               "Noto Naskh Arabic","Noto Sans Arabic",
-               Tahoma, Arial, sans-serif;
-}
-#secretPoem .emoji{
-  font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji";
-  vertical-align: -0.1em;
-}
-#secretPoem .hint{
-  margin-top:10px;
-  font-size:12px;
-  color:#fff;
-  opacity:.8;
-  text-align:center;
-}
-</style>
+  /* paintings ring */
+  #midWrap{z-index:8}
+  #midSpin{animation:spinCCW 56s linear infinite; filter:drop-shadow(var(--glow))}
+  #midRing{position:absolute; inset:0}
+  .mnode{position:absolute; top:50%; left:50%; border-radius:50%; transform:translate(-50%,-50%);
+         background:#111; overflow:hidden; border:1.5px solid #000; filter:drop-shadow(var(--glow));
+         cursor:pointer}
+  .mnode.withCloud::before{content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:calc(100% + 16px); height:calc(100% + 16px); border-radius:inherit;
+    background:radial-gradient(closest-side, rgba(0,0,0,.38), rgba(0,0,0,0)); filter:blur(8px); pointer-events:none}
+  .mnode img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
+             animation:upright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change:transform}
+  @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
+  /* ===== ring effects ===== */
+  /* Add a soft white glow around the inner color ring (ring 1).  Applying a drop-shadow
+     filter to each segment creates a subtle fog along the edges of the orange swatches. */
+  #innerSVG path{
+    filter:drop-shadow(0 0 8px rgba(255,255,255,0.5));
+  }
 
-<style id="injected-tweaks-no-crosshair-heart-glow">
-/* Remove crosshairs from LIBRARY swatches only */
-.card .sw::before,
-.card .sw::after{ content:none !important; display:none !important; }
+  /* Give the outer ghost ring (ring 3) a darker outline and a faint black fog.  These
+     rules override the stroke and apply a drop-shadow to each ghost wedge to separate
+     them from the background. */
+  #outerSVG .ghost-wedge{
+    stroke:rgba(0,0,0,0.55);
+    stroke-width:2;
+    filter:drop-shadow(0 0 8px rgba(0,0,0,0.55));
+  }
 
-/* Nārangī (Bitter Orange) pulsing glow behind each favorited heart */
-@keyframes narangiHeartPulse{
-  0%,100% { transform: translate(-50%,-50%) scale(1); opacity:.55; }
-  50%     { transform: translate(-50%,-50%) scale(1.2); opacity:0; }
-}
-.card .heart{
-  /* keep Bergamot text color; add a subtle static glow too */
-  text-shadow: 0 0 6px rgba(232,125,13,.55), 0 0 12px rgba(232,125,13,.35);
-}
-.card .heart::after{
-  content:"";
-  position:absolute;
-  left:50%; top:50%;
-  width:22px; height:22px;
-  border-radius:50%;
-  background: radial-gradient(circle, rgba(232,125,13,.55) 0%, rgba(232,125,13,.28) 45%, rgba(232,125,13,0) 70%);
-  animation: narangiHeartPulse 1.6s ease-in-out infinite;
-  /* place the glow behind the glyph without escaping the card */
-  z-index:-1;
-}
-</style>
+  /* bottom nav — tighter; Color Library stays one line */
+  .bottomNav{
+    position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 10px);
+    z-index:8; display:flex; gap:10px; justify-content:space-between; padding:0 12px;
+  }
+  .navBtn{
+    flex:1; text-align:center; font-weight:900; padding:10px 8px; border-radius:12px;
+    border:1px solid rgba(0,0,0,.45); color:#140a00; user-select:none; -webkit-user-select:none; cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,.35); text-decoration:none; display:inline-block;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    font-size:clamp(12px, 3.2vw, 14px); line-height:1.05;
+  }
+  .navLeft {background:linear-gradient(180deg,#F4C430,#E69B20)}
+  .navMid  {background:linear-gradient(180deg,#FF8E00,#FF6A13)}
+  .navRight{background:linear-gradient(180deg,#FFA500,#FE5000)}
+  .clickable{cursor:pointer}
 
+  /* ===== interstitial quote overlay ===== */
+  #interstitial{
+    position:fixed; inset:0; background:#000; z-index:10001;
+    opacity:0; pointer-events:none; transition:opacity .55s ease;
+    display:grid; place-items:center;
+  }
 
-<style id="injected-tweaks-restore-library-layout">
-/* === Restore original library swatch layout (swatch on top, meta below) === */
-.card .sw{
-  border: none !important;            /* remove white border we added */
-  border-radius: 12px;                /* keep gentle rounding */
-}
-/* Put meta back under the swatch as a white panel */
-.card .meta{
-  position: static !important;
-  height: auto !important;
-  background: #fff !important;
-  padding: 8px 10px !important;
-  pointer-events: auto !important;
-  display: block !important;
-}
-.card .meta .name{
-  color: #111 !important;
-  text-shadow: none !important;
-  font-weight: 800;
-}
-.card .meta .hex{
-  display: block !important;
-  opacity: .85 !important;
-}
+  /* === Audio Player UI ===
+     A custom mini-player appears after the intro fades.  It contains a play/pause button and a
+     volume slider so users can control the ambient soundtrack.  The underlying audio tracks are
+     hidden from view; this UI simply manipulates them via JavaScript. */
 
-/* === Remove poem 'bubble' (bordered card) so only text sits on the pulsing background === */
-#secretPoem .poemBox{
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-#secretPoem .poem{
-  text-align: center;
-  font-size: 20px;
-}
-</style>
+  /* Restore the central question bubble */
+  /* The bubble prompts the user with "What are you feeling?" and remains centered */
 
+  /* Asteroid (comet) styling with orange rainbow smoke trail */
+  .comet{ position:absolute; pointer-events:none; z-index:5; }
+  /* Stack the comet head (emoji + comet base) vertically and place the smoke tail to the right. */
+  .cometStack{
+    display:flex;
+    align-items:center;
+  }
+  .cometStack .top{
+    /* Reduce the comet head size so asteroids feel smaller */
+    /* Shrink comet heads by ~25% */
+    font-size:clamp(16px,3.2vw,28px);
+    margin-right:6px; /* horizontal gap between head and tail */
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    line-height:1;
+    /* ensure the comet head stands out against dark background */
+    color:#fff;
+    text-shadow:0 0 6px rgba(255,255,255,0.85);
+  }
+  .cometStack .tail{
+    /* create a narrower, tapered smoke trail positioned behind the comet head */
+    /* Shrink the smoke trail dimensions accordingly (25% smaller) */
+    width:135px;
+    height:38px;
+    margin-left:10px;
+    border-radius:25px;
+    /* orange fog trail using a radial gradient that fades out gradually.  This
+       gives the comets a lingering orange mist rather than a simple linear trail. */
+    background:radial-gradient(ellipse at 15% 50%,
+      rgba(255,165,0,0.75) 0%,
+      rgba(255,150,0,0.45) 35%,
+      rgba(255,130,0,0.25) 65%,
+      rgba(255,110,0,0) 100%);
+    filter:blur(22px) saturate(140%);
+    opacity:0.9;
+    /* stronger glow to make the smoke visible on dark background */
+    box-shadow:0 0 20px rgba(255,140,0,.5), 0 0 36px rgba(255,102,0,.35);
+    /* subtle skew for directionality */
+    transform:skewX(-18deg);
+    animation:smokeFade 6s linear forwards;
+  }
+  @keyframes smokeFade{
+    from{ opacity:0.8; transform:scale(1); }
+    to  { opacity:0;   transform:scale(2); }
+  }
 
-<style id="injected-hide-hint">#secretPoem .hint{display:none !important;}</style>
-  <!-- Custom audio player styles for the persistent bottom-left dock -->
-  <style id="audio-player-styles">
-    /* Hide the old compact audio dock to avoid duplicate players */
-    #audioDock{ display:none !important; }
-    /* Nickelodeon Orange audio dock container */
-    #audioDock2{
-      position:fixed;
-      left:calc(8px + env(safe-area-inset-left));
-      bottom:calc(8px + env(safe-area-inset-bottom));
-      z-index:2147483647;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 12px;
-      border-radius:999px;
-      background:#FF6600;
-      border:1px solid rgba(0,0,0,.35);
-      box-shadow:0 8px 22px rgba(255,102,0,.35);
-      -webkit-user-select:none;
-      user-select:none;
-      /* Scale down the entire player by 20% and keep it anchored to the bottom-left */
-      transform:scale(0.8);
-      transform-origin:bottom left;
-    }
-    /* Stop button styling */
-    .ad-stop{
-      width:42px;
-      height:42px;
-      min-width:42px;
-      border-radius:50%;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:22px;
-      line-height:1;
-      border:0;
-      cursor:pointer;
-      /* Use saffron fill for the stop button */
-      background:#F4C430;
-      box-shadow:0 2px 6px rgba(0,0,0,.25);
-      transition:transform .06s ease, box-shadow .2s ease, opacity .15s ease;
-    }
-    .ad-stop:active{ transform:translateY(1px); }
-    /* Track buttons */
-    .ad-btn{
-      width:42px;
-      height:42px;
-      min-width:42px;
-      border-radius:50%;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:22px;
-      line-height:1;
-      border:0;
-      cursor:pointer;
-      /* Use saffron fill for track buttons */
-      background:#F4C430;
-      box-shadow:0 2px 6px rgba(0,0,0,.25);
-      transition:transform .06s ease, box-shadow .2s ease, opacity .15s ease;
-    }
-    .ad-btn:active{ transform:translateY(1px); }
-    .ad-btn.active{
-      outline:2px solid rgba(255,255,255,.85);
-      box-shadow:0 4px 14px rgba(0,0,0,.35), 0 0 0 2px #ffffff inset;
-      background:#fdfdfd;
-    }
-    /* Wrapper for volume slider popovers */
-    #audioDock2 .ad-wrap{ position:relative; }
-    /* Volume slider container */
-    .ad-vol{
-      position:absolute;
-      bottom:58px;
-      width:44px;
-      padding:8px 6px;
-      border-radius:12px;
-      background:rgba(22,22,22,.92);
-      border:1px solid rgba(255,255,255,.2);
-      box-shadow:0 10px 24px rgba(0,0,0,.45);
-      display:none;
-      /* Center the slider horizontally above the button */
-      left:50%;
-      transform:translateX(-50%);
-    }
-    .ad-vol.visible{ display:block; }
-    .ad-vol label{
-      color:#ffffff;
-      font-size:11px;
-      opacity:0.8;
-      display:block;
-      text-align:center;
-      margin-bottom:6px;
-    }
-    /* Vertical range slider styling */
-    .ad-vol input[type="range"]{
-      writing-mode: bt-lr;
-      -webkit-appearance: slider-vertical;
-      width:30px;
-      height:110px;
-      padding:0;
-      margin:0 auto;
-      background:transparent;
-    }
-    .ad-vol input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance: none;
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      background:#FF6600;
-      border:1px solid rgba(0,0,0,.35);
-      box-shadow:0 1px 4px rgba(0,0,0,.35);
-    }
-    .ad-vol input[type="range"]::-webkit-slider-runnable-track{
-      width:6px;
-      background:#dddddd;
-      border-radius:999px;
-      border:0;
-    }
-    .ad-vol input[type="range"]::-moz-range-thumb{
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      background:#FF6600;
-      border:1px solid rgba(0,0,0,.35);
-    }
-    .ad-vol input[type="range"]::-moz-range-track{
-      width:6px;
-      background:#dddddd;
-      border-radius:999px;
-      border:0;
-    }
+  /* Comet field spans the entire viewport (not using wrapCenter).
+     We set its z-index between the emoji rings and the painting ring so that
+     comets can overlap the color/ghost rings but remain behind the artwork. */
+  #cometField{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    overflow:visible;
+    z-index:5;
+  }
 
-    /* Min/Max (expand/collapse) button */
-    .ad-toggle{
-      width:42px;
-      height:42px;
-      min-width:42px;
-      border-radius:50%;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:22px;
-      line-height:1;
-      border:0;
-      cursor:pointer;
-      /* Use Bergamot fill for the toggle button */
-      background:#FFA64D;
-      box-shadow:0 2px 6px rgba(0,0,0,.25);
-      transition:transform .06s ease, box-shadow .2s ease;
-    }
-    .ad-toggle:active{ transform:translateY(1px); }
-
-    /* Play/Pause main button */
-    .ad-play{
-      width:42px;
-      height:42px;
-      min-width:42px;
-      border-radius:50%;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:22px;
-      line-height:1;
-      border:0;
-      cursor:pointer;
-      /* Jinn Flame Orange fill */
-      background:#F88E10;
-      box-shadow:0 2px 6px rgba(0,0,0,.25);
-      transition:transform .06s ease, box-shadow .2s ease;
-    }
-    .ad-play:active{ transform:translateY(1px); }
-
-    /* Pulse animation when expanded */
-    @keyframes pulseToggle{
-      0%{ box-shadow:0 0 0 0 rgba(255,166,77,.5); }
-      50%{ box-shadow:0 0 0 6px rgba(255,166,77,0); }
-      100%{ box-shadow:0 0 0 0 rgba(255,166,77,.5); }
-    }
-    /* When expanded (not collapsed), pulse the toggle to draw attention */
-    #audioDock2:not(.collapsed) #adToggle{
-      animation:pulseToggle 2s infinite;
-    }
-
-    /* Hide track buttons and volume sliders when collapsed */
-    #audioDock2.collapsed .ad-wrap{
-      display:none;
-    }
-    #audioDock2.collapsed .ad-vol{
-      display:none;
-    }
-  </style>
-
-<style id="ready-panel-styles">
-  /* Primary heading shown above the inducer in Step 3 */
-  .test-head-minor{
-    text-align:center;
-    color:#FFFFFF;
-    font-weight:900;
-    letter-spacing:.02em;
-    margin:10px 0 2px;
+  /* A separate field for rose comets.  This sits behind the color ring so the rose emoji
+     comet is unobtrusive.  Its lower z-index positions it between the rings and the
+     background. */
+  #roseField{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    overflow:visible;
+    /* Position the rose field beneath all color rings.  A lower z-index ensures
+       rose comets glide underneath the first ring but above the background. */
+    /* Place the rose comets behind the first color ring by lowering the z-index.
+       Using a negative value ensures they appear beneath the rings but above the
+       background video */
+    z-index:-1;
+  }
+  #interstitial.show{ opacity:1; pointer-events:auto; }
+  #interstitialText{
+    text-align:center; font-weight:900; font-style:italic;
+    font-size:clamp(18px,5.4vw,30px); line-height:1.25; letter-spacing:.01em;
+    color:#ffffffcc; padding:0 7vw;
+  }
+  #interstitialText .accent{
+    color:var(--nick);
+    animation:
+      quoteColor 1.6s linear infinite,
+      saffronGlow 1.6s ease-in-out infinite;
+  }
+  @keyframes quoteColor{
+    0%  { color:var(--nick) }
+    33% { color:var(--afterimage) }
+    66% { color:var(--bergamot) }
+    100%{ color:var(--nick) }
+  }
+  @keyframes saffronGlow{
+    0%,100%{ text-shadow: 0 0 10px var(--saffron), 0 0 22px var(--saffron), 0 0 0 var(--nick); }
+    50%    { text-shadow: 0 0 16px var(--saffron), 0 0 36px var(--saffron), 0 0 10px var(--nick); }
+  }
+  /* === Audio Dock ===
+     A bottom-left pill dock houses an expand/collapse toggle, a main play/pause button and four
+     track sprouts.  Each track has a vertical volume slider that appears above its button when
+     active.  The dock respects safe-area insets and remains collapsed by default.  */
+  #audioDock{
+    position:fixed;
+    /* Position the dock above the bottom navigation.  We offset it by roughly the
+       nav height (about 60px) plus safe-area so it doesn't overlap the nav. */
+    /* Increase the bottom offset so the dock sits comfortably above the color library button */
+    /* Move the dock further up so there is generous space above the bottom navigation */
+    /* Lower the dock closer to the bottom navigation.  Offset it by about 100px plus
+       safe-area so there is some space above the color library button. */
+    /* Lower the audio dock to sit just above the bottom navigation.  The offset is
+       reduced so the dock hovers closely above the color library button. */
+    /* Position the dock just above the bottom navigation.  Reduce the offset so the dock
+       sits right above the Color Library button, leaving a small gap for breathing room. */
+    bottom:calc(env(safe-area-inset-bottom) + 60px);
+    left:14px;
+    display:flex;
+    align-items:center;
+    padding:8px 10px;
+    /* Solid orange backdrop for the dock; remove blur so the color is fully visible */
+    background:var(--dock);
+    backdrop-filter:none;
+    border-radius:30px;
+    /* Use the dock color for the border to reinforce the pill */
+    border:1px solid var(--dock);
+    box-shadow:0 6px 14px rgba(0,0,0,.45);
+    z-index:10050;
+  }
+  #audioDock.collapsed .ad-wrap{
+    display:none;
+  }
+  .ad-toggle{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:var(--heart);
+    border:2px solid var(--dock);
+    color:var(--dock);
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    position:relative;
+    box-shadow:0 0 0 0 rgba(255,102,0,.4);
+    transition:transform .15s ease;
+  }
+  .ad-toggle:active{
+    transform:scale(0.96);
+  }
+  .ad-toggle.pulse{
+    animation:adPulse 2.4s infinite;
+    /* enlarge the toggle and apply a stronger glow when the dock is expanded */
+    transform:scale(1.35);
+    /* glowing halo using dock and heart colors */
+    box-shadow:0 0 6px 2px var(--heart), 0 0 12px 6px var(--dock);
+  }
+  @keyframes adPulse{
+    0%   { box-shadow:0 0 0 0 rgba(255,102,0,.4); }
+    70%  { box-shadow:0 0 0 8px rgba(255,102,0,0); }
+    100% { box-shadow:0 0 0 0 rgba(255,102,0,0); }
+  }
+  .ad-main{
+    margin-left:8px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#fff;
+    /* Use dock color for the glyph (white arrow/pause will appear tinted) */
+    color:var(--dock);
     font-size:22px;
-    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    border:none;
+    box-shadow:0 4px 8px rgba(0,0,0,.3);
+    transition:transform .15s ease;
   }
-  /* Secondary heading shown in gold/orange below the primary heading */
-  .test-head-major{
+  .ad-main:active{
+    transform:scale(0.95);
+  }
+  .ad-wrap{
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    margin-left:10px;
+  }
+  .ad-btn{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    /* Use spectral orange as the base fill for track buttons */
+    background:var(--spectral);
+    /* Do not set text color here so that emoji retain their natural colors */
+    font-size:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    border:none;
+    box-shadow:0 4px 8px rgba(0,0,0,.3);
+    transition:transform .15s ease;
+  }
+  .ad-btn:active{
+    transform:scale(0.95);
+  }
+  .ad-btn.active{
+    /* When a track is active/playing, fill with firefox orange */
+    background:var(--firefox);
+    /* Do not override text color here so that emoji retain their natural colors */
+  }
+  .ad-vol{
+    position:absolute;
+    bottom:54px;
+    left:50%;
+    transform:translateX(-50%);
+    display:none;
+    width:40px;
+    padding:6px 4px;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(8px);
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.5);
+    color:#fff;
     text-align:center;
-    color:#FFB400;
-    font-weight:900;
-    letter-spacing:.02em;
-    margin:0 0 10px;
-    font-size:22px;
-    text-transform:uppercase;
+    z-index:2;
   }
-  /* Larger count/readiness text */
-  #count{
-    font-size:72px;
-    font-weight:900;
-    text-align:center;
-    color:#FFFFFF;
-    margin:6px 0 4px;
-  }
-  /* Footnote at the bottom of the ready panel */
-  .test-footnote{
-    color:#FFB400;
+  .ad-vol label{
+    display:block;
     font-size:18px;
-    font-weight:900;
-    text-align:center;
-    margin-top:10px;
+    margin-bottom:4px;
+  }
+  .ad-vol input[type='range']{
+    width:30px;
+    height:130px;
+    -webkit-appearance:slider-vertical;
+    writing-mode:bt-lr;
+    background:transparent;
+    margin:0;
+    padding:0;
+    cursor:pointer;
+  }
+  .ad-vol input[type='range']::-webkit-slider-runnable-track{
+    width:6px;
+    height:130px;
+    background:var(--dock);
+    border-radius:3px;
+  }
+  .ad-vol input[type='range']::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    border:none;
+    box-shadow:0 1px 3px rgba(0,0,0,.4);
+    margin-top:-6px;
+  }
+  .ad-vol input[type='range']::-moz-range-track{
+    width:6px;
+    height:130px;
+    background:var(--dock);
+    border-radius:3px;
+  }
+  .ad-vol input[type='range']::-moz-range-thumb{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    border:none;
+    box-shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ad-toggle.pulse{ animation:none; }
+  }
+  .ad-toast{
+    position:fixed;
+    left:14px;
+    bottom:calc(env(safe-area-inset-bottom) + 80px);
+    background:rgba(0,0,0,.7);
+    color:#fff;
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:13px;
+    z-index:10051;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease;
   }
 </style>
 </head>
 <body>
 
-<div id="audioDock" role="group" aria-label="Audio controls">
-  <button id="audioToggle" aria-label="Play/pause">►</button>
-  <input id="audioVol" type="range" min="0" max="100" value="10" aria-label="Volume" />
+<div id="failsafe"></div>
+
+<!-- intro -->
+<div id="intro">
+  <!-- Ambient video that plays in the splash screen.  It loops and is muted to comply with browser policies. -->
+  <video id="introVideo" autoplay loop muted playsinline preload="auto">
+    <!-- Play the local front screen placeholder video located in the project root.  This
+         video loops silently during the splash screen. -->
+    <!-- Use the project root's front screen placeholder video.  Ensure the file exists
+         at the root as 'front_screen_placeholder.mp4'.  If it is missing, please add
+         the video to the root directory. -->
+    <!-- Try to load the root video first; if it does not exist, fall back to the hosted placeholder video -->
+    <source src="front_screen_placeholder.mp4" type="video/mp4" />
+    <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
+  </video>
+  <div class="intro-stack">
+    <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
+    <div class="intro-title">neurOrange</div>
+  </div>
+</div>
+<!-- Place the shrinking black circle outside of the intro overlay so it does not fade with the
+     splash.  This circle sits above the intro content and shrinks away on tap. -->
+<div id="introCircle"></div>
+<!-- Add a looping ambient video behind the intro orange.  This video fills the intro overlay and disappears when the overlay is removed. -->
+<style>
+  #introVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;background:#000;}
+</style>
+
+<div id="phone">
+  <div id="canvas">
+    <div id="brandBar"><div id="brand">neurOrange</div></div>
+
+    <div id="bgLayer">
+      <!-- background video -->
+      <video id="bgVideo" muted playsinline webkit-playsinline preload="auto" loop>
+        <!-- Use the remote placeholder video so the background animation plays correctly -->
+        <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
+      </video>
+      <div class="fogWrap"><div class="fog"></div></div>
+    </div>
+
+    <div id="focus">
+      <!-- outer ghost ring -->
+      <div id="outerWrap" class="wrapCenter preGrow">
+        <svg id="outerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
+        <div class="halo" id="outerHalo"></div>
+      </div>
+
+      <!-- inner bright ring -->
+      <div id="innerWrap" class="wrapCenter preGrow">
+        <svg id="innerSVG" width="0" height="0" viewBox="0 0 1000 1000" style="position:absolute; inset:0"></svg>
+        <div class="halo" id="innerHalo"></div>
+      </div>
+
+      <!-- comets / asteroids -->
+      <!-- The cometField now fills the viewport and anchors comets at the screen center -->
+      <div id="cometField"></div>
+      <!-- Separate field for rose comets.  This container sits behind the color ring so
+           the rose comet glides underneath the ring. -->
+      <div id="roseField"></div>
+
+      <!-- painting ring -->
+      <div id="midWrap" class="wrapCenter preGrow">
+        <div id="midSpin" class="spin"><div id="midRing"></div></div>
+      </div>
+
+      <!-- emoji rings -->
+      <div id="emojiWrapA" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:56s"><div id="emojiRingA" class="emojiRing"></div></div></div>
+      <div id="emojiWrapB" class="wrapCenter preGrow"><div class="emojiSpin" style="--dur:82s; transform: rotate(-12deg)"><div id="emojiRingB" class="emojiRing"></div></div></div>
+
+      <!-- center prompt -->
+      <div id="question"><div id="questionText">What are you<br/>feeling?</div></div>
+    </div>
+
+    <!-- bottom nav (links to other HTMLs) -->
+    <div class="bottomNav">
+      <a class="navBtn navLeft"  href="https://vahetharoutounian-stack.github.io/neurOrangeV3/" aria-label="Color Library">Color Library</a>
+      <a class="navBtn navMid"   href="https://vahetharoutounian-stack.github.io/neurOrangeV2/" aria-label="Art Gallery">Art Gallery</a>
+      <a class="navBtn navRight" href="https://vahetharoutounian-stack.github.io/neurOrangeV3/#step=3" aria-label="Illusion Lab">Illusion Lab</a>
+    </div>
+  </div>
 </div>
 
-<!-- Persistent audio player (Nickelodeon orange) anchored bottom-left. Each track toggles between a sprout emoji and its playing icon. A vertical volume slider appears while active. -->
-<div id="audioDock2" role="group" aria-label="Audio Player" class="collapsed">
-  <!-- Expand/Collapse button (min/max). Uses a saffron circle with an orange dot. -->
-  <button class="ad-toggle" id="adToggle" title="Expand or collapse the player">🟠</button>
-  <!-- Play/Pause button. Filled with Jinn Flame Orange -->
-  <button class="ad-play" id="adPlay" title="Play or pause">▶</button>
-  <!-- Track 1: Sparkle ✨ -->
+<!-- interstitial quote overlay -->
+<div id="interstitial" aria-hidden="true">
+  <div id="interstitialText"></div>
+</div>
+
+<!-- 🎵 Self-contained audio dock.  A bottom-left pill houses an expand toggle, a main play/pause button,
+     four track buttons (sparkle, orange, autumn, storm) with volume sliders, and separate audio tags.  -->
+<!--
+  The audio dock is initially hidden via an inline display:none.  It will be revealed once the orange
+  splash screen is dismissed.  The `collapsed` class keeps the dock minimized so only the toggle and
+  main control are visible until the user explicitly expands it.  -->
+<div id="audioDock" class="collapsed" role="group" aria-label="Audio Player" style="display:none;">
+  <button id="adToggle" class="ad-toggle" aria-label="Expand or Collapse" role="button" tabindex="0">🟠</button>
+<!-- Main play/pause control.  The glyph will be set via JS.  Default to play symbol with no orange emoji. -->
+<button id="adMain" class="ad-main" aria-label="Play/Pause" role="button" tabindex="0">▶</button>
+
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="sparkle" title="Sparkle ✨">🌱</button>
+    <button class="ad-btn" data-track="sparkle" aria-label="Sparkle" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="sparkle">
       <label>✨</label>
-      <input type="range" min="0" max="1" step="0.01" value="0.75"/>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Sparkle volume">
     </div>
   </div>
-  <!-- Track 2: Orange 🍊 -->
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="orange" title="Orange 🍊">🌱</button>
+    <button class="ad-btn" data-track="orange" aria-label="Orange" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="orange">
       <label>🍊</label>
-      <!-- Start muted at zero volume -->
-      <input type="range" min="0" max="1" step="0.01" value="0.75"/>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Orange volume">
     </div>
   </div>
-  <!-- Track 3: Autumn 🍂 -->
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="autumn" title="Autumn 🍂">🌱</button>
+    <button class="ad-btn" data-track="autumn" aria-label="Autumn" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="autumn">
       <label>🍂</label>
-      <!-- Start muted at zero volume -->
-      <input type="range" min="0" max="1" step="0.01" value="0.75"/>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Autumn volume">
     </div>
   </div>
-  <!-- Track 4: Storm ⛈️ -->
   <div class="ad-wrap">
-    <button class="ad-btn" data-track="storm" title="Storm ⛈️">🌱</button>
+    <button class="ad-btn" data-track="storm" aria-label="Storm" role="button" tabindex="0">🌱</button>
     <div class="ad-vol" data-for="storm">
       <label>⛈️</label>
-      <!-- Start muted at zero volume -->
-      <input type="range" min="0" max="1" step="0.01" value="0.75"/>
+      <input type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Storm volume">
     </div>
   </div>
-  <!-- Hidden audio elements (provide your own sources) -->
-  <!-- Audio sources point to the /tracks folder. Adjust if your deployment uses a different folder name. -->
-  <audio id="aud_sparkle" preload="metadata" playsinline src="tracks/sparkle.mp3"></audio>
-  <audio id="aud_orange"  preload="metadata" playsinline src="tracks/orange.mp3"></audio>
-  <audio id="aud_autumn"  preload="metadata" playsinline src="tracks/autumn.mp3"></audio>
-  <audio id="aud_storm"   preload="metadata" playsinline src="tracks/storm.mp3"></audio>
+
+  <!-- Pull audio tracks from the live site; local /tracks folder is unavailable -->
+  <audio id="aud_sparkle" preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/sparkle.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_orange"  preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/orange.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_autumn"  preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/autumn.mp3" type="audio/mpeg"></audio>
+  <audio id="aud_storm"   preload="metadata" playsinline src="https://vahetharoutounian-stack.github.io/neurOrange/tracks/storm.mp3" type="audio/mpeg"></audio>
 </div>
-
-
-
-<!-- Page 1 -->
-<section id="p1" class="active">
-  <div class="wrap">
-    <div class="shell">
-      <div class="eyebrow" id="brand">neurOrange</div>
-      <!-- Headline glows between two orange hues -->
-      <h1 class="title glow" id="headline">Orange Picker</h1>
-      <p class="lede">
-        A gentle mini-lab showing how your visual system adapts and reveals complementary color.
-        Pick an orange, fixate on its opposite for ~15&nbsp;seconds, then look at a white screen to see a brief “ghost” orange made by perception.
-      </p>
-
-      <div class="panel">
-        <div class="safetyt">SAFETY &amp; LIMITS</div>
-        <ul class="bullet" style="margin:8px 0 0 18px; line-height:1.5">
-          <li>Use a dim room</li>
-          <li>Moderate your screen brightness</li>
-          <li>Rest between trials</li>
-        </ul>
-      </div>
-
-      <div class="panel" style="text-align:center">
-        <div id="demoStage"><div class="cross"></div></div>
-        <div class="above">Above is a sped up simulation of the effects of the illusion.<br>Press Start to create your own!</div>
-        <div class="how">
-          How it works: prolonged viewing adapts neurons tuned to the opposite of orange (blue/cyan).
-          When you switch to white, the opponent pathway briefly leads, so perception leans toward orange—this is called
-          <span class="bluephrase">opponent-process adaptation</span>.
-        </div>
-        <div class="startWrap">
-          <!-- Inline handler ensures navigation even if JS listeners fail -->
-          <button id="start" class="btn cta" onclick="showPage('p2')">Start</button>
-        </div>
-        <div class="footerNote">Optimized for iPhone portrait orientation.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Page 2 -->
-<section id="p2">
-  <div class="wrap">
-    <!-- Top bar for Step 2: replace the simple STEP 2 label with a two‑line title.  The new
-         title uses a custom class so it can be styled to fit between the Back and Next
-         buttons.  Each line is wrapped in its own span for precise vertical spacing. -->
-    <div class="topbar">
-      <button id="btnBack" class="btn">Back</button>
-      <div id="page2Title" class="topTitle"><span>neurOrange</span><span>COLOR PICKER</span></div>
-      <button id="btnNext" class="btn">Next</button>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">CHOOSE BACKGROUND COLOR</div>
-      <div class="note" style="margin:6px 0 8px">(This recolors chips and library card backgrounds)</div>
-      <div class="row">
-        <span class="pill bgSel active" data-bg="white">White</span>
-        <span class="pill bgSel" data-bg="paper">Paper</span>
-        <span class="pill bgSel" data-bg="gray">Light Gray</span>
-        <span class="pill bgSel" data-bg="black">Black</span>
-      </div>
-    </div>
-
-    <div class="eyebrow" style="margin-top:10px;">CHOOSE THE COLOUR YOU WANT TO SEE THE GHOST OF</div>
-    <div class="stack" id="stack">
-      <div class="panel" id="panelRind">
-        <h3 id="rindTitle">Rind</h3>
-        <div class="chip" id="rindChip" tabindex="0" role="button" aria-pressed="true">
-          <div class="swBox" id="rindSw"></div>
-          <div class="chipLabel" id="rindName">Pure Orange</div>
-        </div>
-        <div class="sliders">
-          <label>Hue</label><input type="range" min="20" max="50" value="39" id="rindHue" />
-          <label>Saturation</label><input type="range" min="40" max="100" value="100" id="rindSat" />
-          <label>Lightness</label><input type="range" min="35" max="75" value="50" id="rindLight" />
-        </div>
-        <div class="hexRow"><input id="hexRind" value="#FFA500" /></div>
-        <!-- Recently selected colours dropdown for the rind.  This select shows the last selected
-             and recently used colours for quick access.  Each option is coloured to
-             reflect the actual hex.  It will be populated dynamically by JS. -->
-        <div class="recentRow" id="recentRindRow">
-          <select id="recentRindSel" class="select"></select>
-        </div>
-      </div>
-
-      <div class="panel" id="panelPits">
-        <h3 id="pitsTitle">Pits</h3>
-        <div class="chip" id="pitsChip" tabindex="0" role="button" aria-pressed="false">
-          <div class="swBox" id="pitsSw"></div>
-          <div class="chipLabel" id="pitsName">Quinacridone Orange</div>
-        </div>
-        <div class="sliders">
-          <label>Hue</label><input type="range" min="20" max="50" value="27" id="pitsHue" />
-          <label>Saturation</label><input type="range" min="40" max="100" value="100" id="pitsSat" />
-          <label>Lightness</label><input type="range" min="35" max="75" value="46" id="pitsLight" />
-        </div>
-        <div class="hexRow"><input id="hexPits" value="#ED6A00" /></div>
-        <!-- Recently selected colours dropdown for the pits.  Hidden when the shape is not
-             fruit.  This select is populated dynamically to surface last and recently used
-             colours. -->
-        <div class="recentRow" id="recentPitsRow">
-          <select id="recentPitsSel" class="select"></select>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel" id="shapePanel">
-      <div class="eyebrow">CHOOSE ANY ILLUSION SHAPE</div>
-      <div class="row" id="shapeRow" style="margin:8px 0">
-        <span class="pill shapeSel active" data-shape="fruit">Fruit</span>
-        <span class="pill shapeSel" data-shape="square">Square</span>
-        <span class="pill shapeSel" data-shape="rect">Rectangle</span>
-      </div>
-      <div id="previewWrap">
-        <canvas id="preview"></canvas>
-        <div class="cross"></div>
-      </div>
-    </div>
-
-    <div class="panel" id="summaryPanel">
-      <div class="summaryBox" id="sumRind">
-        <div class="summaryTitle" id="sumRindTitle">Pure Orange</div>
-        <div class="summaryDesc" id="sumRindDesc">Neutral reference orange for consistent theming and tokens. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.</div>
-      </div>
-      <div class="summaryBox" id="sumPits">
-        <div class="summaryTitle" id="sumPitsTitle">Quinacridone Orange</div>
-        <div class="summaryDesc" id="sumPitsDesc">Lightfast engineering orange for coatings and plastics. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.</div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">CHOOSE FROM THE ORANGE LIBRARY</div>
-      <div class="row" style="margin:8px 0">
-        <span class="pill tabSel active" data-tab="standards">Standards</span>
-        <span class="pill tabSel" data-tab="historic">Historic</span>
-        <span class="pill tabSel" data-tab="folklore">Folklore</span>
-        <span class="pill tabSel" data-tab="brand">Brand</span>
-        <span class="pill tabSel" data-tab="food">Food</span>
-        <span class="pill tabSel" data-tab="scientific">Scientific</span>
-        <span class="pill tabSel" data-tab="mystic">Mystic</span>
-        <span class="pill tabSel" data-tab="ghosts">Ghosts</span>
-      </div>
-      <div class="gallery" id="gallery"></div>
-      <div id="exportWrap" class="hidden">
-        <button id="btnExport" class="btn" style="width:100%;margin-top:10px">CAPTURE FAVORITES</button>
-      </div>
-<div id="inlineClearFavBox" class="mini-box"><button id="btnClearFavInline" class="btn mini">Clear Favorites</button></div>
-    </div>
-
-    <div class="bottomBar">
-      <button id="btnBackBottom" class="btn">Back</button>
-      <!-- Capture favourites button inserted between Back and Next on Step 2.  Clicking
-           this button triggers exportFavorites() to surface the selected colours.  The
-           button is styled the same as other navigation buttons for consistency. -->
-      <button id="btnCaptureFav" class="btn">Capture Favorites</button>
-      <button id="btnNextBottom" class="btn">Next</button>
-    </div>
-  </div>
-</section>
-
-<!-- Page 3 -->
-<section id="p3">
-  <div class="wrap">
-    <div class="topbar">
-      <button id="btnBackLast" class="btn">Back</button>
-      <div class="eyebrow" style="opacity:.9">STEP 3</div>
-      <button id="btnFinish" class="btn">Finish</button>
-    </div>
-    <div class="panel">
-      <div class="eyebrow">AFTERIMAGE TEST</div>
-      <div class="row" style="gap:12px;margin-top:6px">
-        <label>Timer
-          <select id="timerSel" class="select">
-            <option value="15" selected>15 s</option>
-            <option value="25">25 s</option>
-            <option value="45">45 s</option>
-          </select>
-        </label>
-        <label>Background
-          <select id="bgSel3" class="select">
-            <option value="white" selected>White</option>
-            <option value="paper">Paper</option>
-            <option value="gray">Light Gray</option>
-            <option value="black">Black</option>
-          </select>
-        </label>
-          <label>Ghost Oranges
-            <select id="ghostDropdown" class="select">
-              <option disabled selected>No ghosts yet</option>
-            </select>
-          </label>
-          <!-- New Shape selector on the test page. This lets the user pick the inducer shape directly in Step 3. -->
-          <label>Shape
-            <select id="shapeSel3" class="select">
-              <option value="fruit" selected>Fruit</option>
-              <option value="square">Square</option>
-              <option value="rect">Rectangle</option>
-            </select>
-          </label>
-        </div>
-    </div>
-    <div class="panel" id="testPanel" style="text-align:center">
-      
-<div id="testStage"><div class="cross"></div></div>
-<div class="test-head-minor">PRESS START</div>
-<div class="test-head-major">FOCUS ON THE CENTER UNTIL TIME’S UP</div>
-<div id="count">Ready</div>
-<div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
-  <button id="btnStartTest" class="btn cta" style="flex:1">Start</button>
-  <button id="btnResetTest" class="btn" style="flex:1">Reset</button>
-</div>
-<div class="test-footnote">Keep the phone steady, sit still and stare at the center of the crosshair until the timer is up!</div>
-    </div>
-    <div class="bottomBar">
-      <button id="btnBackBottomLast" class="btn">Back</button>
-      <button id="btnFinishBottom" class="btn">Finish</button>
-    </div>
-  </div>
-</section>
 
 <script>
-/* ====================== Utilities & State ====================== */
-const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
-const hexToRgb=(hex)=>{const m=/^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex)||[];return{r:parseInt(m[1]||'ff',16),g:parseInt(m[2]||'a5',16),b:parseInt(m[3]||'00',16)}};
-function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h,s,l=(max+min)/2;if(max===min){h=s=0}else{const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4}h*=60}return{h,s:s*100,l:l*100}}
-function hslToHex(h,s,l){h=clamp(h,0,360);s=clamp(s,0,100)/100;l=clamp(l,0,100)/100;const a=s*Math.min(l,1-l);const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,Math.min(9-k,1)));return Math.round(255*c)};return '#'+[f(0),f(8),f(4)].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase()}
-// Convert an RGB triplet back to a hex string. Ensures values are clamped and upper‑cases the result.
-function rgbToHex(r,g,b){
-  const clampByte=v=>Math.max(0,Math.min(255,Math.round(v)));
-  return '#'+[clampByte(r),clampByte(g),clampByte(b)].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
-}
-// Lighten a hex colour towards white by a given amount (0..1). Returns a new hex string.
-function lightenHex(hex, amt){
-  const {r,g,b}=hexToRgb(hex);
-  const nr=r+(255-r)*amt;
-  const ng=g+(255-g)*amt;
-  const nb=b+(255-b)*amt;
-  return rgbToHex(nr,ng,nb);
-}
-const clampToOrange=(h,s,l)=>({h:clamp(h,20,50),s:clamp(s,40,100),l:clamp(l,35,75)});
-function textColorFor(hex){const {r,g,b}=hexToRgb(hex);const yiq=(r*299+g*587+b*114)/1000;return yiq>=140?'#111':'#fff'}
-const previewBg=()=>({white:'#FFFFFF',paper:'#FAFAFA',gray:'#EDEDED',black:'#000000'})[state.editorBg]||'#FFFFFF';
-const stageBg=bgKey=>({white:'#FFFFFF',paper:'#FAFAFA',gray:'#EDEDED',black:'#000000'})[bgKey]||'#FFFFFF';
-
-const state={
-  page:'p1',
-  editorBg:'white',
-  shape:'fruit',
-  active:'rind',
-  // Track recent colour history for each component so we can surface last and recently selected colours
-  // Preselect Afterimage Orange for the rind and Clyde Orange for the pits.  These values
-  // provide a more engaging default when the user arrives on the colour picker page and
-  // ensure Step 3 reflects the same selections.  We include manualHex and selectedHex to
-  // preserve the exact library colour and highlight the corresponding card in the library.
-  rind:{
-    h:24,s:95,l:55,
-    name:'Afterimage Orange',
-    fun:'The phantom orange seen after staring at bright blue.',
-    significance:'Illustrates the eye’s opponent-process effect as a fleeting complementary ghost.',
-    manualHex:'#F9751F',
-    selectedHex:'#F9751F',
-    history:[]
-  },
-  pits:{
-    h:38,s:97,l:63,
-    name:'Clyde Orange',
-    fun:'Named after the orange ghost from Pac-Man.',
-    significance:'A playful retro orange invoking arcade nostalgia and mischievous fun.',
-    manualHex:'#FCBA45',
-    selectedHex:'#FCBA45',
-    history:[]
-  },
-  favorites:[],
-  lastTouch:0
+/* === external destinations (deep links) === */
+const URLS = {
+  home:   "https://vahetharoutounian-stack.github.io/neurOrange/",
+  color:  "https://vahetharoutounian-stack.github.io/neurOrangeV3/",
+  gallery:"https://vahetharoutounian-stack.github.io/neurOrangeV2/"
 };
+function hexNorm(h){return (h||'').replace(/^#/,'').toUpperCase()}
+function toColor(hex){ return `${URLS.color}#step=2&cat=standards&hex=${hexNorm(hex)}`; }
+function toGallery(idx){ return `${URLS.gallery}#painting=${idx}`; }
+function toIllusion(hex){return `${URLS.color}#step=3&cat=ghosts&hex=${hexNorm(hex)}`; }
 
-/* ====================== ORANGE LIBRARY (9 per category) ====================== */
+/* === interstitial quote handling === */
+const QUOTES = [
+  // Quotes inspired by the color orange.  Each occurrence of the word “orange” is wrapped
+  // with a span.accent so it animates in the interstitial overlay.
+  "\u201cIt’s funny how the colors of the real world only seem really real when you viddy them on the screen.\u201d — A Clockwork <span class='accent'>Orange</span> (1971)",
+  "\u201c<span class='accent'>Orange</span> is the happiest color.\u201d — Frank Sinatra",
+  "\u201cThere is no blue without yellow and without <span class='accent'>orange</span>.\u201d — Vincent Van Gogh",
+  "\u201cThe <span class='accent'>orange</span> tree took time to create this masterpiece.\u201d — Thich Nhat Hanh",
+  "\u201cIf the real world is <span class='accent'>orange</span> juice, then art is like <span class='accent'>orange</span> juice concentrate.\u201d — Martin Mull",
+  "\u201cIn a world full of yellows and reds, dare to be <span class='accent'>orange</span>.\u201d"
+];
+function showQuoteThenGo(url, dwell=1600){
+  const overlay = document.getElementById('interstitial');
+  const text = document.getElementById('interstitialText');
+  text.innerHTML = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  overlay.classList.add('show');
+  setTimeout(()=>{ location.href = url; }, dwell);
+    /* Use a black background so if the splash video fails to load there is a dark fallback */
+    background:#000;
+}
 
-/* ===== ORANGE_LIBRARY (105 colors total; 15 per category; 3×5 grid per tab) ===== */
-/* Copy-paste ready. Keys match your existing data model: name, hex, fun, significance, persian. */
+/* === failsafe remove === */
+(function(){ const fs=document.getElementById('failsafe'); requestAnimationFrame(()=>{ fs.style.opacity=0; setTimeout(()=>fs.remove(),300); }); })();
 
-const ORANGE_LIBRARY = {
-  standards: [
-    { name:"Saffron Orange", hex:"#F4C430", fun:"Named for the prized dye from saffron stigmas.", significance:"A luminous golden-orange that reads ceremonial yet friendly. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Amber", hex:"#FFBF00", fun:"Named for fossil resin used in jewelry since antiquity.", significance:"A high-chroma yellow-orange that grabs attention without feeling neon. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Marigold", hex:"#FCC200", fun:"Botanical namesake long used in festive garlands.", significance:"Sunny and optimistic, great for helpful hints and success states. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Tangerine", hex:"#F28500", fun:"Named for fruit exported through Tangier, Morocco.", significance:"Energetic citrus pop suited to primary CTAs and badges. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Sunset Orange", hex:"#FD5E53", fun:"A classic ‘sunset’ paint and crayon shade.", significance:"Warm and emotive with a slight red lean for drama. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Flame", hex:"#E25822", fun:"Popular in fiery gradient ramps and retro palettes.", significance:"A saturated heat note that reads fast and bold. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Pure Orange", hex:"#FFA500", fun:"The baseline CSS/HTML ‘orange’.", significance:"Neutral reference orange for consistent theming and tokens. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Persian Orange", hex:"#D99058", fun:"Echoes clay and terracotta in Iranian crafts.", significance:"A tasteful mid-tone bridging amber and copper for UI neutrals. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Nārangī (Bitter Orange)", hex:"#E87D0D", fun:"‘Nārang’ is the Persian/Arabic root of ‘orange’.", significance:"Earthy fruit-skin orange that feels natural and grounded. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Tiger Orange", hex:"#FF7F24", fun:"Named for the vivid striping contrast on big cats.", significance:"Punchy mid-orange that holds up on dark or light surfaces. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Pumpkin Spice", hex:"#C76A1F", fun:"Evokes autumnal mixes and seasonal motifs.", significance:"A cozy brown-leaning orange for depth and hierarchy. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Copper Orange", hex:"#CB6D51", fun:"Inspired by weathered copper’s warm patina.", significance:"Sophisticated, slightly desaturated hue for long-read surfaces. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Coral Orange", hex:"#FF7F50", fun:"Bridges orange and living coral tones.", significance:"Friendly and approachable for onboarding and tips. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Solar Orange", hex:"#FF8E00", fun:"Named for bright solar flares in art and viz.", significance:"High-visibility accent without veering into warning territory. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Desert Orange", hex:"#D07A2D", fun:"Inspired by dune faces at golden hour.", significance:"Earthy stability that pairs well with sands and slates. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false }
-  ],
+/* === palettes === */
+const BRIGHT=[{hex:"#FE5000"},{hex:"#FFA500"},{hex:"#FF8E00"},{hex:"#FF6600"},{hex:"#FF6A00"},{hex:"#FF9400"},{hex:"#F28500"},{hex:"#FF7F24"},{hex:"#ED9121"},{hex:"#FFBF00"},{hex:"#FF5E00"},{hex:"#FF6A13"}];
+const GHOSTS=["#B36019","#F9751F","#F6B76F","#D2B379","#E3AC47","#F88E10","#C18514","#DE9513","#92752D","#F0CE85","#FCBA45","#D99621","#E8C569","#F0B85F","#D2B265"];
+const EMOJIS=["&#128992;","&#129031;","&#128246;","&#128248;","&#129505;","&#127818;","&#129389;","&#129365;","&#127840;","&#127875;","&#127936;","&#128217;"];
 
-  historic: [
-    { name:"Yellow Ochre", hex:"#CC7722", fun:"Among humanity’s oldest pigments (iron-oxide clay).", significance:"Reliable earthy structural orange used since prehistory. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Saffron Dye", hex:"#F4C430", fun:"A sacred dye across West/South Asia for millennia.", significance:"Ceremonial golden-orange central to textiles and ritual. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Burnt Sienna", hex:"#E97451", fun:"Calcined sienna deepens warmth and durability.", significance:"Painterly orange-brown that communicates craft and heritage. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Orpiment", hex:"#E9A800", fun:"Ancient arsenic sulfide with golden brilliance.", significance:"Historic manuscript orange used despite toxicity risks. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Realgar", hex:"#E56024", fun:"Ruby-orange arsenic sulfide used in East/West.", significance:"A vivid antiquity orange famed in fireworks and art. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Persian Berry (Stil-de-Grain)", hex:"#E6AE3D", fun:"Buckthorn dye traded via Persian routes.", significance:"Warm orange-yellow long used in inks and washes. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Chrome Orange", hex:"#ED6A00", fun:"Early 19th-c. lead-chromate synthetic.", significance:"Industrial-era vibrancy that shaped modern palettes. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Persian Red", hex:"#CC3333", fun:"Iron-rich soils from Hormuz inspired this hue.", significance:"A red-biased orange central to carpets and miniatures. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Minium (Red Lead)", hex:"#E34234", fun:"Illuminators’ vermilion-orange in manuscripts.", significance:"Brilliant headings and rubrication in medieval works. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Gamboge Orange", hex:"#E49B0F", fun:"Tree resin pigment prized in Asia.", significance:"Deep yellow-orange used in glazes and robes. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Cadmium Orange", hex:"#E16B00", fun:"Cadmium selenium sulfide modern bright.", significance:"High-saturation durable paint for vivid fields. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Mars Orange", hex:"#BA5D00", fun:"Synthetic iron-oxide orange (‘Mars’ series).", significance:"Stable, lightfast earth-like orange for utility UIs. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Pompeian Orange", hex:"#DF6D14", fun:"Inspired by Roman fresco palettes.", significance:"Classical warmth that reads scholarly and timeless. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Naples Orange", hex:"#FFA368", fun:"Lead antimonate mixed to an orange tint.", significance:"Soft pastel-orange with historical studio cachet. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Alizarin Orange Lake", hex:"#E95C2A", fun:"Lake pigment variant of famed alizarin reds.", significance:"Transparent glaze orange for layered depth cues. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false }
-  ],
+/* === helpers === */
+function $(id){return document.getElementById(id)}
+function $$(sel){return Array.from(document.querySelectorAll(sel))}
+function sizeQuestion(){
+  const b=$('question'), t=$('questionText');
+  b.style.transform='translate(-50%,-50%) scale(1)';
+  const w=t.offsetWidth, h=t.offsetHeight, pad=Math.max(6,Math.round(Math.max(w,h)*0.20));
+  const D=Math.ceil(Math.max(w,h)+pad*2);
+  b.style.width=D+'px'; b.style.height=D+'px';
+  startBoundedSpin();
+}
 
-  folklore: [
-    { name:"Saffron (Sannyāsa Robe)", hex:"#F4C430", fun:"Robes of renunciation and enlightenment.", significance:"Signals spiritual discipline and inner transformation across traditions. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Dutch National Orange", hex:"#FF7F27", fun:"Color of the House of Orange-Nassau.", significance:"A national unity color for celebration and sport. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Samhain Fire Orange", hex:"#FF6F00", fun:"Halloween’s bonfire lineage in Celtic rites.", significance:"Encodes protection and transition at season’s veil. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"“Naranj” Orange", hex:"#FF7A33", fun:"Persian/Arabic nārang gave English ‘orange’.", significance:"A linguistic trace of trade, fruit, and mythic ‘golden apples’. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Hesperides Orange", hex:"#FF8C00", fun:"Later identified with mythic golden apples.", significance:"Represents immortal bounty and heroic quests. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Bacchus Harvest Orange", hex:"#E66A1F", fun:"Renaissance revelry tones in vintners’ scenes.", significance:"Communicates conviviality, feasts, and autumn plenty. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Chinese Good-Luck Orange", hex:"#F68B1E", fun:"Exchanged during Lunar New Year for fortune.", significance:"Auspicious wealth cue in gifts and decor. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Phoenix Orange", hex:"#FF6D3A", fun:"The fire-bird’s rebirth plumage.", significance:"Marks cycles of renewal and undefeatable spirit. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Nowruz Orange (Floating Fruit)", hex:"#FF8F1F", fun:"Haft-Seen orange symbolizes the Earth afloat.", significance:"Signals seasonal renewal and hopeful prosperity. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Simurgh Feather Orange", hex:"#F5871F", fun:"Mythic Persian bird of wisdom and healing.", significance:"Embodies protection, guidance, and return to origins. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Mithraic Dawn Orange", hex:"#FFA726", fun:"Echoes dawn light of the Iranian sun-god Mithra.", significance:"Associates justice, oaths, and radiant guardianship. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Zoroastrian Sacred Fire", hex:"#FF7F23", fun:"Temple fires symbolize truth and purity.", significance:"Represents illumination and ethical clarity in ritual. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Marigold of the Dead", hex:"#F3A712", fun:"Cempasúchil guides spirits in Día de Muertos.", significance:"Honors memory and the bright path home. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Holi Powder Orange", hex:"#FF9933", fun:"Festival color of joy and social renewal.", significance:"Signals play, release, and seasonal reset. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Harvest Lantern Orange", hex:"#FF8E3C", fun:"Jack-o’-lantern glow in autumn lore.", significance:"Wards mischief while celebrating abundance. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false }
-  ],
+/* color math */
+function hexToRgb(h){h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}}
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return {h:h*360,s,l}}
+function hslToRgb(h,s,l){h/=360;let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p},q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return {r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}}
+function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}
+function opponentHex(hex){const {r,g,b}=hexToRgb(hex); const {h,s,l}=rgbToHsl(r,g,b); const opp=(h+180)%360; const {r:rr,g:gg,b:bb}=hslToRgb(opp,s,l); return rgbToHex(rr,gg,bb)}
 
-  brand: [
-    { name:"Hermès Orange", hex:"#FF7F00", fun:"Wartime box stock birthed a luxury icon.", significance:"Reads premium and timeless across packaging and UI accents. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"International Orange (Golden Gate)", hex:"#C0362C", fun:"Chosen for visibility and landscape harmony.", significance:"Engineering-grade orange-red that remains unmistakable. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Veuve Clicquot Orange", hex:"#F7A81B", fun:"Signature champagne label hue.", significance:"Signals celebration, sparkle, and convivial luxury. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Nickelodeon Orange", hex:"#FF6600", fun:"The playful ‘splat’ identity since the 1980s.", significance:"Communicates youth, creativity, and high energy. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Gulf Racing Orange", hex:"#FF7E00", fun:"Legendary blue-and-orange motorsport livery.", significance:"Encodes speed, heritage, and cinematic cool. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Pantone 021 C", hex:"#FE5000", fun:"Designers’ go-to pure print orange.", significance:"High-impact contrast in both print and UI tokens. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Allis-Chalmers Persian Orange", hex:"#FF6E00", fun:"Iconic tractor livery called ‘Persian’.", significance:"Industrial heritage orange with rugged clarity. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Persian Orange (Design Staple)", hex:"#D99058", fun:"Beloved in ceramics and textiles palettes.", significance:"A tasteful mid neutral for grounded brand systems. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Saffron Packaging Orange", hex:"#F4C430", fun:"Common on saffron tins and labels.", significance:"Signals gourmet authenticity and provenance. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Ubuntu Orange", hex:"#E95420", fun:"Canonical brand’s signature warm orange.", significance:"Human, open, and approachable tech identity. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Firefox Orange", hex:"#FF9400", fun:"Part of the browser’s fox gradient.", significance:"Friendly dynamism for consumer tech marks. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"SoundCloud Orange", hex:"#FF7700", fun:"Streaming brand’s instantly recognizable hue.", significance:"Signals creativity and community in audio spaces. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Mastercard Orange", hex:"#FF5F00", fun:"Half of the modern overlapping mark.", significance:"Trusted, legible, and globally familiar color logic. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Fanta Orange", hex:"#FF6A00", fun:"Citrus soda’s high-spirited orange.", significance:"Fun, sparkling, and youth-coded saturation. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Lamborghini Arancio Atlas", hex:"#FF8C1A", fun:"Supercar ‘Arancio’ paint line staple.", significance:"High-gloss performance orange with luxury attitude. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false }
-  ],
+/* svg wedges */
+function wedgePath(cx,cy,r0,r1,a0Deg,a1Deg){const R=d=>d*Math.PI/180; const a0=R(a0Deg),a1=R(a1Deg);
+  const P=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}); const A=P(r1,a0),B=P(r1,a1),C=P(r0,a1),D=P(r0,a0);
+  const large=(a1Deg-a0Deg)>180?1:0; return `M ${D.x} ${D.y} L ${A.x} ${A.y} A ${r1} ${r1} 0 ${large} 1 ${B.x} ${B.y} L ${C.x} ${C.y} A ${r0} ${r0} 0 ${large} 0 ${D.x} ${D.y} Z`}
 
-  food: [
-    { name:"Carrot", hex:"#ED9121", fun:"Dutch breeding popularized orange roots.", significance:"Health-coded orange that reads fresh and active. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Apricot (Zardālū)", hex:"#FBCEB1", fun:"Persian name means ‘yellow plum’.", significance:"Soft, skin-tone-friendly orange for friendly UI affordances. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Tangerine", hex:"#F28500", fun:"Named for Tangier trade routes.", significance:"Juicy accent that immediately feels edible and bright. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Bergamot", hex:"#FFA64D", fun:"Toranj— a rare, quiet brilliance which unfolds brightness into layered depth; rewarding to the patient and discerning.", significance:"Luminous medallion at a carpet's heart, where all patterns converge. It crowns society's essential manuscripts.", persian:true, opponent:"#005BB3" }, 
-    { name:"Pumpkin", hex:"#FF7518", fun:"Autumn icon for pies and lanterns.", significance:"Harvest anchor that pairs well with deep browns. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Mandarin", hex:"#F6A200", fun:"Name references imperial ‘mandarin’ robes.", significance:"Cheerful snack-orange tint for friendly controls. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Clementine", hex:"#F98B00", fun:"Late-19th-c. Algerian hybrid citrus.", significance:"Seedless sweetness encoded in a bright mid-orange. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Sweet Orange", hex:"#FFA500", fun:"‘Orange’ in English descends from nārang.", significance:"Archetypal edible orange with universal recognition. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Kumquat", hex:"#F99E1A", fun:"Bite-sized citrus eaten peel-and-all.", significance:"Zippy micro-accent orange for compact UI elements. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Butternut Squash", hex:"#E67E22", fun:"Velvety orange gourds for soups and roasts.", significance:"Comforting kitchen orange for cozy themes. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Sea Buckthorn", hex:"#F6A700", fun:"Tart super-berries with vivid oil.", significance:"Nutrient-coded orange ideal for wellness cues. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Turmeric Root", hex:"#DE7C00", fun:"Spice coloring curries and textiles.", significance:"Earthy culinary orange with craft connotations. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Bitter Orange (Nāranj)", hex:"#E67910", fun:"Used in marmalades and Persian cuisine.", significance:"Aromatic peel orange for gourmet indicators. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Thompson Navel (porteghāl-e Tamsun)", hex:"#FF8A00", fun:"Cold-resistant sweet orange propagated in the Caspian belt (incl. Gilan/Rasht).", significance:"True mid-orange that reads immediate yet natural—reliable inducer and everyday cue. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Persimmon (Khar-mālū)", hex:"#EC5800", fun:"Autumn fruit with lacquer-bright flesh grown in northern Iran.", significance:"Deep edible orange that suggests ripeness and reward; great for ‘complete’ or ‘ready’ states. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true }
-  ],
-
-  scientific: [
-    { name:"Spectral Orange (585–620 nm)", hex:"#FF8C00", fun:"Representative visible-spectrum orange band.", significance:"Defines orange by wavelength, bridging yellow to red in optics. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Sodium D-Line 589 nm", hex:"#FFC20E", fun:"The classic low-pressure sodium glow.", significance:"Textbook example of atomic emission used in street lighting. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Amber LED 590 nm", hex:"#FFB000", fun:"Nominal amber solid-state emitter peak.", significance:"Reliable signaling orange in devices and wearables. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Blackbody 2000 K", hex:"#FF7A1A", fun:"Incandescent radiator at candle-like temperature.", significance:"Incandescence orange used in rendering and photometry. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Blackbody 2500 K", hex:"#FF8D3A", fun:"Warm tungsten filament regime.", significance:"Reference orange for white-balance and color constancy tests. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Thermal Imaging Mid-Orange", hex:"#FF8C40", fun:"Common middle stop in ‘Ironbow’ palettes.", significance:"Translates heat magnitude to perceptible orange in IR UIs. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Lava Incandescence", hex:"#FF6F3C", fun:"Molten basalt’s radiant orange stage.", significance:"Communicates hazardous heat in safety visualizations. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Carotene Peak", hex:"#F4A300", fun:"β-Carotene’s characteristic fruit/veg orange.", significance:"Biological pigment orange used in nutrition viz. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Xanthophyll Orange", hex:"#F4C04A", fun:"Leaf pigments shifting in autumn senescence.", significance:"Seasonal biology cue for ecological dashboards. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Quinacridone Orange", hex:"#ED6A00", fun:"High-performance synthetic organic pigment.", significance:"Lightfast engineering orange for coatings and plastics. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Goethite (FeO(OH)) Orange", hex:"#C7782A", fun:"Hydrated iron-oxide mineral pigment.", significance:"Geology-coded orange for terrain and core samples. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Chromosphere Prominence", hex:"#FF5E2E", fun:"Solar prominences imaged in H-alpha palettes.", significance:"Astro-viz orange denoting intense solar activity. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Crocin (Saffron) Orange", hex:"#F4C430", fun:"Dominant carotenoid of saffron threads.", significance:"Spectrally bright botanical orange used in chem/food studies. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Hormuz Ocher (Iran)", hex:"#D96F34", fun:"Iron-rich soils from Hormuz Island.", significance:"Field-sample orange for sedimentology references. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Persian Gulf Aerosol Sunset", hex:"#E8892C", fun:"Dust/aerosol scattering over the Gulf.", significance:"Atmospheric optics orange used in radiative transfer demos. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true }
-  ],
-
-  mystic: [
-    { name:"Sacral Chakra Orange", hex:"#F4A261", fun:"Linked to creativity, passion, and flow.", significance:"Used in meditation to energize embodied imagination. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Cleansing & Joy Orange", hex:"#FFA64D", fun:"Orange peels/oils in folk rites uplift spaces.", significance:"Employed to banish stagnation and invite prosperity. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Saffron Robes", hex:"#F4C430", fun:"Monastic color of renunciation and purity.", significance:"Encodes inner fire that burns away attachment. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Nowruz Renewal Orange", hex:"#FF8F1F", fun:"Haft-Seen orange/goldfish signal rebirth.", significance:"Marks cosmic turning and prosperous beginnings. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Zoroastrian Sacred Fire", hex:"#FF7F23", fun:"Atash altars symbolize truth and light.", significance:"Focus for prayer, purity, and ethical clarity. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Mithraic Dawn", hex:"#FFA726", fun:"Orange of oath-keeping sun deity Mithra.", significance:"Invoked for justice, covenant, and guardianship. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:true },
-    { name:"Simurgh Guidance Orange", hex:"#F5871F", fun:"Persian bird of wisdom and healing.", significance:"Used symbolically for protection and right return. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Amber Talisman", hex:"#FFB347", fun:"Fossil resin worn for protection and calm.", significance:"Said to transmute heaviness into sunny vitality. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Carnelian Orange", hex:"#E85E29", fun:"Stone of courage in many esoteric systems.", significance:"Applied to energize speech and creative will. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Tarot Wands Orange", hex:"#FF6D3A", fun:"Fire-element suit for drive and action.", significance:"Amplifies initiative, focus, and momentum spells. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Solar Amulet Orange", hex:"#FF9A00", fun:"Sun disks and seals across mystic arts.", significance:"Channels success, rank, and radiant charisma. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Aura Creativity Orange", hex:"#FF8E4A", fun:"Seen in aura lore as maker’s glow.", significance:"Read as openness, play, and inventive spark. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Frankincense Ember Orange", hex:"#E6761A", fun:"Incense embers in prayer and divination.", significance:"Signals consecration and clearing in ritual space. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Marigold Puja Orange", hex:"#F3A712", fun:"Garlands offered to deities and guests.", significance:"Invokes blessing, hospitality, and auspicious presence. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false },
-    { name:"Sufi Samā Sunset", hex:"#F28627", fun:"Evening orange evoked in devotional music.", significance:"Aids surrender to love and ecstatic remembrance. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", persian:false }
-  ],
-
-  ghosts: [ 
-    { name:"Ghost Pepper Orange", hex:"#B36019", fun:"Named for the infamous Bhut Jolokia ‘ghost pepper’ chili.", significance:"A scorching red-orange that embodies extreme heat and daring flavor. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#186BB3", persian:false }, 
-    { name:"Afterimage Orange", hex:"#F9751F", fun:"The phantom orange seen after staring at bright blue.", significance:"Illustrates the eye’s opponent-process effect as a fleeting complementary ghost. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#0066FF", persian:false }, 
-    { name:"CRT Ghost Orange", hex:"#F6B76F", fun:"Amber glow of ghosting trails on old CRT monitors.", significance:"A nostalgic display orange evoking afterimage streaks in retro tech. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#6EADF6", persian:false }, 
-    { name:"Will-o’-Wisp Orange", hex:"#D2B379", fun:"Named for ghostly swamp lights said to mislead travelers.", significance:"An eerie flame-orange flicker at the edge of vision, evoking folkloric lanterns. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#7897D2", persian:false }, 
-    { name:"Hitodama Orange", hex:"#E3AC47", fun:"Named for the Japanese ghost-fire orb seen floating at night.", significance:"A spiritual flame-orange said to be souls of the departed drifting in darkness. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#467DE3", persian:false }, 
-    { name:"Jinn Flame Orange", hex:"#F88E10", fun:"Inspired by the fiery form of a summoned jinn (genie).", significance:"A supernatural blaze-orange hinting at otherworldly power and heat. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#0F79F8", persian:false }, 
-    { name:"Phantom Orange", hex:"#C18514", fun:"So named for its elusive, barely-there presence.", significance:"A muted dusk-orange that fades in and out like a specter at twilight. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#144FC0", persian:false }, 
-    { name:"Specter Orange", hex:"#DE9513", fun:"Title for a visible ghostly figure.", significance:"A mid-toned spectral orange that materializes abruptly and startles. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#125BDE", persian:false }, 
-    { name:"Wraith Orange", hex:"#92752D", fun:"A wraith is a vengeful ghost—this orange echoes its darkness.", significance:"A deep brown-leaning orange that creeps in with a grim, ominous cast. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#2C4992", persian:false }, 
-    { name:"Apparition Orange", hex:"#F0CE85", fun:"Term for a ghost that suddenly appears before you.", significance:"A pale, subtle orange that materializes briefly before fading away. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#85A7F0", persian:false }, 
-    { name:"Clyde (Pac-Man Ghost)", hex:"#FCBA45", fun:"Named after the orange ghost from Pac-Man.", significance:"A playful retro orange invoking arcade nostalgia and mischievous fun. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#4486FC", persian:false }, 
-    { name:"Poltergeist Orange", hex:"#D99621", fun:"Poltergeists are noisy, chaotic ghosts—this orange fits the bill.", significance:"An agitated mid-orange radiating restless, unpredictable energy. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#2063D9", persian:false }, 
-    { name:"Marfa Lights Orange", hex:"#E8C569", fun:"Named for the mysterious ghost lights of Marfa, Texas.", significance:"An enigmatic orange orb that hovers on remote horizons, defying explanation. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#698CE7", persian:false }, 
-    { name:"Ghost Moth Orange", hex:"#F0B85F", fun:"Female ghost moths flash bright orange to attract mates.", significance:"An alluring golden-orange beacon used in dusk mating dances—nature’s spectral display. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#5E96F0", persian:false }, 
-    { name:"Hungry Ghost Orange", hex:"#D2B265", fun:"Refers to lantern offerings for restless spirits in the Ghost Festival.", significance:"A warm, candlelit orange guiding wayward souls to comfort and rest. Falls squarely in the orange opponent band for crisp afterimages on iPhone P3.", opponent:"#6484D2", persian:false } 
-  ]
-};
-
-
-
-/* ====================== Page 1 Demo Animation ====================== */
-(function animateDemo(){
-  const stage=document.getElementById('demoStage');
-  if(!stage) return;
-  const blue='#0A4BFF';
-  const orange='#ED6A00';
-  function stepBlue(){
-    stage.style.transition='background-color 0s linear';
-    stage.style.backgroundColor=blue;
-    setTimeout(stepOrangeHold,3000); // 3s solid blue
+function drawRing(svgEl,sizePx,r0px,r1px,colorObjs,gapDeg){
+  svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
+  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
+  const n=colorObjs.length, slice=360/n; svgEl.innerHTML='';
+  for(let i=0;i<n;i++){
+    const hex=(typeof colorObjs[i]==='string')? colorObjs[i] : colorObjs[i].hex;
+    const a0=i*slice, a1=(i+1)*slice-gap;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
+    p.setAttribute('fill',hex);
+    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
+    p.classList.add('clickable');
+    p.addEventListener('click', ()=> showQuoteThenGo(toColor(hex)), {passive:true});
+    svgEl.appendChild(p);
   }
-  function stepOrangeHold(){
-    stage.style.transition='background-color 0s linear';
-    stage.style.backgroundColor=orange; // solid Quinacridone Orange
-    setTimeout(stepOrangeFade,1000); // 1s hold
-  }
-  function stepOrangeFade(){
-    // Fade the inducer from orange to white over 2 seconds. The cubic-bezier accelerates towards the end (faster in the last 1.5 seconds).
-    stage.style.transition='background-color 0s linear';
-    stage.style.backgroundColor = orange;
-    // Small timeout to ensure the initial colour takes effect before transition
-    setTimeout(() => {
-      stage.style.transition='background-color 2s cubic-bezier(0.4, 0.0, 1.0, 0.8)';
-      stage.style.backgroundColor='#FFFFFF';
-      // After the fade completes, hold white for 0.5 s and restart the sequence
-      setTimeout(() => {
-        stage.style.transition='background-color 0s linear';
-        stage.style.backgroundColor='#FFFFFF';
-        setTimeout(stepBlue,500);
-      },2000);
-    }, 20);
-  }
-  stepBlue();
-})();
+}
 
-/* ====================== Rendering / Library / Test / Events (unchanged from v2) ====================== */
-function drawPreview(){
-  const canvas=document.getElementById('preview');
-  const rect=canvas.getBoundingClientRect();
-  canvas.width=Math.max(320,Math.floor(rect.width));
-  canvas.height=canvas.width;
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle=previewBg();
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  // Prefer the manually selected hex (from the library) when available; otherwise derive from the current HSL values.
-  const rindHex = (state.rind && state.rind.manualHex) ? state.rind.manualHex : hslToHex(state.rind.h,state.rind.s,state.rind.l);
-  const pitsHex = (state.pits && state.pits.manualHex) ? state.pits.manualHex : hslToHex(state.pits.h,state.pits.s,state.pits.l);
-  if(state.shape!=='fruit'){
-    const pad=18; let rw=Math.min(canvas.width,canvas.height)-pad*2; let rh=rw;
-    if(state.shape==='rect'){rh=Math.round((canvas.height-pad*2)*0.66); rw=canvas.width-pad*2;}
-    const x=(canvas.width-rw)/2; const y=(canvas.height-rh)/2;
-    // Fill the base shape with the rind colour
-    ctx.fillStyle=rindHex;
-    ctx.fillRect(x,y,rw,rh);
-    // Draw pits as semi-transparent dots using the pits colour. Increase the
-    // alpha and dot count to better reflect the selected pits hue. Use smaller
-    // dots to approximate the pore texture of an orange. This makes the
-    // selected pits colour noticeable on the preview.
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = pitsHex;
-    const dotCount = 260;
-    for (let i = 0; i < dotCount; i++) {
-      const px = x + Math.random() * rw;
-      const py = y + Math.random() * rh;
-      const pr = Math.random() * 1.2 + 0.4;
-      ctx.beginPath();
-      ctx.arc(px, py, pr, 0, Math.PI * 2);
-      ctx.fill();
+function drawGhostRing(svgEl,sizePx,r0px,r1px,ghostHexes,gapDeg){
+  svgEl.setAttribute('viewBox','0 0 1000 1000'); svgEl.style.width=sizePx+'px'; svgEl.style.height=sizePx+'px';
+  const k=1000/sizePx, r0=Math.max(2,r0px*k), r1=r1px*k, gap=Number(gapDeg)||0;
+  const n=ghostHexes.length, slice=360/n; svgEl.innerHTML='';
+  for(let i=0;i<n;i++){
+    const base=ghostHexes[i], opp=opponentHex(base), a0=i*slice, a1=(i+1)*slice-gap;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',wedgePath(500,500,r0,r1,a0,a1));
+    p.classList.add('ghost-wedge','clickable');
+    p.style.setProperty('--c0',base); p.style.setProperty('--c1',opp);
+    const dur=10+Math.random()*6, phase=Math.random()*dur; p.style.setProperty('--dur',dur.toFixed(2)+'s'); p.style.setProperty('--delay',(-phase).toFixed(2)+'s');
+    p.setAttribute('stroke','rgba(0,0,0,.18)'); p.setAttribute('stroke-width','1');
+    p.addEventListener('click', ()=> showQuoteThenGo(toIllusion(base)), {passive:true});
+    svgEl.appendChild(p);
+  }
+}
+
+/* paintings */
+function buildMidNodes(){
+  const mid=$('midRing'); mid.innerHTML='';
+  for(let i=1;i<=6;i++){
+    const n=document.createElement('div'); n.className='mnode withCloud';
+    const img=new Image(); img.alt='Painting '+i;
+    // Use hosted images for the mid-ring paintings to ensure artwork displays correctly.
+    img.src=`https://vahetharoutounian-stack.github.io/neurOrange/assets/paintings/${i}.jpg`;
+    img.onerror=()=>{ n.style.background='#222'; };
+    n.addEventListener('click', ()=> showQuoteThenGo(toGallery(i)), {passive:true});
+    n.appendChild(img); mid.appendChild(n);
+  }
+}
+
+/* layout */
+function layoutRings(){
+  const innerSVG=$('innerSVG'), outerSVG=$('outerSVG'), innerWrap=$('innerWrap'), outerWrap=$('outerWrap');
+  const midRing=$('midRing'); const W=innerWidth, H=innerHeight, S=Math.min(W,H);
+  document.documentElement.style.setProperty('--emoji-font',Math.round(W*0.036)+'px');
+
+  const innerD=Math.round(S*0.58), innerThick=Math.max(16,Math.round(innerD*0.12));
+  document.documentElement.style.setProperty('--inner-thick',innerThick+'px');
+  innerWrap.style.width=innerD+'px'; innerWrap.style.height=innerD+'px';
+
+  const innerOuter=innerD/2, innerInner=Math.max(2, innerOuter - innerThick*2);
+  drawRing(innerSVG, innerD, innerInner, innerOuter, BRIGHT, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
+
+  const nodeD=Math.round(innerThick*0.85*5.25*0.82), margin=2, midR=Math.max(0, (W/2)-(nodeD/2)-margin);
+  const nodes=$$('#midRing .mnode'), N=6, step=2*Math.PI/N;
+  nodes.forEach((n,i)=>{const a=i*step, x=Math.cos(a)*midR, y=Math.sin(a)*midR; n.style.width=nodeD+'px'; n.style.height=nodeD+'px'; n.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`});
+
+  const outerInnerR=midR + nodeD/2 + margin, outerThick=innerThick*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--outer-thick-mult'))||2.2);
+  const outerOuterR=Math.max(outerInnerR+outerThick, W/2+8), outD=Math.round(outerOuterR*2);
+  outerWrap.style.width=outD+'px'; outerWrap.style.height=outD+'px';
+  drawGhostRing(outerSVG, outD, outerInnerR, outerOuterR, GHOSTS, getComputedStyle(document.documentElement).getPropertyValue('--gap-deg')||3);
+
+  const gap=Math.max(8,Math.round(S*0.014)), rA=outerOuterR+gap, rB=rA+Math.max(22,Math.round(S*0.028));
+  placeEmojis('emojiWrapA', rA, 0);
+  placeEmojis('emojiWrapB', rB, (Math.PI*2)/(12*2));
+  // expose the emoji ring radii globally for simple collision detection with comets
+  window.emojiRadii = [rA, rB];
+}
+function placeEmojis(wrapId,R,phase=0){
+  const container=$(wrapId).querySelector('.emojiRing'); container.innerHTML=''; const n=12;
+  for(let i=0;i<n;i++){const d=document.createElement('div'); d.className='emoji'; d.innerHTML=EMOJIS[i%EMOJIS.length];
+    const a=i*(2*Math.PI/n)+phase, x=Math.cos(a)*R, y=Math.sin(a)*R;
+    d.style.transform=`translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`; container.appendChild(d);}
+}
+
+/* 1 rpm bounded center text (±45°, random flips) */
+let spinRAF, spinStarted=false;
+function startBoundedSpin(){
+  if(spinStarted) return; spinStarted=true;
+  const t=$('questionText'); let angle=0, dir=Math.random()<0.5?1:-1; const speed=360/60;
+  let change=3+Math.random()*5, last=performance.now();
+  function step(now){const dt=(now-last)/1000; last=now; angle+=dir*speed*dt;
+    if(angle>45){angle=45;dir=-1} if(angle<-45){angle=-45;dir=1}
+    change-=dt; if(change<=0){ if(Math.random()<0.35) dir*=-1; change=3+Math.random()*5; }
+    t.style.transform=`rotate(${angle.toFixed(3)}deg)`; spinRAF=requestAnimationFrame(step);}
+  spinRAF=requestAnimationFrame(step);
+}
+
+/* comets: first in cycle plain, 4th 🌱, 5th 🌹 */
+(function comet(){
+    const field=$('cometField');
+    // Use a separate field for rose comets so they can appear behind ring 1.  The rose field
+    // is layered behind the color ring via a lower z-index.  If it doesn't exist,
+    // fall back to the main comet field.
+    const roseField=$('roseField');
+    // update cycle to 10 so that the rose emoji appears every 10th comet.  The pattern is:
+    // 1 bare rock, 2 sprout, 3 orange, 4 sprout, 5 orange, 6 sprout, 7 orange, 8 sprout,
+    // 9 fire, and 10 rose.  This spreads out the special emojis and makes the rose less frequent.
+    const cycle=10;
+    let count=0;
+  function spawn(){
+    count++;
+    const idx=((count-1)%cycle)+1;
+    const W = innerWidth, H = innerHeight;
+    // Determine a random direction vector so comets traverse the viewport from one side to the opposite
+    const angle = Math.random() * Math.PI * 2;
+    const dir = { x: Math.cos(angle), y: Math.sin(angle) };
+    // length for traveling beyond the viewport; ensure comets start and end off-screen
+    const travel = Math.max(W, H) * 1.4;
+    // start and end positions relative to screen center
+    let P0 = { x: -dir.x * travel / 2, y: -dir.y * travel / 2 };
+    let P1 = { x:  dir.x * travel / 2, y:  dir.y * travel / 2 };
+    // Preselect the path type: favour curved trajectories
+    let kind;
+    {
+      const r = Math.random();
+      if(r < 0.5)      kind = 'curved';
+      else if(r < 0.75) kind = 'offcenter';
+      else              kind = 'straight';
     }
-    ctx.globalAlpha = 1;
-  } else {
-    // Draw the circular fruit as a solid fill using the exact rind colour.
-    const R = Math.min(canvas.width, canvas.height) * 0.28;
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    // Fill the circle uniformly with the chosen rind colour so the preview reflects the selected hue accurately.
-    ctx.fillStyle = rindHex;
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.fill();
-    // Overlay pits (small dots) using the pits colour.  Increase the alpha so the
-    // speckles clearly reflect the chosen pits hue while remaining subtle.  A
-    // higher opacity makes the dots visible on light backgrounds.  Use the
-    // exact pits colour so the preview reflects the selection accurately.
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = pitsHex;
-    for (let i = 0; i < 200; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const rr = Math.random() * R * 0.9;
-      const px = cx + Math.cos(a) * rr;
-      const py = cy + Math.sin(a) * rr;
-      // Use smaller dots to better mimic orange pores on the preview
-      const pr = Math.random() * 1.2 + 0.4;
-      ctx.beginPath();
-      ctx.arc(px, py, pr, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
-}
-function buildLibrary(){
-  const gallery=document.getElementById('gallery'); if(!gallery) return;
-  gallery.innerHTML='';
-  const activeTab=document.querySelector('.tabSel.active')?.getAttribute('data-tab')||'standards';
-  const list=ORANGE_LIBRARY[activeTab]||[];
-  list.forEach(item=>{
-    const hex=item.hex.toUpperCase();
-    const card=document.createElement('div'); card.className='card'; card.style.background=previewBg();
-    // store the colour hex (uppercased) on the card so we can identify it later for highlighting
-    card.setAttribute('data-hex', hex.toUpperCase());
-    const swatch=document.createElement('div'); swatch.className='sw'; swatch.style.background=hex;
-    const meta=document.createElement('div'); meta.className='meta';
-    const nameDiv=document.createElement('div'); nameDiv.className='name'; nameDiv.textContent=item.name; nameDiv.style.color=hex;
-    const hexDiv=document.createElement('div'); hexDiv.className='hex'; hexDiv.textContent=hex; hexDiv.style.color=hex;
-    meta.appendChild(nameDiv); meta.appendChild(hexDiv);
-    const heart=document.createElement('div'); heart.className='heart'; heart.textContent='♥';
-    card.appendChild(swatch); card.appendChild(meta); card.appendChild(heart);
-    if(state.favorites.some(c=>c.hex===hex)) heart.style.display='block';
-    setupTap(card, () => {
-      // Determine which parameter (rind or pits) this selection should apply to based on current shape.
-      const target = state.shape === 'fruit' ? state.active : 'rind';
-      // Copy over descriptive metadata for the summary boxes and record the selected hex for later highlighting
-      state[target].name = item.name;
-      state[target].fun = item.fun;
-      state[target].significance = item.significance;
-      state[target].selectedHex = item.hex.toUpperCase();
-      /*
-        First clamp the chosen colour into the allowed orange band (updates the HSL values).
-        After clamping we assign manualHex so that the swatch, summary and preview use
-        the exact library colour.  This avoids manualHex being cleared by applyHex.
-      */
-      applyHex(target, item.hex);
-      state[target].manualHex = item.hex.toUpperCase();
-      // Update only the selected chip to reflect the manual override and sync sliders/inputs.
-      updateChip(target);
-      // Mark the correct parameter panel as active, so it gets the highlight and summary update.
-      setActiveTarget(target);
-      // Refresh which library cards are highlighted and update nav buttons.
-      updateLibrarySelection();
-      updateButtons();
-    });
-    setupDoubleTap(card, ()=> toggleFavourite(item, heart));
-    gallery.appendChild(card);
-  });
-  // After populating the gallery, highlight the card corresponding to the current selection
-  updateLibrarySelection();
-}
-function applyHex(which, hex) {
-  // Convert a hex colour to clamped HSL values and assign to the given parameter.
-  // Note: UI updates are performed separately by the caller.
-  const { r, g, b } = hexToRgb(hex);
-  const { h, s, l } = rgbToHsl(r, g, b);
-  const safe = clampToOrange(h, s, l);
-  // Update the HSL properties on state
-  state[which].h = Math.round(safe.h);
-  state[which].s = Math.round(safe.s);
-  state[which].l = Math.round(safe.l);
-}
-function updateChip(which){
-  // Prefer a manually selected hex (from the library) when available.  Otherwise derive
-  // the hex from the current HSL state.  This ensures the parameter swatch displays
-  // the exact chosen colour rather than the clamped HSL approximation.
-  const hex = (state[which] && state[which].manualHex)
-    ? state[which].manualHex.toUpperCase()
-    : hslToHex(state[which].h, state[which].s, state[which].l);
-  const sw = document.getElementById(which + 'Sw'); if (sw) sw.style.background = hex;
-  const nameEl = document.getElementById(which + 'Name'); if (nameEl) {
-    nameEl.textContent = state[which].name || 'Custom';
-    nameEl.style.color = textColorFor(hex);
-  }
-  const hexInput = document.getElementById(which === 'rind' ? 'hexRind' : 'hexPits'); if (hexInput) {
-    hexInput.value = hex;
-    hexInput.style.background = hex;
-    hexInput.style.color = textColorFor(hex);
-    hexInput.style.borderColor = hex;
-  }
-  const chip = document.getElementById(which + 'Chip'); if (chip) chip.style.background = previewBg();
-  // Sync the slider positions with the current state values when a new colour is applied
-  const hueSlider = document.getElementById(which + 'Hue');
-  const satSlider = document.getElementById(which + 'Sat');
-  const lightSlider = document.getElementById(which + 'Light');
-  if (hueSlider) hueSlider.value = state[which].h;
-  if (satSlider) satSlider.value = state[which].s;
-  if (lightSlider) lightSlider.value = state[which].l;
-  drawPreview();
-  updateButtons();
-  // After updating chip visuals and buttons, highlight the selected colour in the library
-  updateLibrarySelection();
-
-  // Maintain a recent colour history for each parameter.  If the current hex
-  // differs from the most recent entry, add it to the front of the history
-  // list and limit the list to 5 items.  Then refresh the corresponding
-  // select dropdown so the user can quickly pick their last or recently used
-  // colours.  See addToHistory() and updateRecentSelect() below.
-  addToHistory(which, hex);
-  updateRecentSelect(which);
-}
-function setActiveTarget(which){
-  state.active=which;
-  ['rind','pits'].forEach(k=>{const chip=document.getElementById(k+'Chip'); if(chip) chip.setAttribute('aria-pressed',String(k===which))});
-  document.getElementById('panelRind')?.classList.toggle('selectedPanel',which==='rind');
-  document.getElementById('panelPits')?.classList.toggle('selectedPanel',which==='pits');
-  updateSummary();
-  // Update library highlight when switching the active parameter
-  updateLibrarySelection();
-}
-function updateSummary(){
-  // Use manualHex if available (preserve the exact library colour); otherwise derive from HSL for display
-  const rindHex = (state.rind && state.rind.manualHex)
-    ? state.rind.manualHex.toUpperCase()
-    : hslToHex(state.rind.h, state.rind.s, state.rind.l);
-  const pitsHex = (state.pits && state.pits.manualHex)
-    ? state.pits.manualHex.toUpperCase()
-    : hslToHex(state.pits.h, state.pits.s, state.pits.l);
-  const sumRindTitle=document.getElementById('sumRindTitle'); const sumRindDesc=document.getElementById('sumRindDesc');
-  const sumPitsTitle=document.getElementById('sumPitsTitle'); const sumPitsDesc=document.getElementById('sumPitsDesc');
-  // Set titles to the color names only (no "Rind"/"Pits")
-  sumRindTitle.textContent=(state.rind.name||'Custom');
-  sumPitsTitle.textContent=(state.pits.name||'Custom');
-  // Apply descriptions and colours
-  sumRindDesc.textContent=[state.rind.fun,state.rind.significance].filter(Boolean).join(' ');
-  sumPitsDesc.textContent=[state.pits.fun,state.pits.significance].filter(Boolean).join(' ');
-  // Style colours and boldness
-  sumRindTitle.style.color = rindHex; sumRindTitle.style.fontWeight = '800';
-  sumRindDesc.style.color = rindHex; sumRindDesc.style.fontWeight = '600';
-  sumPitsTitle.style.color = pitsHex; sumPitsTitle.style.fontWeight = '800';
-  sumPitsDesc.style.color = pitsHex; sumPitsDesc.style.fontWeight = '600';
-  // Show or hide second summary box when only one parameter is needed
-  document.getElementById('sumPits').style.display = (state.shape==='fruit') ? 'block' : 'none';
-  // Determine highlight for the active summary box
-  const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--highlight') || '#FFA64D';
-  const activeKey = (state.shape==='fruit') ? state.active : 'rind';
-  const sumRindBox=document.getElementById('sumRind');
-  const sumPitsBox=document.getElementById('sumPits');
-  // Reset borders on both boxes
-  [sumRindBox,sumPitsBox].forEach(box=>{if(box){box.style.boxShadow=''; box.style.border='1px solid var(--ring)'}});
-  const activeBox = (activeKey==='rind') ? sumRindBox : sumPitsBox;
-  if(activeBox){ activeBox.style.boxShadow=`0 0 0 2px ${highlightColor}`; activeBox.style.border=`2px solid ${highlightColor}`; }
-  // Adjust grid layout for summary panel
-  const summaryPanel=document.getElementById('summaryPanel'); summaryPanel.style.gridTemplateColumns=(state.shape==='fruit')?'1fr 1fr':'1fr';
-
-  // Ensure the library selection highlight reflects the current active colour
-  updateLibrarySelection();
-}
-function updateButtons(){
-  const next=document.getElementById('btnNext'); const nextBottom=document.getElementById('btnNextBottom');
-  const back=document.getElementById('btnBack'); const backBottom=document.getElementById('btnBackBottom');
-  const activeKey=state.shape==='fruit'?state.active:'rind';
-  const otherKey=state.shape==='fruit'?(state.active==='rind'?'pits':'rind'):'pits';
-  // Prefer manualHex for fill colours so that navigation buttons reflect the exact chosen colour;
-  // fall back to selectedHex (for library highlighting) or HSL when no overrides exist.
-  let fill;
-  if (state[activeKey] && state[activeKey].manualHex) {
-    fill = state[activeKey].manualHex.toUpperCase();
-  } else if (state[activeKey] && state[activeKey].selectedHex) {
-    fill = state[activeKey].selectedHex.toUpperCase();
-  } else {
-    fill = hslToHex(state[activeKey].h, state[activeKey].s, state[activeKey].l);
-  }
-  let otherHex;
-  if (state[otherKey] && state[otherKey].manualHex) {
-    otherHex = state[otherKey].manualHex.toUpperCase();
-  } else if (state[otherKey] && state[otherKey].selectedHex) {
-    otherHex = state[otherKey].selectedHex.toUpperCase();
-  } else {
-    otherHex = hslToHex(state[otherKey].h, state[otherKey].s, state[otherKey].l);
-  }
-  [next, nextBottom].forEach(b => {
-    if (b) {
-      b.style.background = fill;
-      b.classList.add('cta');
-      b.style.color = state.shape === 'fruit' ? textColorFor(otherHex) : textColorFor(fill);
-    }
-  });
-  [back, backBottom].forEach(b => {
-    if (b) {
-      b.style.background = '#0A4BFF';
-      b.style.color = '#fff';
-    }
-  });
-  document.getElementById('exportWrap')?.classList.toggle('hidden', !(state.favorites && state.favorites.length > 0));
-}
-
-// Highlight the swatch in the library that matches the currently selected colour.
-function updateLibrarySelection(){
-  // Determine the active colour hex based on the current shape and active parameter
-  // Get the selected library hexes for each parameter (if any)
-  const selectedHexes = [];
-  if(state.rind && state.rind.selectedHex) selectedHexes.push(state.rind.selectedHex.toUpperCase());
-  if(state.pits && state.pits.selectedHex) selectedHexes.push(state.pits.selectedHex.toUpperCase());
-  // Loop over all library cards and compare their data-hex attributes
-  document.querySelectorAll('.card').forEach(card => {
-    const cardHex = card.getAttribute('data-hex');
-    const isSelected = cardHex && selectedHexes.includes(cardHex.toUpperCase());
-    // Toggle the selectedLib class to control highlighting via CSS
-    card.classList.toggle('selectedLib', !!isSelected);
-  });
-}
-
-// === Recent colour history and dropdown helpers ===
-// Track recently selected colours so that the user can quickly access their
-// last used hues.  Each parameter (rind or pits) maintains its own history
-// array on state[which].history.  Histories are capped at 5 entries and
-// duplicate entries are collapsed to keep the most recent first.
-function addToHistory(which, hex){
-  if(!hex) return;
-  const hx = hex.toUpperCase();
-  const hist = state[which].history || (state[which].history = []);
-  // If the most recent entry is the same, no update needed
-  if(hist.length > 0 && hist[0] === hx) return;
-  // Remove duplicates further down
-  const idx = hist.indexOf(hx);
-  if(idx >= 0) hist.splice(idx, 1);
-  // Add to front
-  hist.unshift(hx);
-  // Limit to 5 entries
-  if(hist.length > 5) hist.length = 5;
-}
-
-// Populate the select element for a given parameter with its recent colours.
-// The first group labelled "Last Selected" contains the most recent colour.
-// A second group labelled "Recent" lists up to four other colours.
-function updateRecentSelect(which){
-  const selId = which === 'rind' ? 'recentRindSel' : 'recentPitsSel';
-  const rowId = which === 'rind' ? 'recentRindRow' : 'recentPitsRow';
-  const selEl = document.getElementById(selId);
-  if(!selEl) return;
-  const hist = state[which].history || [];
-  // If no history, show a disabled placeholder option
-  selEl.innerHTML = '';
-  if(hist.length === 0){
-    const opt = document.createElement('option');
-    opt.textContent = 'No recent colours';
-    opt.disabled = true;
-    opt.selected = true;
-    selEl.appendChild(opt);
-    return;
-  }
-  // Add "Last Selected" group
-  const lastHex = hist[0];
-  const groupLast = document.createElement('optgroup');
-  groupLast.label = 'Last Selected';
-  const optLast = document.createElement('option');
-  optLast.value = lastHex;
-  optLast.textContent = lastHex;
-  optLast.style.background = lastHex;
-  optLast.style.color = textColorFor(lastHex);
-  groupLast.appendChild(optLast);
-  selEl.appendChild(groupLast);
-  // Add "Recent" group if additional history exists
-  if(hist.length > 1){
-    const groupRecent = document.createElement('optgroup');
-    groupRecent.label = 'Recent';
-    for(let i = 1; i < hist.length; i++){
-      const h = hist[i];
-      const opt = document.createElement('option');
-      opt.value = h;
-      opt.textContent = h;
-      opt.style.background = h;
-      opt.style.color = textColorFor(h);
-      groupRecent.appendChild(opt);
-    }
-    selEl.appendChild(groupRecent);
-  }
-  // Hide the pits dropdown when not in fruit mode
-  if(rowId === 'recentPitsRow'){
-    const row = document.getElementById(rowId);
-    if(row) row.style.display = (state.shape === 'fruit') ? 'block' : 'none';
-  }
-}
-function applyEditorBg(){
-  ['rind','pits'].forEach(which=>{const chip=document.getElementById(which+'Chip'); if(chip) chip.style.background=previewBg()});
-  document.querySelectorAll('.card').forEach(card=>{card.style.background=previewBg()});
-  drawPreview();
-}
-function saveFavorites(){try{localStorage.setItem('neurOrangeFavorites',JSON.stringify(state.favorites))}catch(e){}}
-function loadFavorites(){try{const s=localStorage.getItem('neurOrangeFavorites'); if(s){state.favorites=JSON.parse(s)||[]}}catch(e){}}
-function toggleFavourite(item,heartEl){
-  const idx=state.favorites.findIndex(c=>c.hex.toUpperCase()===item.hex.toUpperCase());
-  if(idx>=0){state.favorites.splice(idx,1); if(heartEl) heartEl.style.display='none'}
-  else{state.favorites.push({name:item.name,hex:item.hex.toUpperCase(),fun:item.fun,significance:item.significance}); if(heartEl) heartEl.style.display='block'}
-  saveFavorites(); updateFavoritesDropdown(); updateButtons();
-}
-function updateFavoritesDropdown(){
-  const sel=document.getElementById('favoritesDropdown'); if(!sel) return;
-  sel.innerHTML='';
-  // Always include a default option that preserves the current colour selection on the test page.
-  // This option allows the user to keep the Step 2 selection rather than overriding it with a favourite.
-  const defaultOpt = document.createElement('option');
-  defaultOpt.value = '';
-  defaultOpt.textContent = 'Use current selection';
-  defaultOpt.selected = true;
-  sel.appendChild(defaultOpt);
-  // If there are no favourites saved, show a disabled placeholder informing the user.
-  if(!state.favorites || state.favorites.length === 0){
-    const placeholder = document.createElement('option');
-    placeholder.textContent = 'No favorites yet';
-    placeholder.disabled = true;
-    sel.appendChild(placeholder);
-    return;
-  }
-  // Otherwise, append each favourite colour to the dropdown with its name and hex.
-  state.favorites.forEach(({name,hex})=>{
-    const opt = document.createElement('option');
-    const upper = (hex||'').toUpperCase();
-    opt.value = upper;
-    opt.textContent = `${name} — ${upper}`;
-    opt.style.background = upper;
-    opt.style.color = textColorFor(upper);
-    sel.appendChild(opt);
-  });
-}
-
-// Populate the Ghost Oranges dropdown on the test page. This creates a default
-// 'Use current selection' option and fills in all colours from the ghosts group
-// of the ORANGE_LIBRARY. Each option is styled with its colour and stores the
-// hex value in its value property.
-function updateGhostDropdown(){
-  const sel=document.getElementById('ghostDropdown'); if(!sel) return;
-  sel.innerHTML='';
-  // Insert default option to keep using the Step 2 colour
-  const defaultOpt=document.createElement('option');
-  defaultOpt.value='';
-  defaultOpt.textContent='Use current selection';
-  defaultOpt.selected=true;
-  sel.appendChild(defaultOpt);
-  try {
-    const ghosts=(ORANGE_LIBRARY && ORANGE_LIBRARY.ghosts)? ORANGE_LIBRARY.ghosts : [];
-    if(!Array.isArray(ghosts) || ghosts.length===0){
-      const placeholder=document.createElement('option');
-      placeholder.textContent='No Ghost Oranges';
-      placeholder.disabled=true;
-      sel.appendChild(placeholder);
-    } else {
-      ghosts.forEach(item=>{
-        const opt=document.createElement('option');
-        const hx=String(item.hex||'').toUpperCase();
-        opt.value=hx;
-        opt.textContent=`${item.name} — ${hx}`;
-        opt.style.background=hx;
-        opt.style.color=textColorFor(hx);
-        sel.appendChild(opt);
-      });
-    }
-  } catch(e){}
-}
-function maxContrastOrder(list){
-  const arr=list.map(item=>{const {r,g,b}=hexToRgb(item.hex); const {h}=rgbToHsl(r,g,b); return {...item,hue:h}}).sort((a,b)=>a.hue-b.hue);
-  const out=[]; let l=0,r=arr.length-1; while(l<=r){if(l===r){out.push(arr[l]);break;} out.push(arr[l]); out.push(arr[r]); l++; r--;} return out;
-}
-// The original exportFavorites function generated a PNG image of favourites.  This
-// behaviour has been replaced by an interactive capture popup, so the old PNG
-// export is now intentionally disabled.  We keep the function definition to
-// avoid reference errors but return immediately.
-function exportFavorites(){
-  return;
-}
-function wrapText(ctx,text,x,y,maxWidth,lineHeight){
-  const words=text.split(' '); let line=''; for(let n=0;n<words.length;n++){const testLine=line+words[n]+' '; const metrics=ctx.measureText(testLine); const testWidth=metrics.width; if(testWidth>maxWidth && n>0){ctx.fillText(line,x,y); line=words[n]+' '; y+=lineHeight}else{line=testLine}} ctx.fillText(line,x,y);
-}
-// Compute the complement of a hex colour in HSL space. Takes a hex like #FFA500 and returns its opponent colour.
-function complementHex(hex){
-  const {r,g,b}=hexToRgb(hex);
-  let {h,s,l}=rgbToHsl(r,g,b);
-  h=(h+180)%360;
-  return hslToHex(h,s,l);
-}
-// Look up an explicit opponent colour from the ORANGE_LIBRARY. If the given hex
-// matches a library entry that defines an opponent, return that value instead of
-// computing a generic complement. If no explicit opponent is defined, fallback
-// to complementHex(hex).
-function opponentFor(hex){
-  const target = (hex||'').toUpperCase();
-  for(const group of Object.values(ORANGE_LIBRARY)){
-    for(const item of group){
-      if(item.hex && item.hex.toUpperCase()===target && item.opponent){
-        return item.opponent.toUpperCase();
+    let C;
+    // compute a base duration (slowest speed) then divide by a speed factor between 1 and 3 so fastest is triple the speed
+    const baseDur = 4.8 + Math.random() * 3; // same range as before
+    const speedFactor = 1 + Math.random() * 2; // 1 (slow) to 3 (fast)
+    const dur = baseDur / speedFactor;
+    if(kind === 'offcenter' || kind === 'curved'){
+      // compute normal vector to direction
+      const normal = { x: -dir.y, y: dir.x };
+      if(kind === 'offcenter'){
+        // shift the entire line perpendicular to direction
+        const d = (Math.random()*0.35 + 0.15) * (Math.min(W,H)/2);
+        const sign = Math.random() < 0.5 ? -1 : 1;
+        P0 = { x: P0.x + normal.x * d * sign, y: P0.y + normal.y * d * sign };
+        P1 = { x: P1.x + normal.x * d * sign, y: P1.y + normal.y * d * sign };
+      } else {
+        // curved: compute control point offset along normal at mid point
+        const mid = { x: (P0.x + P1.x) / 2, y: (P0.y + P1.y) / 2 };
+        const bend = (Math.random()*0.5 + 0.3) * (Math.min(W,H)/2);
+        const sign = Math.random() < 0.5 ? -1 : 1;
+        C = { x: mid.x + normal.x * bend * sign, y: mid.y + normal.y * bend * sign };
       }
     }
-  }
-  return complementHex(hex);
-}
-
-// Draw the inducer shape for the afterimage test. It inserts an absolutely positioned div into the testStage
-// reflecting the current shape selection (fruit, square, rectangle) and fills it with the opponent colour.
-function drawTestShape(){
-  const stage=document.getElementById('testStage');
-  if(!stage) return;
-  // Remove any existing inducer shape
-  const old=document.getElementById('testShape');
-  if(old) old.remove();
-  // Determine the current rind (base) and pits colours. A selection from the Ghost Oranges dropdown overrides the rind only.
-  const selG=document.getElementById('ghostDropdown');
-  const baseRindHex=(selG && selG.value) ? selG.value.toUpperCase() : (state.rind.manualHex || hslToHex(state.rind.h,state.rind.s,state.rind.l));
-  const pitsHex=(state.pits.manualHex) ? state.pits.manualHex : hslToHex(state.pits.h,state.pits.s,state.pits.l);
-  // Compute opponent colours for both components, preferring explicit opponents when defined
-  const rindOpp = opponentFor(baseRindHex);
-  const pitsOpp = opponentFor(pitsHex);
-  // Lighten the pits opponent colour slightly so speckles contrast on the dark inducer background
-  const speckColour=lightenHex(pitsOpp, 0.45);
-  // Determine dimensions based on the selected shape. Use the stage height to keep fruits and squares perfectly circular.
-  const stageRect=stage.getBoundingClientRect();
-  const stageW=stageRect.width; const stageH=stageRect.height;
-  let shapeW, shapeH, br;
-  if(state.shape==='fruit'){
-    // For fruits, use a diameter based on stage height so the circle remains circular even on wide stages
-    const diameter=stageH*0.6;
-    shapeW=diameter;
-    shapeH=diameter;
-    br='50%';
-  } else if(state.shape==='square'){
-    // Squares maintain equal width and height
-    shapeH=stageH*0.6;
-    shapeW=shapeH;
-    br='10%';
-  } else { // rectangle
-    // Use a rectangle with a 1.66 ratio similar to preview; compute height based on stage height
-    shapeH=stageH*0.55;
-    shapeW=shapeH*1.66;
-    // Clamp width if it exceeds 90% of stage width and adjust height accordingly
-    const maxW=stageW*0.9;
-    if(shapeW>maxW){ shapeW=maxW; shapeH=shapeW/1.66; }
-    br='12px';
-  }
-  // Build the main inducer shape
-  const shape=document.createElement('div');
-  shape.id='testShape';
-  shape.style.position='absolute';
-  shape.style.left='50%';
-  shape.style.top='50%';
-  shape.style.transform='translate(-50%,-50%)';
-  shape.style.width=shapeW+'px';
-  shape.style.height=shapeH+'px';
-  shape.style.background=rindOpp;
-  shape.style.borderRadius=br;
-  shape.style.pointerEvents='none';
-  // Add a subtle 3D shading: a radial and linear gradient that lightens the top and darkens the bottom
-  const shade=document.createElement('div');
-  shade.style.position='absolute';
-  shade.style.inset='0';
-  shade.style.borderRadius=br;
-  shade.style.pointerEvents='none';
-  // Combine radial and linear gradients: radial for a soft highlight near the top left and linear for top‑to‑bottom shading
-  shade.style.background=`radial-gradient(circle at 35% 30%, rgba(255,255,255,0.18), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(0,0,0,0.25))`;
-  shape.appendChild(shade);
-  // Create speckles overlay: numerous tiny dots using the lightened pits opponent colour
-  const speckles=document.createElement('div');
-  speckles.style.position='absolute';
-  speckles.style.inset='0';
-  speckles.style.borderRadius=br;
-  speckles.style.pointerEvents='none';
-  // Generate many random radial gradients for pores
-  const speckList=[];
-  const totalDots=140; // more dots for a finer texture
-  for(let i=0;i<totalDots;i++){
-    const x=Math.random()*100;
-    const y=Math.random()*100;
-    // Use very small radius for pores: 0.4px radius with 1.6px fade
-    speckList.push(`radial-gradient(circle at ${x}% ${y}%, ${speckColour} 0px, ${speckColour} 0.4px, transparent 0.4px 1.6px)`);
-  }
-  speckles.style.background=speckList.join(',');
-  // Lower the opacity slightly so the dots remain subtle
-  speckles.style.opacity='0.85';
-  shape.appendChild(speckles);
-  // Add an inner crosshair overlay for focus, placed above shading and speckles
-  const innerCross=document.createElement('div');
-  innerCross.className='innerCross';
-  shape.appendChild(innerCross);
-  // Append the completed shape to the stage
-  stage.appendChild(shape);
-}
-
-// Render the idle state of the afterimage test: set the stage background, draw the inducer shape and set the count text.
-function renderTestIdle(){
-  const stage=document.getElementById('testStage');
-  const bgSelEl=document.getElementById('bgSel3');
-  const bgKey=(bgSelEl && bgSelEl.value) ? bgSelEl.value : 'white';
-  if(stage){ stage.style.background=stageBg(bgKey); }
-  drawTestShape();
-  const count=document.getElementById('count');
-  if(count) count.textContent='Ready';
-  // Ensure controls are enabled
-  // Include the shape selector when enabling controls on the test page
-  const controls=[document.getElementById('timerSel'),document.getElementById('bgSel3'),document.getElementById('ghostDropdown'),document.getElementById('shapeSel3'),document.getElementById('btnStartTest'),document.getElementById('btnResetTest')];
-  controls.forEach(el=>{ if(el) el.disabled=false; });
-  // Do not remove the grow class here. Keeping the scaling after the test ends makes the inducer remain enlarged
-  // until the user explicitly starts a new test or navigates away. This provides a more stable visual reset.
-  const testPanel=document.getElementById('testPanel');
-  // intentionally no testPanel.classList.remove('grow') call
-}
-
-// Keep reference to the active timer so we can cancel it on reset
-let currentTestTimer=null;
-// Timer used to collapse the test panel after a test run or manual reset.
-let collapseTimer=null;
-
-// Helper to remove the grow class on the test panel, returning it to its default size.
-function collapsePanel(){
-  const panel=document.getElementById('testPanel');
-  if(panel){ panel.classList.remove('grow'); }
-}
-
-// Reset the test manually: cancels any running timer and returns to the idle state
-function resetTestControls(){
-  if(currentTestTimer){ clearInterval(currentTestTimer); currentTestTimer=null; }
-  // Cancel any pending collapse timeout and deflate the panel immediately
-  if(collapseTimer){ clearTimeout(collapseTimer); collapseTimer=null; }
-  collapsePanel();
-  renderTestIdle();
-}
-
-function runAfterimageTest(){
-  // Cancel any existing timer
-  if(currentTestTimer){ clearInterval(currentTestTimer); currentTestTimer=null; }
-  // Cancel any pending collapse so the panel stays enlarged until we schedule it again
-  if(collapseTimer){ clearTimeout(collapseTimer); collapseTimer=null; }
-  // Determine the base colour from the Ghost Oranges selection or the Rind selection
-  const selG=document.getElementById('ghostDropdown');
-  const baseHex=(selG && selG.value)? selG.value : hslToHex(state.rind.h,state.rind.s,state.rind.l);
-  const timer=parseInt(document.getElementById('timerSel').value,10)||15;
-  const bgSelEl=document.getElementById('bgSel3');
-  const bgKey=(bgSelEl && bgSelEl.value) ? bgSelEl.value : 'white';
-  const stage=document.getElementById('testStage');
-  const count=document.getElementById('count');
-  // Prepare controls list including Reset button to disable during test
-  // Disable all interactive selects during the inducer phase including the shape selector
-  const controls=[document.getElementById('timerSel'),document.getElementById('bgSel3'),document.getElementById('ghostDropdown'),document.getElementById('shapeSel3'),document.getElementById('btnStartTest'),document.getElementById('btnResetTest')];
-  // Set stage background to the selected background colour and draw the opponent shape
-  if(stage){ stage.style.background=stageBg(bgKey); }
-  drawTestShape();
-  // Add the grow class to the containing panel so the test area scales up during the inducer phase
-  const testPanel=document.getElementById('testPanel');
-  if(testPanel){ testPanel.classList.add('grow'); }
-  // Disable controls while running
-  // Keep the reset button enabled so the user can interrupt the test early
-  controls.forEach(el=>{
-    if(!el) return;
-    if(el.id==='btnResetTest'){ el.disabled=false; }
-    else { el.disabled=true; }
-  });
-  if(count) count.textContent=timer;
-  let t=timer;
-  // Countdown tick
-  currentTestTimer=setInterval(()=>{
-    t--;
-    if(count) count.textContent=t;
-    if(t<=0){
-      clearInterval(currentTestTimer);
-      currentTestTimer=null;
-      flashWhite();
+    const comet=document.createElement('div'); comet.className='comet';
+    // Anchor each comet at the center of the viewport; we set left/top 50% and then translate via transform
+    comet.style.left = '50%';
+    comet.style.top  = '50%';
+    const stk=document.createElement('div'); stk.className='cometStack';
+    const top=document.createElement('div'); top.className='top';
+    /* Set comet icon sequence based on a 10-item cycle.  The base rock (🪨) sits below the
+       object on top.  The pattern is: 1 bare rock, 2 sprout, 3 orange, 4 sprout,
+       5 orange, 6 sprout, 7 orange, 8 sprout, 9 fire, and 10 rose. */
+    if(idx === 1){
+      // bare comet (only the rock)
+      top.innerHTML = '<div>🪨</div>';
+    } else if(idx === 2 || idx === 4 || idx === 6 || idx === 8){
+      // sprout on rock (occurs on 2, 4, 6, 8)
+      top.innerHTML = '<div>🌱</div><div>🪨</div>';
+    } else if(idx === 3 || idx === 5 || idx === 7){
+      // orange on rock (occurs on 3, 5, 7)
+      top.innerHTML = '<div>🍊</div><div>🪨</div>';
+    } else if(idx === 9){
+      // fire emoji on rock (9th comet)
+      top.innerHTML = '<div>🔥</div><div>🪨</div>';
+    } else if(idx === 10){
+      // rose on rock (every 10th comet)
+      top.innerHTML = '<div>🌹</div><div>🪨</div>';
     }
-  },1000);
-  function flashWhite(){
-    // Remove the inducer shape and flash to white background
-    const shapeEl=document.getElementById('testShape'); if(shapeEl) shapeEl.remove();
-    if(stage){ stage.style.transition='background-color 0s'; stage.style.background='#FFFFFF'; }
-    if(count) count.textContent='Look at the white';
-    // After a short delay, return to idle and schedule the panel to collapse after an additional delay.
-    // Extend the white screen by 3 seconds (from 2s to 5s)
+    const tail=document.createElement('div'); tail.className='tail';
+    stk.appendChild(top);
+    stk.appendChild(tail);
+    comet.appendChild(stk);
+    // Append to the rose field when idx === 10; otherwise append to the main comet field.
+    if(idx === 10 && roseField){
+      roseField.appendChild(comet);
+    } else {
+      field.appendChild(comet);
+    }
+    // assign a random rotation speed (degrees per second).  The rose comet (10th) should not rotate.
+    const spinRate = (idx === 10) ? 0 : ((10 + Math.random()*30) * (Math.random() < 0.5 ? -1 : 1));
+    let t0 = null;
+    let lastTime = null;
+    let rotSum = 0;
+    function lerp(a,b,t){ return a + (b - a) * t; }
+    function draw(now){
+      if(t0 === null){ t0 = now; lastTime = now; }
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+      // total elapsed time since start
+      const elapsed = (now - t0) / 1000;
+      // normalized progress (0..1)
+      const u = Math.min(1, elapsed / dur);
+      // warp the progress so comets quickly fly in, ease through the center, then gently fling out.
+      // The rose comet travels at a constant pace for a graceful motion.
+      let s;
+      if(idx === 10){
+        // constant linear progress for the rose comet
+        s = u;
+      } else {
+        if(u < 0.5){
+          const frac = u / 0.5;
+          // accelerate early (power < 1) to fly in faster
+          s = 0.5 * Math.pow(frac, 0.4);
+        } else {
+          const frac = (u - 0.5) / 0.5;
+          // ease out smoothly with a moderate exponent
+          s = 0.5 + 0.5 * Math.pow(frac, 0.5);
+        }
+      }
+      // compute position along path using warped progress s
+      let x, y;
+      if(C){
+        const one = 1 - s;
+        x = one*one*P0.x + 2*one*s*C.x + s*s*P1.x;
+        y = one*one*P0.y + 2*one*s*C.y + s*s*P1.y;
+      } else {
+        x = lerp(P0.x, P1.x, s);
+        y = lerp(P0.y, P1.y, s);
+      }
+      comet.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      // compute spin easing: slow rotation near the center, faster after crossing
+      let spinFactor;
+      if(u < 0.5){
+        const frac = u / 0.5;
+        spinFactor = 1 - 0.4 * frac;
+      } else {
+        const frac = (u - 0.5) / 0.5;
+        spinFactor = 0.6 + 0.7 * frac;
+      }
+      rotSum += spinRate * dt * spinFactor;
+      stk.style.transform = `rotate(${rotSum}deg)`;
+      if(u < 1){
+        requestAnimationFrame(draw);
+      } else {
+        // After the comet completes its path, allow the smoke trail to linger and fade.
+        setTimeout(()=>{ comet.remove(); }, 6000);
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  // Launch each comet every 3–5 seconds to ensure frequent sightings
+  (function loop(){ spawn(); setTimeout(loop, 3000 + Math.random()*2000); })();
+})();
+
+/* build + layout once (no animation yet) */
+function layoutAll(){ buildMidNodes(); sizeQuestion(); layoutRings(); }
+layoutAll();
+
+
+/* press the orange to start animation + video */
+(function(){
+  const orange=$('startOrange');
+  orange.addEventListener('click', async ()=>{
+    // Display the black circle overlay and animate it shrinking away.  The circle
+    // starts hidden; on tap we show it, then on the next frame we scale it to zero
+    // and fade it out to coincide with the intro fade.
+    {
+      const circle = document.getElementById('introCircle');
+      if(circle){
+        circle.style.display = 'block';
+        // ensure the circle is at full scale to start
+        circle.style.transform = 'translate(-50%,-50%) scale(1)';
+        // Use requestAnimationFrame to allow the browser to process the display change
+        requestAnimationFrame(() => {
+          circle.style.transform = 'translate(-50%,-50%) scale(0)';
+        });
+      }
+    }
+    const intro=$('intro');
+    // start fading out the intro overlay
+    intro.classList.add('hidden');
+
+    // Immediately start the background video on tap.  Play the bgVideo and reveal it
+    // behind the fading overlay so the scene transitions smoothly.  By starting
+    // playback here rather than after the fade completes, the video is ready and
+    // visible as soon as the user taps the orange.
+    {
+      const bg = $('bgVideo');
+      if(bg){
+        try{
+          const p = bg.play();
+          if(p && p.catch) p.catch(()=>{});
+        }catch(e){}
+        bg.style.opacity = 1;
+      }
+    }
+    // Show the audio dock and start the sparkle track immediately (before the fade completes)
+    const dockEl = document.getElementById('audioDock');
+    if(dockEl){
+      dockEl.style.display = 'flex';
+      dockEl.classList.add('collapsed');
+    }
+    // Autoplay the sparkle track right away and mute the other tracks.  Reset all tracks
+    // to a clean state before starting sparkle to avoid hearing other tracks from a prior session.
+    try{
+      // First deactivate all tracks so none remain active from a previous session.
+      if(window.adEnsureInactive){
+        ['sparkle','orange','autumn','storm'].forEach(name=>{ window.adEnsureInactive(name); });
+      }
+      // Mute and reset each non-sparkle track.  This pauses the audio, clears its time
+      // position, sets volume to zero and updates the corresponding localStorage entry.
+      ['orange','autumn','storm'].forEach(name=>{
+        const aud = document.getElementById('aud_' + name);
+        if(aud){
+          aud.pause();
+          aud.currentTime = 0;
+          aud.volume = 0;
+        }
+        try{ localStorage.setItem('advol_' + name, '0'); }catch(_){ /* ignore storage errors */ }
+        const volWrap = document.querySelector(`#audioDock .ad-vol[data-for="${name}"]`);
+        if(volWrap){
+          const inp = volWrap.querySelector('input');
+          if(inp) inp.value = 0;
+          volWrap.style.display = 'none';
+        }
+      });
+      // Now activate the sparkle track exclusively.
+      if(window.adToggleTrack){
+        window.adToggleTrack('sparkle');
+        // Hide the sparkle volume popover while the dock is collapsed.  It will reappear
+        // when the user expands the dock.
+        const sVol = document.querySelector('#audioDock .ad-vol[data-for="sparkle"]');
+        if(sVol) sVol.style.display = 'none';
+        // Ensure the sparkle audio is playing and unmuted.  Some environments require
+        // an explicit play() call even after toggling.
+        const sparkleAud = document.getElementById('aud_sparkle');
+        if(sparkleAud){
+          try{
+            sparkleAud.muted = false;
+            const p = sparkleAud.play();
+            if(p && p.catch) p.catch(()=>{});
+          }catch(_){}
+        }
+      }
+    }catch(_){}
+
+
+    // after fade duration, remove intro, reveal audio controls and start video/animations
     setTimeout(()=>{
-      reset();
-      // deflate the panel 3 seconds later (so ~8 seconds after the white screen starts)
-      collapseTimer=setTimeout(()=>{ collapsePanel(); collapseTimer=null; }, 3000);
-    },5000);
-  }
-  function reset(){
-    // Restore idle state and enable controls
-    renderTestIdle();
-  }
-}
-let lastTapTime=0, lastTappedEl=null;
-function setupTap(el, handler){
-  el.addEventListener('touchend', (e)=>{state.lastTouch=Date.now(); handler()});
-  el.addEventListener('click', (e)=>{ if(Date.now()-state.lastTouch<350) return; handler() });
-}
-function setupDoubleTap(el, handler){
-  /**
-   * Detect double taps on touch devices and double clicks on desktop.
-   * On iOS Safari the default double tap delay can interfere with click handlers,
-   * so we rely on touchstart timestamps to determine when a second tap occurs.
-   * When a double tap is detected we call the provided handler and prevent the default
-   * zoom behaviour on mobile Safari.
-   */
-  el.addEventListener('touchstart', (e)=>{
-    const now = Date.now();
-    if(lastTappedEl === el && (now - lastTapTime) < 350){
-      // second tap within threshold: treat as double tap
-      handler();
-      lastTapTime = 0;
-      lastTappedEl = null;
-      // prevent default to avoid double-tap zoom on iOS
-      e.preventDefault();
-    } else {
-      lastTappedEl = el;
-      lastTapTime = now;
-      // reset if no second tap within threshold
-      setTimeout(() => {
-        if(Date.now() - now >= 350){
-          lastTappedEl = null;
-        }
-      }, 360);
-    }
-  });
-  // support desktop double click
-  el.addEventListener('dblclick', (e)=>{
-    e.preventDefault();
-    handler();
-  });
-}
-// Helper to show a page by id and scroll to the library on Step 2.  When
-// switching to page 2, we automatically scroll the gallery into view so
-// the colour library section is visible without manual scrolling.  This
-// function was originally a one‑liner; it has been expanded for clarity.
-function showPage(id){
-  // Toggle the active class on each page section
-  ['p1','p2','p3'].forEach(pid=>{
-    const section = document.getElementById(pid);
-    if(section) section.classList.toggle('active', pid===id);
-  });
-  // Update the current page state
-  state.page = id;
-  // If entering page 2, update chips to reflect the default colours and
-  // scroll the summary panel into view so the colour descriptions are at
-  // the top of the screen.  We schedule these updates on the next
-  // animation frame to ensure the DOM has rendered before we manipulate it.
-  if(id==='p2'){
-    requestAnimationFrame(()=>{
-      // Apply the default colour selections to both parameters.  Calling
-      // updateChip() ensures manualHex values are propagated to the UI,
-      // slider positions are synchronised, the summary panel is refreshed
-      // and the library selection highlight is updated.
-      if(typeof updateChip === 'function'){
-        updateChip('rind');
-        updateChip('pits');
+      intro.remove();
+      // reveal the audio dock after the intro fades
+      const dockEl = document.getElementById('audioDock');
+      if(dockEl){
+        // reveal the audio dock once the splash has faded.  Always keep it collapsed at first
+        // so only the toggle and main control are shown.
+        dockEl.style.display = 'flex';
+        dockEl.classList.add('collapsed');
       }
-      // Set the active parameter to 'rind' so the rind summary box is highlighted by default.
-      if(typeof setActiveTarget === 'function'){
-        setActiveTarget('rind');
-      }
-      // Scroll the summary panel into view.  This positions the colour
-      // descriptions at the top of the viewport so the user immediately
-      // sees the selected colour details without manual scrolling.
-      const summaryEl = document.getElementById('summaryPanel');
-      if(summaryEl){
-        summaryEl.scrollIntoView({behavior:'auto'});
-      }
-    });
-  }
-}
-document.getElementById('start').addEventListener('touchend',()=>showPage('p2'));
-document.getElementById('start').addEventListener('click',()=>{ if(Date.now()-state.lastTouch<350) return; showPage('p2') });
-['btnBack','btnBackBottom'].forEach(id=>document.getElementById(id).addEventListener('click',()=>showPage('p1')));
-// When advancing to the test page, refresh the test UI and draw the inducer immediately
-['btnNext','btnNextBottom'].forEach(id=>document.getElementById(id).addEventListener('click',()=>{
-  // Populate the Ghost Oranges dropdown before entering the test page
-  updateGhostDropdown();
-  showPage('p3');
-  // Render the idle state of the test when the page loads
-  renderTestIdle();
-}));
-// When the back button is pressed on the test page, always return to page 2.
-// If the test panel is enlarged (has the grow class), remove the class so the
-// panel resets its scale when returning to the picker.
-['btnBackLast','btnBackBottomLast'].forEach(id=>{
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.addEventListener('click', ()=>{
-    const panel=document.getElementById('testPanel');
-    if(panel) panel.classList.remove('grow');
-    showPage('p2');
-  });
-});
-// When the user clicks either Finish button, navigate to the external neurOrange link instead of
-// returning to the first page. This opens the requested URL directly.
-['btnFinish','btnFinishBottom'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('click', () => {
-    window.location.href = 'https://vahetharoutounian-stack.github.io/neurOrange/';
-  });
-});
 
-// Bind the Capture Favorites button on Step 2.  When tapped or clicked it
-// invokes exportFavorites(), which currently opens a capture popup.  We guard
-// against missing elements in case the button is not present on other pages.
-(function(){
-  const btnCap = document.getElementById('btnCaptureFav');
-  if(btnCap){
-    btnCap.addEventListener('click', () => {
-      // Only fire if we are on Step 2.  This avoids capturing favourites on other pages.
-      if(state.page === 'p2') exportFavorites();
-    });
-  }
+      // Note: autoplay and track initialization are handled immediately when the orange is tapped.
+      // We intentionally do not repeat autoplay logic here to avoid re-triggering tracks or
+      // toggling other tracks a second time.  The audio dock is already shown and
+      // sparkle has been started in the click handler above.
+
+      // The background video is started immediately upon tapping the orange, so we
+      // no longer need to invoke play() here.  If it is still paused for some reason,
+      // ensure its opacity is set and attempt to play.
+      const v=$('bgVideo');
+      if(v){
+        v.style.opacity = 1;
+        try{
+          const p=v.play();
+          if(p && p.catch) p.catch(()=>{});
+        }catch(e){}
+      }
+
+      // run grow-out from center
+      ['innerWrap','midWrap','outerWrap','emojiWrapA','emojiWrapB'].forEach(id=>{
+        const el=$(id);
+        if(!el) return;
+        el.classList.remove('grow');
+        el.classList.add('preGrow');
+        requestAnimationFrame(()=> el.classList.add('grow'));
+      });
+
+    }, 2250); // match the intro fade duration (2.25s)
+  }, {passive:true});
 })();
-// Attach the test runner to the Start button using setupTap.  Using setupTap ensures
-// both touch and click events trigger the test reliably without duplicating
-// events or race conditions.  We remove the explicit event listeners here
-// in favour of a unified handler.
-setupTap(document.getElementById('btnStartTest'), runAfterimageTest);
-// Bind the reset button for the afterimage test
-// When Reset is pressed, cancel any running test and return the panel to the idle state.
-// We call resetTestControls() instead of runAfterimageTest() so that
-// the test does not immediately start over. This collapses the enlarged panel
-// and restores the Ready state. The user can then choose to start a new test
-// by tapping the Start button.
-// Likewise attach the Reset button via setupTap so tapping or clicking
-// cancels any running test and restores the Ready state.  This avoids
-// duplicate handlers and unifies touch/click behaviour.
-setupTap(document.getElementById('btnResetTest'), resetTestControls);
 
-// Update the inducer shape when the background or favourite selection changes on the test page
-const ghostSel=document.getElementById('ghostDropdown');
-if(ghostSel){ ghostSel.addEventListener('change', ()=>{ if(state.page==='p3'){ renderTestIdle(); }}); }
-const bgSel=document.getElementById('bgSel3');
-if(bgSel){ bgSel.addEventListener('change', ()=>{ if(state.page==='p3'){ renderTestIdle(); }}); }
-// When the shape selector changes on the test page, update the state and redraw the inducer
-const shapeSel3=document.getElementById('shapeSel3');
-if(shapeSel3){
-  shapeSel3.addEventListener('change', ()=>{
-    // Update the global shape so the inducer shape adjusts immediately
-    state.shape = shapeSel3.value || 'fruit';
-    if(state.page==='p3'){ renderTestIdle(); }
-  });
-}
-
-// Handle selection of a recently used colour.  When the user picks a hex from
-// the recent colours dropdown, apply it to the appropriate parameter and
-// refresh the associated UI.  We update manualHex and selectedHex so that
-// the colour persists through shape changes and test runs.
-const recentRindSel = document.getElementById('recentRindSel');
-if(recentRindSel){
-  recentRindSel.addEventListener('change', (e)=>{
-    const hex = (e.target.value || '').toUpperCase();
-    if(!hex) return;
-    // Apply the selected hex to the rind parameter
-    applyHex('rind', hex);
-    state.rind.manualHex = hex;
-    state.rind.selectedHex = hex;
-    updateChip('rind');
-    setActiveTarget('rind');
-    updateLibrarySelection();
-  });
-}
-const recentPitsSel = document.getElementById('recentPitsSel');
-if(recentPitsSel){
-  recentPitsSel.addEventListener('change', (e)=>{
-    const hex = (e.target.value || '').toUpperCase();
-    if(!hex) return;
-    applyHex('pits', hex);
-    state.pits.manualHex = hex;
-    state.pits.selectedHex = hex;
-    updateChip('pits');
-    setActiveTarget('pits');
-    updateLibrarySelection();
-  });
-}
-setupTap(document.getElementById('rindChip'), ()=>setActiveTarget('rind'));
-setupTap(document.getElementById('pitsChip'), ()=>setActiveTarget('pits'));
-// Expand the interactive area so tapping anywhere in the parameter panel selects that parameter.
-setupTap(document.getElementById('panelRind'), ()=>setActiveTarget('rind'));
-setupTap(document.getElementById('panelPits'), ()=>setActiveTarget('pits'));
-// Allow tapping on the summary boxes themselves to select the corresponding
-// parameter.  This makes the descriptions interactive: tap on the Rind
-// summary to adjust the rind colour, and tap on the Pits summary to adjust
-// the pits colour.  When the shape is not fruit, only the rind summary is
-// visible.
-setupTap(document.getElementById('sumRind'), ()=>setActiveTarget('rind'));
-setupTap(document.getElementById('sumPits'), ()=>setActiveTarget('pits'));
-// Map the slider IDs back to the short keys used on the state object (h, s, l).
-// Update state when Rind sliders move.  Use e.target.id to determine which channel is being changed
-['rindHue','rindSat','rindLight'].forEach(sliderId => {
-  const el = document.getElementById(sliderId);
-  if (!el) return;
-  el.addEventListener('input', e => {
-    const id = e.target.id;
-    let key;
-    if (id.includes('Hue')) key = 'h';
-    else if (id.includes('Sat')) key = 's';
-    else key = 'l';
-    state.rind[key] = parseInt(e.target.value, 10);
-    // User is adjusting sliders; remove any manual library colour override so the swatch and preview
-    // reflect the new HSL value instead of the previous manual selection.
-    if (state.rind.manualHex) delete state.rind.manualHex;
-    updateChip('rind');
-    updateSummary();
-    updateLibrarySelection();
-  });
-});
-// Update state when Pits sliders move.  Use e.target.id to determine which channel is being changed
-['pitsHue','pitsSat','pitsLight'].forEach(sliderId => {
-  const el = document.getElementById(sliderId);
-  if (!el) return;
-  el.addEventListener('input', e => {
-    const id = e.target.id;
-    let key;
-    if (id.includes('Hue')) key = 'h';
-    else if (id.includes('Sat')) key = 's';
-    else key = 'l';
-    state.pits[key] = parseInt(e.target.value, 10);
-    // User is adjusting sliders; remove any manual library colour override
-    if (state.pits.manualHex) delete state.pits.manualHex;
-    updateChip('pits');
-    updateSummary();
-    updateLibrarySelection();
-  });
-});
-document.getElementById('hexRind').addEventListener('change',e=>{
-  // Apply the typed hex to update HSL values
-  applyHex('rind', e.target.value);
-  // Preserve the exact typed hex so the swatch and preview use it
-  state.rind.manualHex = e.target.value.toUpperCase();
-  updateChip('rind');
-  updateSummary();
-  updateLibrarySelection();
-});
-document.getElementById('hexPits').addEventListener('change',e=>{
-  // Apply the typed hex to update HSL values
-  applyHex('pits', e.target.value);
-  // Preserve the exact typed hex so the swatch and preview use it
-  state.pits.manualHex = e.target.value.toUpperCase();
-  updateChip('pits');
-  updateSummary();
-  updateLibrarySelection();
-});
-document.querySelectorAll('.bgSel').forEach(p=>setupTap(p, ()=>{
-  document.querySelectorAll('.bgSel').forEach(x=>x.classList.remove('active'));
-  p.classList.add('active');
-  state.editorBg=p.getAttribute('data-bg'); applyEditorBg();
-}));
-document.querySelectorAll('.shapeSel').forEach(p=>setupTap(p, ()=>{
-  document.querySelectorAll('.shapeSel').forEach(x=>x.classList.remove('active'));
-  p.classList.add('active'); state.shape=p.getAttribute('data-shape');
-  document.getElementById('panelPits').style.display = (state.shape==='fruit')?'block':'none';
-  // Toggle single class on stack container for centering when only one panel is visible
-  const stack=document.getElementById('stack');
-  if(stack){ stack.classList.toggle('single', state.shape!=='fruit'); }
-  updateSummary(); drawPreview(); updateButtons();
-  // Update the pits recent colour dropdown visibility when the shape changes
-  updateRecentSelect('pits');
-}));
-document.querySelectorAll('.tabSel').forEach(p=>setupTap(p, ()=>{
-  document.querySelectorAll('.tabSel').forEach(x=>x.classList.remove('active'));
-  p.classList.add('active'); buildLibrary();
-}));
-document.getElementById('btnExport').addEventListener('click',exportFavorites);
-loadFavorites();
-buildLibrary();
-updateFavoritesDropdown();
-// Populate Ghost Oranges dropdown on initial load
-updateGhostDropdown();
-updateChip('rind');
-updateChip('pits');
-// Populate the recent colour selects with the initial colours
-try {
-  updateRecentSelect('rind');
-  updateRecentSelect('pits');
-} catch(e){}
-// initialise selectedHex for default colours so the library highlights them if present
-try {
-  state.rind.selectedHex = hslToHex(state.rind.h, state.rind.s, state.rind.l).toUpperCase();
-  state.pits.selectedHex = hslToHex(state.pits.h, state.pits.s, state.pits.l).toUpperCase();
-} catch(e){}
-updateLibrarySelection();
-setActiveTarget('rind');
-updateSummary();
-updateButtons();
-drawPreview();
-</script>
-<script>
-
-// WebAudio-enhanced audio dock: Storm-only autoplay, proper play/pause, exclusive melodic tracks, working volume sliders on iOS.
+/* === Audio Dock Logic ===
+   Implements a self-contained audio player dock with expand/collapse, track toggling,
+   volume sliders with persistence, concurrency rules (melodic tracks are mutually exclusive,
+   storm layers independently), and iOS unlock handling. */
 (function(){
-  // Track metadata: Storm is ambient (may layer); others are melodic (exclusive)
-  const TRACKS = {
-    sparkle:{ on:'✨', el:'aud_sparkle', group:'melodic' },
-    orange: { on:'🍊', el:'aud_orange',  group:'melodic' },
-    autumn: { on:'🍂', el:'aud_autumn',  group:'melodic' },
-    storm:  { on:'⛈️', el:'aud_storm',   group:'ambient' }
-  };
-  const DOCK   = document.getElementById('audioDock2');
-  const TOGGLE = document.getElementById('adToggle');
-  const PLAY   = document.getElementById('adPlay');
-  const SEED   = '🌱';
+  const dock = document.getElementById('audioDock');
+  if(!dock) return;
   const ACTIVE = new Set();
-  // WebAudio context and gain nodes
-  let AC = null;
-  const GAINS = {};
-  const SOURCES = {};
-  let unlocked = false;
-
-  const btn = n => DOCK ? DOCK.querySelector(`.ad-btn[data-track="${n}"]`) : null;
-  const vol = n => DOCK ? DOCK.querySelector(`.ad-vol[data-for="${n}"]`) : null;
-  const aud = n => document.getElementById(TRACKS[n].el);
-
-  function anyPlaying(){
-    for(const n of ACTIVE){
-      const aEl = aud(n);
-      if(aEl && !aEl.paused) return true;
+  const TRACKS = { sparkle:{group:'melodic'}, orange:{group:'melodic'}, autumn:{group:'melodic'}, storm:{group:'ambient'} };
+  const names = Object.keys(TRACKS);
+  function audSel(name){ return document.getElementById('aud_'+name); }
+  function btnSel(name){ return dock.querySelector(`.ad-btn[data-track="${name}"]`); }
+  function volSel(name){ return dock.querySelector(`.ad-vol[data-for="${name}"]`); }
+  function anyPlaying(){ for(const name of ACTIVE){ const a=audSel(name); if(a && !a.paused) return true; } return false; }
+  function setBtnGlyph(btn,name,active){
+    if(active){
+      if(name==='sparkle') btn.textContent='✨';
+      else if(name==='orange') btn.textContent='🍊';
+      else if(name==='autumn') btn.textContent='🍂';
+      else if(name==='storm') btn.textContent='⛈️';
+    } else {
+      btn.textContent='🌱';
     }
-    return false;
   }
-  function setIcon(){ if(PLAY) PLAY.textContent = anyPlaying() ? '⏸' : '▶'; }
-  function center(vEl){ if(vEl){ vEl.style.left='50%'; vEl.style.transform='translateX(-50%)'; } }
-  function ensureAC(){
-    if(AC) return AC;
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if(!Ctx) return null;
-    AC = new Ctx();
-    return AC;
-  }
-  function ensureGraph(name){
-    const aEl = aud(name);
-    if(!aEl) return null;
-    const ac = ensureAC();
-    if(!ac) return null;
-    if(!SOURCES[name]){
-      SOURCES[name] = ac.createMediaElementSource(aEl);
-      GAINS[name]   = ac.createGain();
-      SOURCES[name].connect(GAINS[name]).connect(ac.destination);
+  function setMainGlyph(){
+    const main=document.getElementById('adMain');
+    // Only show play/pause glyphs without the orange emoji
+    if(anyPlaying()){
+      main.textContent = '⏸';
+    } else {
+      main.textContent = '▶';
     }
-    return GAINS[name];
   }
-  function deactivate(name){
-    const aEl = aud(name), bEl = btn(name), vEl = vol(name);
-    if(aEl){ try{ aEl.pause(); aEl.currentTime = 0; }catch(_){} }
-    ACTIVE.delete(name);
-    if(bEl){ bEl.textContent = SEED; bEl.classList.remove('active'); }
-    if(vEl){ vEl.classList.remove('visible'); }
-  }
-  function activate(name){
-    const info = TRACKS[name]; if(!info) return;
-    // Stop other melodic tracks if new one is melodic
-    if(info.group === 'melodic'){
-      [...ACTIVE].forEach(other=>{
-        if(TRACKS[other].group === 'melodic' && other !== name) deactivate(other);
-      });
+  // restore stored volumes
+  names.forEach(name=>{
+    const a=audSel(name);
+    const vol=volSel(name);
+    if(!a||!vol) return;
+    const stored=parseFloat(localStorage.getItem('advol_'+name));
+    if(!isNaN(stored)){
+      a.volume=stored;
+      const inp=vol.querySelector('input'); if(inp) inp.value=stored;
     }
-    const aEl = aud(name), bEl = btn(name), vEl = vol(name);
-    const g = ensureGraph(name);
-    if(g){ try{ ensureAC().resume(); }catch(_){} }
-    // Only start playback if the audio system has been unlocked.  This
-    // prevents auto-play errors on iOS before the first gesture.  Storm
-    // will be preselected visually and will begin playing upon unlock.
-    if(aEl){
-      aEl.loop = (name === 'storm');
-      if(unlocked){ aEl.play().catch(()=>{}); }
-    }
-    ACTIVE.add(name);
-    if(bEl){ bEl.textContent = info.on; bEl.classList.add('active'); }
-    if(vEl){ center(vEl); vEl.classList.add('visible'); }
-  }
-  function startStormOnly(){
-    Object.keys(TRACKS).forEach(deactivate);
-    activate('storm');
-    setIcon();
-  }
-
-  // Preselect storm visually without starting audio.  This makes the Storm
-  // slider visible and shows the ⛈️ glyph on its button when the dock is
-  // expanded, giving users an immediate hint that Storm is the default
-  // ambience.  The actual audio will not start until the system is unlocked.
-  function preselectStorm(){
-    // Clear any previous selections
-    ACTIVE.clear();
-    ACTIVE.add('storm');
-    const bEl = btn('storm');
-    const vEl = vol('storm');
-    if(bEl){ bEl.textContent = TRACKS['storm'].on; bEl.classList.add('active'); }
-    if(vEl){ center(vEl); vEl.classList.add('visible'); }
-    setIcon();
-  }
-  // Initialize the volume sliders and gain nodes.  Each track starts at a
-  // sensible default (0.75) rather than zero.  A stored value will only be
-  // accepted if it is strictly greater than zero to avoid muting the player
-  // after a previous session.  Gain nodes are lazily created via
-  // ensureGraph().  For browsers that do not support WebAudio, fall back to
-  // setting the element's volume property directly.
-  function initVolumes(){
-    if(!DOCK) return;
-    DOCK.querySelectorAll('.ad-vol').forEach(wrap=>{
-      const name = wrap.getAttribute('data-for');
-      const aEl  = aud(name);
-      const rng  = wrap.querySelector('input[type="range"]');
-      if(!aEl || !rng) return;
-      const g = ensureGraph(name);
-      // Determine the starting volume: default to 0.75.  Only accept
-      // persisted values that are >0 to avoid a stale zero setting from
-      // completely muting the track on load.
-      let volVal = 0.75;
-      try{
-        const saved = localStorage.getItem('advol_'+name);
-        if(saved !== null){
-          const parsed = parseFloat(saved);
-          if(!isNaN(parsed) && parsed > 0 && parsed <= 1){ volVal = parsed; }
-        }
-      }catch(_){ /* ignore storage errors */ }
-      volVal = Math.max(0, Math.min(1, volVal));
-      if(g){
-        // Use the gain node for WebAudio; set the underlying element volume to
-        // 1 so the gain actually controls loudness on iOS.
-        g.gain.value = volVal;
-        aEl.volume = 1;
-      }else{
-        // Fallback: set the element volume directly when WebAudio isn't
-        // available.
-        aEl.volume = volVal;
-      }
-      rng.value = String(volVal);
-      const onChange = ()=>{
-        // Clamp and update the gain/volume.  Persist the value if possible.
-        const nv = Math.max(0, Math.min(1, parseFloat(rng.value)||0));
-        if(g) g.gain.value = nv; else aEl.volume = nv;
-        try{ localStorage.setItem('advol_'+name, nv); }catch(__){}
-      };
-      rng.addEventListener('input', onChange, {passive:true});
-      rng.addEventListener('change', onChange, {passive:true});
+  });
+  // volume slider events
+  names.forEach(name=>{
+    const vol=volSel(name);
+    if(!vol) return;
+    const input=vol.querySelector('input');
+    input.addEventListener('input', ()=>{
+      const a=audSel(name);
+      const val=parseFloat(input.value);
+      // Update the audio volume and ensure the track is unmuted when adjusting the slider
+      a.volume = val;
+      a.muted = false;
+      localStorage.setItem('advol_'+name, val);
     });
+    input.addEventListener('change', ()=>{
+      const a=audSel(name);
+      const val=parseFloat(input.value);
+      // Update the audio volume and ensure the track is unmuted on change as well
+      a.volume = val;
+      a.muted = false;
+      localStorage.setItem('advol_'+name, val);
+    });
+  });
+  function showToast(msg){
+    const toast=document.createElement('div');
+    toast.className='ad-toast';
+    toast.textContent=msg;
+    document.body.appendChild(toast);
+    requestAnimationFrame(()=>{ toast.style.opacity=1; });
+    setTimeout(()=>{ toast.style.opacity=0; setTimeout(()=>toast.remove(),400); }, 2400);
   }
-  // Unlock: prime audio context by playing muted each audio once, then autoplay storm
-  function unlock(){
+  let unlocked=false;
+  function unlockAudio(){
+    // Unlock audio playback on iOS by briefly playing each track while muted.  Without muting,
+    // the browser may leak a short burst of sound from all tracks before we can pause them.
+    // To avoid that audible blip, set the audio element to muted before playing and unmute
+    // after pausing.  Unlocking runs once on the first pointer interaction.
     if(unlocked) return;
-    const ac = ensureAC();
-    // Prime each audio element at zero volume.  This satisfies iOS
-    // interaction requirements without audible output.  We mute the element,
-    // play and pause it, then restore the original volume.  Graphs are
-    // created on demand via ensureGraph().
-    Object.keys(TRACKS).forEach(name=>{
-      const aEl = aud(name);
-      if(!aEl) return;
-      ensureGraph(name);
-      const prevVol = aEl.volume;
-      aEl.muted = true;
-      const playPromise = aEl.play();
-      (playPromise && playPromise.then ? playPromise : Promise.resolve()).then(()=>{
-        aEl.pause();
-        aEl.currentTime = 0;
-        aEl.muted = false;
-        // Restore the volume in case it was changed
-        aEl.volume = prevVol;
-      }).catch(()=>{
-        // In case play() fails (e.g. due to policies), still unmute and restore
-        aEl.muted = false;
-        aEl.volume = prevVol;
-      });
-    });
-    // Resume the context to ensure the GainNodes are active
-    try{ ac && ac.resume(); }catch(_){}
-    // Mark the system as unlocked BEFORE starting the storm so that
-    // activate('storm') will actually play the track.  Without this,
-    // activate() skips playing audio during the unlock process.
     unlocked = true;
-    // Start the Storm track and restore the default volumes.
-    startStormOnly();
-    // Reinitialize volumes after priming so sliders reflect the default state
-    // and the gain nodes are updated to the correct values.  Without this
-    // call, the sliders may reset to zero when the AudioContext is first
-    // unlocked.
-    initVolumes();
-    document.removeEventListener('pointerdown', unlock, true);
+    names.forEach(name => {
+      const a = audSel(name);
+      if(!a) return;
+      // Temporarily mute the audio during unlock to suppress sound
+      const wasMuted = a.muted;
+      a.muted = true;
+      const p = a.play();
+      if(p && p.then){
+        p.then(() => {
+          a.pause();
+          a.currentTime = 0;
+          // Restore previous mute state after unlocking
+          a.muted = wasMuted;
+        }).catch(() => {
+          // In case of failure, still restore mute state
+          a.muted = wasMuted;
+        });
+      } else {
+        // If play() doesn't return a promise, pause immediately and restore mute state
+        try{
+          a.pause();
+          a.currentTime = 0;
+        }catch(_){}
+        a.muted = wasMuted;
+      }
+    });
   }
-  function bind(){
-    if(DOCK){
-      DOCK.querySelectorAll('.ad-btn').forEach(bEl=>{
-        bEl.addEventListener('click', ()=>{
-          const name = bEl.getAttribute('data-track');
-          if(ACTIVE.has(name)) deactivate(name);
-          else activate(name);
-          setIcon();
-        }, {passive:true});
-      });
-    }
-    if(TOGGLE){
-      TOGGLE.addEventListener('click', ()=>{
-        unlock();
-        DOCK.classList.toggle('collapsed');
-        if(!DOCK.classList.contains('collapsed')){
-          ACTIVE.forEach(name=>{
-            const vEl = vol(name);
-            if(vEl){ center(vEl); vEl.classList.add('visible'); }
-          });
-        }
-      }, {passive:true});
-    }
-    if(PLAY){
-      PLAY.addEventListener('click', ()=>{
-        if(!unlocked){ unlock(); setIcon(); return; }
-        if(anyPlaying()){
-          ACTIVE.forEach(name=>{
-            const aEl = aud(name);
-            if(aEl) try{ aEl.pause(); }catch(_){}
-          });
-        }else{
-          if(ACTIVE.size){
-            ACTIVE.forEach(name=>{
-              const aEl = aud(name);
-              if(aEl) aEl.play().catch(()=>{});
-            });
-          }else{
-            startStormOnly();
-          }
-        }
-        setIcon();
-      }, {passive:true});
-    }
-    document.addEventListener('pointerdown', unlock, true);
+  window.addEventListener('pointerdown', unlockAudio, {once:true, passive:true});
+  function stopOtherMelodic(){
+    ['sparkle','orange','autumn'].forEach(name=>{
+      if(ACTIVE.has(name)){
+        const a=audSel(name);
+        a.pause();
+        a.currentTime=0;
+        ACTIVE.delete(name);
+        const btn=btnSel(name);
+        btn.classList.remove('active');
+        setBtnGlyph(btn,name,false);
+        const vol=volSel(name);
+        if(vol) vol.style.display='none';
+      }
+    });
   }
-  initVolumes();
-  // Visually select Storm by default so the slider is shown when expanded.
-  preselectStorm();
-  bind();
-  setIcon();
-})();
-  </script>
 
+  // Expose a helper to ensure a specific track is not active.  If the track is active,
+  // it will be paused, removed from the active set, its button reset to sprout,
+  // and its volume slider hidden.  If the track is not active, nothing happens.
+  function ensureInactive(name){
+    if(!ACTIVE.has(name)) return;
+    const a = audSel(name);
+    if(a){ a.pause(); a.currentTime = 0; }
+    ACTIVE.delete(name);
+    const btn = btnSel(name);
+    if(btn){ btn.classList.remove('active'); setBtnGlyph(btn,name,false); }
+    const vol = volSel(name);
+    if(vol) vol.style.display = 'none';
+    setMainGlyph();
+  }
+  // Attach to window so outside code can deactivate tracks
+  window.adEnsureInactive = ensureInactive;
+  function toggleTrack(name){
+    const a=audSel(name);
+    const btn=btnSel(name);
+    const vol=volSel(name);
+    if(ACTIVE.has(name)){
+      a.pause();
+      ACTIVE.delete(name);
+      btn.classList.remove('active');
+      setBtnGlyph(btn,name,false);
+      if(vol) vol.style.display='none';
+    } else {
+      if(TRACKS[name].group==='melodic') stopOtherMelodic();
+      a.loop = true;
+      // Ensure the audio volume reflects the slider value before playing
+      if(vol){
+        const inp = vol.querySelector('input');
+        if(inp){
+          const val = parseFloat(inp.value);
+          if(!isNaN(val)) a.volume = val;
+        }
+      }
+      // Make sure the track is unmuted when starting playback
+      a.muted = false;
+      a.play().catch(()=>{ showToast(`Couldn't load ${name}.mp3. Check /tracks/.`); });
+      ACTIVE.add(name);
+      btn.classList.add('active');
+      setBtnGlyph(btn,name,true);
+      if(vol){
+        // Show and initialize the slider with current volume
+        vol.style.display='block';
+        const inp = vol.querySelector('input');
+        if(inp){
+          inp.value = a.volume;
+        }
+      }
+    }
+    setMainGlyph();
+  }
+  function resumeAll(){
+    ACTIVE.forEach(name=>{
+      const a=audSel(name);
+      a.play().catch(()=>{});
+    });
+  }
+  function pauseAll(){
+    ACTIVE.forEach(name=>{
+      const a=audSel(name);
+      a.pause();
+    });
+  }
+  document.getElementById('adMain').addEventListener('click', e=>{
+    e.stopPropagation();
+    if(anyPlaying()){
+      pauseAll();
+    } else {
+      if(ACTIVE.size>0){
+        // If there are selected tracks but none playing, resume them
+        resumeAll();
+      } else {
+        // Default to playing the storm track when nothing is active
+        toggleTrack('storm');
+      }
+    }
+    setMainGlyph();
+  });
+  document.getElementById('adToggle').addEventListener('click', e=>{
+    e.stopPropagation();
+    dock.classList.toggle('collapsed');
+    const expanded=!dock.classList.contains('collapsed');
+    const toggleBtn=document.getElementById('adToggle');
+    if(expanded) toggleBtn.classList.add('pulse');
+    else toggleBtn.classList.remove('pulse');
+    names.forEach(name=>{
+      const vol = volSel(name);
+      if(!vol) return;
+      if(expanded){
+        // Only show volume popovers for currently active tracks when expanded.
+        if(ACTIVE.has(name)){
+          vol.style.display = 'block';
+        } else {
+          vol.style.display = 'none';
+        }
+      } else {
+        // collapsed: hide all volume popovers
+        vol.style.display = 'none';
+      }
+    });
+  });
+  names.forEach(name=>{
+    const btn=btnSel(name);
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      toggleTrack(name);
+    });
+    btn.addEventListener('keypress', e=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        toggleTrack(name);
+      }
+    });
+  });
+  document.getElementById('adMain').addEventListener('keypress', e=>{
+    if(e.key==='Enter' || e.key===' '){
+      e.preventDefault();
+      document.getElementById('adMain').click();
+    }
+  });
+  document.getElementById('adToggle').addEventListener('keypress', e=>{
+    if(e.key==='Enter' || e.key===' '){
+      e.preventDefault();
+      document.getElementById('adToggle').click();
+    }
+  });
+  // Do not force collapsed here; the dock starts collapsed via markup.  Leaving this call
+  // could inadvertently remove the collapsed state if toggled during init.  The markup
+  // already applies the `.collapsed` class, so the dock will remain minimized until
+  // expanded by the user.
+  // dock.classList.add('collapsed');
+
+  // Expose the track toggle function globally so it can be invoked outside this IIFE,
+  // e.g. to autoplay the sparkle track after the splash screen.
+  window.adToggleTrack = toggleTrack;
+})();
+</script>
 </body>
 </html>
