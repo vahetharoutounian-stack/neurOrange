@@ -72,8 +72,11 @@
     left:50%;
     top:50%;
     transform:translate(-50%,-50%) scale(1);
-    width:200vmax;
-    height:200vmax;
+    /* Reduce the circle size so it sits just behind the "What are you feeling?" prompt.
+       Using vmin ties the dimension to the smaller viewport side; this keeps the circle
+       relatively small while still encompassing the center text. */
+    width:50vmin;
+    height:50vmin;
     border-radius:50%;
     background:#000;
     /* Start hidden; show on tap then shrink away.  Keep fully opaque during shrink. */
@@ -101,6 +104,9 @@
     /* radial gradient for soft orange glow */
     background:radial-gradient(circle, rgba(255,102,0,0.55) 0%, rgba(255,102,0,0.25) 40%, rgba(255,102,0,0) 80%);
     filter:blur(22px);
+    /* Add a faint black fog behind the orange glow by using a box-shadow.  This creates
+       a dark halo that accentuates the orange fog. */
+    box-shadow:0 0 18px 6px rgba(0,0,0,0.45);
     animation:orangePulse 3s ease-in-out infinite;
     pointer-events:none;
     z-index:-1;
@@ -116,7 +122,6 @@
     text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);
     animation:titlePulse 2.2s ease-in-out infinite;
     /* add a subtle black stroke to match the main neurOrange logo.  Use a thinner stroke for a refined look */
-    -webkit-text-stroke:0.6px #000;
   }
   @keyframes titlePulse{
     0%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
@@ -132,7 +137,6 @@
   #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500;
     /* add a thin black stroke around the text to improve contrast.  Use a thinner width
        so the border remains subtle and refined. */
-    -webkit-text-stroke:0.6px #000;
     text-shadow:0 0 2px rgba(0,0,0,.85);
   }
 
@@ -175,9 +179,18 @@
   /* center prompt */
   #question{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1);
-    display:grid; place-items:center; /* transparent background so no black circle */
-    background:transparent; color:#fff; border-radius:50%; border:none;
-    z-index:5; filter:drop-shadow(var(--glow)); padding:.4rem .6rem; user-select:none;
+    display:grid;
+    place-items:center;
+    /* Provide a dark circular backdrop behind the question prompt.  The circle is just
+       large enough to encapsulate the text and gently frames the message. */
+    background:rgba(0,0,0,0.75);
+    color:#fff;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.9);
+    z-index:5;
+    filter:drop-shadow(var(--glow));
+    padding:.4rem .6rem;
+    user-select:none;
     animation:breathe 7s ease-in-out infinite;
   }
   @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1.00)}50%{transform:translate(-50%,-50%) scale(1.02)}}
@@ -226,6 +239,22 @@
   .mnode img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
              animation:upright 56s linear infinite; transform-origin:center; backface-visibility:hidden; will-change:transform}
   @keyframes upright{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+  /* ===== ring effects ===== */
+  /* Add a soft white glow around the inner color ring (ring 1).  Applying a drop-shadow
+     filter to each segment creates a subtle fog along the edges of the orange swatches. */
+  #innerSVG path{
+    filter:drop-shadow(0 0 8px rgba(255,255,255,0.5));
+  }
+
+  /* Give the outer ghost ring (ring 3) a darker outline and a faint black fog.  These
+     rules override the stroke and apply a drop-shadow to each ghost wedge to separate
+     them from the background. */
+  #outerSVG .ghost-wedge{
+    stroke:rgba(0,0,0,0.55);
+    stroke-width:2;
+    filter:drop-shadow(0 0 8px rgba(0,0,0,0.55));
+  }
 
   /* bottom nav — tighter; Color Library stays one line */
   .bottomNav{
@@ -720,6 +749,8 @@ function showQuoteThenGo(url, dwell=1600){
   text.innerHTML = QUOTES[Math.floor(Math.random()*QUOTES.length)];
   overlay.classList.add('show');
   setTimeout(()=>{ location.href = url; }, dwell);
+    /* Use a black background so if the splash video fails to load there is a dark fallback */
+    background:#000;
 }
 
 /* === failsafe remove === */
