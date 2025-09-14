@@ -76,13 +76,14 @@
     height:200vmax;
     border-radius:50%;
     background:#000;
-    /* Start hidden; show on tap then shrink away.  Opacity transitions along with scale. */
+    /* Start hidden; show on tap then shrink away.  Keep fully opaque during shrink. */
     display:none;
-    opacity:1;
-    /* animate the scale and fade down on tap using a transition matching the intro fade */
-    transition:transform 2250ms ease, opacity 2250ms ease;
+    /* Do not set opacity here so the circle remains solid black throughout the animation */
+    /* Animate only the scale on tap using a transition matching the intro fade */
+    transition:transform 2250ms ease;
     pointer-events:none;
-    z-index:0;
+    /* Elevate the circle above the splash overlay but below interstitials. */
+    z-index:10002;
   }
 
   /* Add a pulsing glowing circle behind the neurOrange emoji.  The ::before pseudo-element
@@ -114,6 +115,8 @@
     color:var(--bergamot);
     text-shadow:0 0 10px rgba(255,166,77,.55), 0 0 22px rgba(255,165,0,.35);
     animation:titlePulse 2.2s ease-in-out infinite;
+    /* add a subtle black stroke to match the main neurOrange logo.  Use a thinner stroke for a refined look */
+    -webkit-text-stroke:0.6px #000;
   }
   @keyframes titlePulse{
     0%{color:var(--bergamot);text-shadow:0 0 10px rgba(255,166,77,.55),0 0 22px rgba(255,165,0,.35)}
@@ -127,9 +130,9 @@
 
   #brandBar{position:absolute; left:0; right:0; top:10px; display:flex; justify-content:center; z-index:6; filter:drop-shadow(var(--glow))}
   #brand{font-weight:900; letter-spacing:.12em; font-size:clamp(18px,5vw,32px); color:#FFA500;
-    /* add a thin black stroke around the text to improve contrast.  Increase stroke width
-       slightly to create a clear border on the letters. */
-    -webkit-text-stroke:1.2px #000;
+    /* add a thin black stroke around the text to improve contrast.  Use a thinner width
+       so the border remains subtle and refined. */
+    -webkit-text-stroke:0.6px #000;
     text-shadow:0 0 2px rgba(0,0,0,.85);
   }
 
@@ -330,7 +333,10 @@
     overflow:visible;
     /* Position the rose field beneath all color rings.  A lower z-index ensures
        rose comets glide underneath the first ring but above the background. */
-    z-index:1;
+    /* Place the rose comets behind the first color ring by lowering the z-index.
+       Using a negative value ensures they appear beneath the rings but above the
+       background video */
+    z-index:-1;
   }
   #interstitial.show{ opacity:1; pointer-events:auto; }
   #interstitialText{
@@ -368,7 +374,9 @@
        safe-area so there is some space above the color library button. */
     /* Lower the audio dock to sit just above the bottom navigation.  The offset is
        reduced so the dock hovers closely above the color library button. */
-    bottom:calc(env(safe-area-inset-bottom) + 68px);
+    /* Position the dock just above the bottom navigation.  Reduce the offset so the dock
+       sits right above the Color Library button, leaving a small gap for breathing room. */
+    bottom:calc(env(safe-area-inset-bottom) + 60px);
     left:14px;
     display:flex;
     align-items:center;
@@ -563,16 +571,14 @@
     <source src="front_screen_placeholder.mp4" type="video/mp4" />
     <source src="https://vahetharoutounian-stack.github.io/neurOrange/assets/placeholder.mp4" type="video/mp4" />
   </video>
-  <!-- Black circle overlay that shrinks away when the orange is tapped.  This circle
-       begins large and covers the splash screen.  On tap of the orange, it
-       animates its scale down to zero over the same duration as the fade to
-       provide a focused transition effect. -->
-  <div id="introCircle"></div>
   <div class="intro-stack">
     <div id="startOrange" class="intro-emoji" aria-label="Start">🍊</div>
     <div class="intro-title">neurOrange</div>
   </div>
 </div>
+<!-- Place the shrinking black circle outside of the intro overlay so it does not fade with the
+     splash.  This circle sits above the intro content and shrinks away on tap. -->
+<div id="introCircle"></div>
 <!-- Add a looping ambient video behind the intro orange.  This video fills the intro overlay and disappears when the overlay is removed. -->
 <style>
   #introVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1}
@@ -1015,13 +1021,11 @@ layoutAll();
       const circle = document.getElementById('introCircle');
       if(circle){
         circle.style.display = 'block';
-        // ensure the circle is at full scale and fully opaque to start
+        // ensure the circle is at full scale to start
         circle.style.transform = 'translate(-50%,-50%) scale(1)';
-        circle.style.opacity = '1';
         // Use requestAnimationFrame to allow the browser to process the display change
         requestAnimationFrame(() => {
           circle.style.transform = 'translate(-50%,-50%) scale(0)';
-          circle.style.opacity = '0';
         });
       }
     }
@@ -1049,37 +1053,49 @@ layoutAll();
       dockEl.style.display = 'flex';
       dockEl.classList.add('collapsed');
     }
-    // Autoplay the sparkle track right away and mute the other tracks
+    // Autoplay the sparkle track right away and mute the other tracks.  Reset all tracks
+    // to a clean state before starting sparkle to avoid hearing other tracks from a prior session.
     try{
+      // First deactivate all tracks so none remain active from a previous session.
+      if(window.adEnsureInactive){
+        ['sparkle','orange','autumn','storm'].forEach(name=>{ window.adEnsureInactive(name); });
+      }
+      // Mute and reset each non-sparkle track.  This pauses the audio, clears its time
+      // position, sets volume to zero and updates the corresponding localStorage entry.
+      ['orange','autumn','storm'].forEach(name=>{
+        const aud = document.getElementById('aud_' + name);
+        if(aud){
+          aud.pause();
+          aud.currentTime = 0;
+          aud.volume = 0;
+        }
+        try{ localStorage.setItem('advol_' + name, '0'); }catch(_){ /* ignore storage errors */ }
+        const volWrap = document.querySelector(`#audioDock .ad-vol[data-for="${name}"]`);
+        if(volWrap){
+          const inp = volWrap.querySelector('input');
+          if(inp) inp.value = 0;
+          volWrap.style.display = 'none';
+        }
+      });
+      // Now activate the sparkle track exclusively.
       if(window.adToggleTrack){
         window.adToggleTrack('sparkle');
-        // When toggling sparkle on load, immediately hide its volume popover since the dock
-        // starts collapsed.  The popover will appear when the user expands the dock.
-        {
-          const sVol = document.querySelector('#audioDock .ad-vol[data-for="sparkle"]');
-          if(sVol) sVol.style.display = 'none';
+        // Hide the sparkle volume popover while the dock is collapsed.  It will reappear
+        // when the user expands the dock.
+        const sVol = document.querySelector('#audioDock .ad-vol[data-for="sparkle"]');
+        if(sVol) sVol.style.display = 'none';
+        // Ensure the sparkle audio is playing and unmuted.  Some environments require
+        // an explicit play() call even after toggling.
+        const sparkleAud = document.getElementById('aud_sparkle');
+        if(sparkleAud){
+          try{
+            sparkleAud.muted = false;
+            const p = sparkleAud.play();
+            if(p && p.catch) p.catch(()=>{});
+          }catch(_){}
         }
-        ['orange','autumn','storm'].forEach(name=>{
-          // Deactivate and mute each non-sparkle track.  Use the exported ensureInactive helper
-          // to clear the ACTIVE set and hide the track's volume slider.
-          if(window.adEnsureInactive) window.adEnsureInactive(name);
-          const aud = document.getElementById('aud_' + name);
-          if(aud){
-            aud.pause();
-            aud.currentTime = 0;
-            aud.volume = 0;
-          }
-          try{ localStorage.setItem('advol_' + name, '0'); }catch(_){ /* ignore storage errors */ }
-          // Also update the slider UI and ensure it is hidden
-          const volWrap = document.querySelector(`#audioDock .ad-vol[data-for="${name}"]`);
-          if(volWrap){
-            const inp = volWrap.querySelector('input');
-            if(inp) inp.value = 0;
-            volWrap.style.display = 'none';
-          }
-        });
       }
-    }catch(e){}
+    }catch(_){}
 
 
     // after fade duration, remove intro, reveal audio controls and start video/animations
@@ -1176,13 +1192,17 @@ layoutAll();
     input.addEventListener('input', ()=>{
       const a=audSel(name);
       const val=parseFloat(input.value);
-      a.volume=val;
+      // Update the audio volume and ensure the track is unmuted when adjusting the slider
+      a.volume = val;
+      a.muted = false;
       localStorage.setItem('advol_'+name, val);
     });
     input.addEventListener('change', ()=>{
       const a=audSel(name);
       const val=parseFloat(input.value);
-      a.volume=val;
+      // Update the audio volume and ensure the track is unmuted on change as well
+      a.volume = val;
+      a.muted = false;
       localStorage.setItem('advol_'+name, val);
     });
   });
@@ -1283,6 +1303,8 @@ layoutAll();
           if(!isNaN(val)) a.volume = val;
         }
       }
+      // Make sure the track is unmuted when starting playback
+      a.muted = false;
       a.play().catch(()=>{ showToast(`Couldn't load ${name}.mp3. Check /tracks/.`); });
       ACTIVE.add(name);
       btn.classList.add('active');
