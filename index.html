@@ -1158,16 +1158,6 @@ layoutAll();
         // when the user expands the dock.
         const sVol = document.querySelector('#audioDock .ad-vol[data-for="sparkle"]');
         if(sVol) sVol.style.display = 'none';
-        // Ensure the sparkle audio is playing and unmuted.  Some environments require
-        // an explicit play() call even after toggling.
-        const sparkleAud = document.getElementById('aud_sparkle');
-        if(sparkleAud){
-          try{
-            sparkleAud.muted = false;
-            const p = sparkleAud.play();
-            if(p && p.catch) p.catch(()=>{});
-          }catch(_){}
-        }
       }
     }catch(_){}
 
@@ -1210,11 +1200,9 @@ layoutAll();
         requestAnimationFrame(()=> el.classList.add('grow'));
       });
 
-      // After the rings have started growing, fade and shrink the central question bubble.
-      const qEl = document.getElementById('question');
-      if(qEl){
-        qEl.classList.add('vanish');
-      }
+      // After the rings have started growing, do not fade or remove the central question
+      // bubble.  We intentionally keep the 'What are you feeling?' text visible so it
+      // continues its breathing and rotation animations throughout the experience.
 
     }, 2250); // match the intro fade duration (2.25s)
   }, {passive:true});
@@ -1245,9 +1233,12 @@ layoutAll();
     }
   }
   function setMainGlyph(){
-    const main=document.getElementById('adMain');
-    // Only show play/pause glyphs without the orange emoji
-    if(anyPlaying()){
+    const main = document.getElementById('adMain');
+    // Only show play/pause glyphs without the orange emoji.  Use the
+    // `isPlaying` flag so the glyph updates immediately when playback
+    // state changes, even if the underlying audio elements haven't yet
+    // reported their paused state.
+    if(isPlaying){
       main.textContent = '⏸';
     } else {
       main.textContent = '▶';
@@ -1363,18 +1354,40 @@ layoutAll();
   }
   // Attach to window so outside code can deactivate tracks
   window.adEnsureInactive = ensureInactive;
+  // Track whether any of the selected audio tracks are currently playing.  This
+  // flag is used by the main play/pause button so that it responds on the
+  // first tap, even if the browser hasn't yet updated the audio element's
+  // `paused` state.  Without this, the first tap on the play/pause button
+  // might incorrectly think nothing is playing due to async playback, causing
+  // users to need two taps to pause.  We update this flag whenever a track
+  // starts or stops playing.
+  let isPlaying = false;
+
+  function updatePlayingFlag(){
+    // Assume nothing is playing until we find a track that isn't paused.
+    isPlaying = false;
+    ACTIVE.forEach(name => {
+      const a = audSel(name);
+      if(a && !a.paused){
+        isPlaying = true;
+      }
+    });
+  }
+
   function toggleTrack(name){
     const a=audSel(name);
     const btn=btnSel(name);
     const vol=volSel(name);
     if(ACTIVE.has(name)){
+      // If this track is already active, stop it and remove from the active set.
       a.pause();
       ACTIVE.delete(name);
       btn.classList.remove('active');
-      setBtnGlyph(btn,name,false);
-      if(vol) vol.style.display='none';
+      setBtnGlyph(btn, name, false);
+      if(vol) vol.style.display = 'none';
     } else {
-      if(TRACKS[name].group==='melodic') stopOtherMelodic();
+      // Starting a track: stop any other melodic track first.
+      if(TRACKS[name].group === 'melodic') stopOtherMelodic();
       a.loop = true;
       // Ensure the audio volume reflects the slider value before playing
       if(vol){
@@ -1386,40 +1399,52 @@ layoutAll();
       }
       // Make sure the track is unmuted when starting playback
       a.muted = false;
-      a.play().catch(()=>{ showToast(`Couldn't load ${name}.mp3. Check /tracks/.`); });
+      a.play().catch(() => { showToast(`Couldn't load ${name}.mp3. Check /tracks/.`); });
       ACTIVE.add(name);
       btn.classList.add('active');
-      setBtnGlyph(btn,name,true);
+      setBtnGlyph(btn, name, true);
       if(vol){
         // Show and initialize the slider with current volume
-        vol.style.display='block';
+        vol.style.display = 'block';
         const inp = vol.querySelector('input');
         if(inp){
           inp.value = a.volume;
         }
       }
     }
-    setMainGlyph();
+    // Update playing flag and glyph after a short delay to allow the browser
+    // to update the audio element state.
+    requestAnimationFrame(() => {
+      updatePlayingFlag();
+      setMainGlyph();
+    });
   }
   function resumeAll(){
-    ACTIVE.forEach(name=>{
-      const a=audSel(name);
-      a.play().catch(()=>{});
+    ACTIVE.forEach(name => {
+      const a = audSel(name);
+      a.play().catch(() => {});
     });
+    // Update the playing flag since tracks have resumed
+    updatePlayingFlag();
   }
   function pauseAll(){
-    ACTIVE.forEach(name=>{
-      const a=audSel(name);
+    ACTIVE.forEach(name => {
+      const a = audSel(name);
       a.pause();
     });
+    // Update the playing flag since tracks have been paused
+    updatePlayingFlag();
   }
   document.getElementById('adMain').addEventListener('click', e=>{
     e.stopPropagation();
-    if(anyPlaying()){
+    // Use the isPlaying flag rather than relying on audio.paused, which may not
+    // immediately reflect the playback state when audio is starting.  This ensures
+    // a single tap pauses playback.
+    if(isPlaying){
       // Pause all currently playing tracks with one tap
       pauseAll();
     } else {
-      if(ACTIVE.size>0){
+      if(ACTIVE.size > 0){
         // If there are selected tracks but none playing, resume them
         resumeAll();
       } else {
