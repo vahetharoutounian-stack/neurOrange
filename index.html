@@ -194,29 +194,41 @@
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1);
     display:grid;
     place-items:center;
-    /* Provide a dark circular backdrop behind the question prompt.  The circle is just
-       large enough to encapsulate the text and gently frames the message. */
-    background:rgba(0,0,0,0.75);
+    /* The prompt text itself remains visible throughout; the dark circular backdrop
+       is provided by a ::before pseudo-element so it can be animated independently. */
     color:#fff;
-    border-radius:50%;
-    border:1px solid rgba(0,0,0,0.9);
     z-index:5;
-    filter:drop-shadow(var(--glow));
     padding:.4rem .6rem;
     user-select:none;
     animation:breathe 7s ease-in-out infinite;
   }
-  /* When the orange is pressed and the scene transitions, fade and shrink the
-     central question bubble.  The `.vanish` class triggers an animation
-     that scales the bubble down and fades it out. */
-  #question.vanish{
-    animation:questionVanish 2200ms ease forwards;
+  /* Dark circular backdrop behind the question prompt.  Using a pseudo-element
+     allows us to animate the circle independently of the text. */
+  #question::before{
+    content:'';
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%) scale(1);
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    background:rgba(0,0,0,0.75);
+    border:1px solid rgba(0,0,0,0.9);
+    filter:drop-shadow(var(--glow));
+    z-index:-1;
+    opacity:1;
+    transition:transform 2250ms ease, opacity 2250ms ease;
   }
-  @keyframes questionVanish{
-    from{ transform:translate(-50%,-50%) scale(1); opacity:1; }
-    to  { transform:translate(-50%,-50%) scale(0); opacity:0; }
+  /* When fading, shrink and fade the backdrop circle while leaving the text
+     intact.  The `.faded` class is added during the transition. */
+  #question.faded::before{
+    transform:translate(-50%,-50%) scale(0);
+    opacity:0;
   }
-  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1.00)}50%{transform:translate(-50%,-50%) scale(1.02)}}
+  @keyframes breathe{
+    0%,100%{transform:translate(-50%,-50%) scale(1.00)}
+    50%{transform:translate(-50%,-50%) scale(1.02)}
+  }
   #questionText{
     font-weight:900; font-style:italic; text-align:center;
     font-size:clamp(16px,3.6vw,22px); line-height:1.15; margin:0;
@@ -1200,9 +1212,14 @@ layoutAll();
         requestAnimationFrame(()=> el.classList.add('grow'));
       });
 
-      // After the rings have started growing, do not fade or remove the central question
-      // bubble.  We intentionally keep the 'What are you feeling?' text visible so it
-      // continues its breathing and rotation animations throughout the experience.
+      // After the rings have started growing, fade and shrink only the dark circular
+      // backdrop behind the prompt.  The text remains visible because the
+      // backdrop is implemented via a ::before pseudo-element.  The `.faded`
+      // class triggers the shrink/fade animation on the pseudo-element.
+      const qEl = document.getElementById('question');
+      if(qEl){
+        qEl.classList.add('faded');
+      }
 
     }, 2250); // match the intro fade duration (2.25s)
   }, {passive:true});
