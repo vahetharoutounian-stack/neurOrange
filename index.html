@@ -75,8 +75,11 @@
     /* Reduce the circle size so it sits just behind the "What are you feeling?" prompt.
        Using vmin ties the dimension to the smaller viewport side; this keeps the circle
        relatively small while still encompassing the center text. */
-    width:50vmin;
-    height:50vmin;
+    /* Shrink the circle so it aligns more closely with the question prompt.  Using
+       35vmin provides a circle that comfortably frames the "What are you feeling?"
+       bubble without dominating the screen. */
+    width:35vmin;
+    height:35vmin;
     border-radius:50%;
     background:#000;
     /* Start hidden; show on tap then shrink away.  Keep fully opaque during shrink. */
@@ -244,16 +247,22 @@
   /* Add a soft white glow around the inner color ring (ring 1).  Applying a drop-shadow
      filter to each segment creates a subtle fog along the edges of the orange swatches. */
   #innerSVG path{
-    filter:drop-shadow(0 0 8px rgba(255,255,255,0.5));
+    /* Increase the inner ring glow to create a more pronounced white fog
+       around the orange swatches.  A larger blur radius enhances the
+       ethereal look without overpowering the colors. */
+    filter:drop-shadow(0 0 12px rgba(255,255,255,0.55));
   }
 
   /* Give the outer ghost ring (ring 3) a darker outline and a faint black fog.  These
      rules override the stroke and apply a drop-shadow to each ghost wedge to separate
      them from the background. */
   #outerSVG .ghost-wedge{
-    stroke:rgba(0,0,0,0.55);
+    stroke:rgba(0,0,0,0.65);
     stroke-width:2;
-    filter:drop-shadow(0 0 8px rgba(0,0,0,0.55));
+    /* Darken and soften the ghost wedges further by increasing the blur radius
+       of the drop-shadow.  This adds a stronger black fog behind each
+       segment to enhance contrast. */
+    filter:drop-shadow(0 0 14px rgba(0,0,0,0.65));
   }
 
   /* bottom nav — tighter; Color Library stays one line */
@@ -749,8 +758,10 @@ function showQuoteThenGo(url, dwell=1600){
   text.innerHTML = QUOTES[Math.floor(Math.random()*QUOTES.length)];
   overlay.classList.add('show');
   setTimeout(()=>{ location.href = url; }, dwell);
-    /* Use a black background so if the splash video fails to load there is a dark fallback */
-    background:#000;
+    /* Note: do not set CSS properties here.  The failsafe overlay and
+       intro video styles provide a black fallback if the splash
+       video fails to load.  Leaving stray CSS (e.g. `background:#000;`)
+       within this JavaScript function would break the script. */
 }
 
 /* === failsafe remove === */
